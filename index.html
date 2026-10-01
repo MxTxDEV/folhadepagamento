@@ -403,17 +403,21 @@ const byName = (a, b) => {
   return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
 };
 
-const SEED_VER = 2;
+const SEED_VER = 3;
+function seedMes(m) {
+  const list = state.meses[m] || (state.meses[m] = []);
+  SEED_NOMES.forEach(nome => {
+    if (!list.some(r => sameName(r.nome, nome))) list.push({ id: uid(), nome });
+  });
+  list.sort(byName);
+}
 function seed() {
   if (state.seed >= SEED_VER) return;
-  const inicio = currentMonth() < '2026-10' ? currentMonth() : '2026-10';
-  for (let m = inicio; m <= SEED_ATE; m = addMonth(m, 1)) {
-    const list = state.meses[m] || (state.meses[m] = []);
-    SEED_NOMES.forEach(nome => {
-      if (!list.some(r => sameName(r.nome, nome))) list.push({ id: uid(), nome });
-    });
-    list.sort(byName);
+  if (state.seed < 2) {
+    const inicio = currentMonth() < '2026-10' ? currentMonth() : '2026-10';
+    for (let m = inicio; m <= SEED_ATE; m = addMonth(m, 1)) seedMes(m);
   }
+  if (state.seed < 3) seedMes('2026-09');
   state.seed = SEED_VER;
   save();
 }

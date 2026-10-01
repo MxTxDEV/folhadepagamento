@@ -120,7 +120,12 @@
     padding: 5px 7px; border-radius: 7px; text-align: right; }
   td input:hover { border-color: var(--line); background: var(--card); }
   td input:focus { outline: none; border-color: var(--lav-d); background: var(--card); }
-  td:first-child input { text-align: left; min-width: 150px; width: calc(100% - 24px); font-weight: 500; }
+  td:first-child input { text-align: left; min-width: 150px; width: calc(100% - 58px); font-weight: 500; }
+  .namecell { display: flex; align-items: center; gap: 4px; }
+  .cfg { border: none; background: transparent; color: var(--muted); padding: 3px 7px; border-radius: 7px; font-size: 14px; line-height: 1; }
+  .cfg:hover { background: var(--lav); color: var(--lav-d); }
+  .cfg.on { background: var(--lav); color: var(--lav-d); }
+  .tag { display: block; font-size: 11px; color: var(--lav-d); padding-left: 31px; margin-top: -2px; }
   td input::placeholder { color: var(--muted); opacity: .7; }
   .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 8px; }
   .calc { font-variant-numeric: tabular-nums; padding-right: 14px; }
@@ -213,6 +218,32 @@
     <button class="danger" id="delSeg">Deste e dos seguintes</button>
     <button class="danger" id="delTodos">De todos os meses</button>
   </div>
+</dialog>
+
+<!-- configuração do funcionário -->
+<dialog id="dlgFunc">
+  <form id="funcForm">
+    <h2 id="funcTitulo">Configuração do funcionário</h2>
+    <h3>Hora extra</h3>
+    <div class="row">
+      <label>HE semana</label>
+      <select id="fHeSemModo"><option value="">Padrão geral</option><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
+      <input id="fHeSemValor" inputmode="decimal" style="width:80px">
+    </div>
+    <div class="row">
+      <label>HE SDF</label>
+      <select id="fHeSdfModo"><option value="">Padrão geral</option><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
+      <input id="fHeSdfValor" inputmode="decimal" style="width:80px">
+    </div>
+    <p class="hint" style="margin-top:0" id="fPadrao"></p>
+    <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
+    <h3>Aplicar em</h3>
+    <div class="row"><label><input type="checkbox" id="fSeguintes" checked> Este mês e os meses seguintes</label></div>
+    <div class="dlg-actions">
+      <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="primary">Salvar</button>
+    </div>
+  </form>
 </dialog>
 
 <!-- configurações -->
@@ -436,6 +467,7 @@ const brl = n => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency:
 const num = n => n == null ? '' : n.toLocaleString('pt-BR', { maximumFractionDigits: 2, useGrouping: false });
 const r2 = n => Math.round(n * 100) / 100;
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---------- cálculo ----------
@@ -454,10 +486,11 @@ function calcInss(base) {
   return r2(total);
 }
 function calc(r) {
-  const heSemV = r2((r.heSem || 0) * valorHora(r.salario, state.config.heSem));
-  const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, state.config.heSdf));
+  const cfg = r.cfg || {};
+  const heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
+  const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, cfg.heSdf || state.config.heSdf));
   const bruto = (r.salario || 0) + (r.bonif || 0) + (r.grat || 0) + heSemV + heSdfV;
-  const inssAuto = calcInss(bruto);
+  const inssAuto = calcInss(cfg.foraInss ? bruto - heSemV - heSdfV : bruto);
   const inss = r.inss != null ? r.inss : inssAuto;
   const liquido = r2(bruto - (r.adiant || 0) - inss - (r.desc || 0));
   const conta = r2(liquido - (r.ifood || 0));
@@ -545,7 +578,7 @@ function criarFolha(m) {
     if (rowsOf(p).length) { src = rowsOf(p); break; }
   }
   state.meses[m] = (src || []).map(r => ({
-    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood,
+    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood, cfg: r.cfg,
   }));
   save();
 }
@@ -629,7 +662,7 @@ function input(r, field) {
 function rowEl(r, n) {
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"></td>
+    <td><div class="namecell"><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}</td>
     <td>${input(r, 'salario')}</td>
     <td>${input(r, 'bonif')}</td>
     <td>${input(r, 'grat')}</td>
@@ -651,6 +684,7 @@ function rowEl(r, n) {
     renderTotals();
   });
   tr.querySelector('.del').onclick = () => abrirRemover(r);
+  tr.querySelector('.cfg').onclick = () => abrirFunc(r);
   updateRow(tr, r);
   return tr;
 }
@@ -701,6 +735,56 @@ document.getElementById('novoForm').onsubmit = e => {
   });
   save();
   document.getElementById('dlgNovo').close();
+  render();
+};
+
+// ---------- configuração por funcionário ----------
+const heTxt = c => c.modo === 'fixo' ? brl(c.valor) + '/h' : num(c.valor) + '%';
+function cfgResumo(c) {
+  const p = [];
+  if (c.heSem) p.push('HE sem. ' + heTxt(c.heSem));
+  if (c.heSdf) p.push('SDF ' + heTxt(c.heSdf));
+  if (c.foraInss) p.push('HE por fora');
+  return p.join(' · ');
+}
+let editandoFunc = null;
+function abrirFunc(r) {
+  editandoFunc = r;
+  const c = r.cfg || {}, g = state.config;
+  $('funcTitulo').textContent = r.nome || 'Funcionário';
+  $('fHeSemModo').value = c.heSem ? c.heSem.modo : ''; $('fHeSemValor').value = c.heSem ? num(c.heSem.valor) : '';
+  $('fHeSdfModo').value = c.heSdf ? c.heSdf.modo : ''; $('fHeSdfValor').value = c.heSdf ? num(c.heSdf.valor) : '';
+  $('fFora').checked = !!c.foraInss;
+  $('fPadrao').textContent = `Padrão geral: HE semana ${heTxt(g.heSem)}, HE SDF ${heTxt(g.heSdf)}.`;
+  syncFuncInputs();
+  $('dlgFunc').showModal();
+}
+function syncFuncInputs() {
+  ['Sem', 'Sdf'].forEach(k => {
+    const inp = $('fHe' + k + 'Valor');
+    inp.disabled = !$('fHe' + k + 'Modo').value;
+    if (inp.disabled) inp.value = '';
+  });
+}
+$('fHeSemModo').onchange = syncFuncInputs;
+$('fHeSdfModo').onchange = syncFuncInputs;
+$('funcForm').onsubmit = e => {
+  e.preventDefault();
+  const r = editandoFunc;
+  const he = k => {
+    const modo = $('fHe' + k + 'Modo').value;
+    return modo ? { modo, valor: parse($('fHe' + k + 'Valor').value) || 0 } : null;
+  };
+  const c = { heSem: he('Sem'), heSdf: he('Sdf'), foraInss: $('fFora').checked };
+  const cfg = c.heSem || c.heSdf || c.foraInss ? c : null;
+  r.cfg = cfg;
+  if ($('fSeguintes').checked && r.nome) {
+    Object.keys(state.meses).filter(m => m > mes).forEach(m => {
+      state.meses[m].forEach(x => { if (sameName(x.nome, r.nome)) x.cfg = cfg && structuredClone(cfg); });
+    });
+  }
+  save();
+  $('dlgFunc').close();
   render();
 };
 
@@ -766,7 +850,6 @@ function download(name, content, type) {
 
 // ---------- configurações ----------
 const dlg = document.getElementById('dlg');
-const $ = id => document.getElementById(id);
 
 $('btnConfig').onclick = () => {
   const c = state.config;

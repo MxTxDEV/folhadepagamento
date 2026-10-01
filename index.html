@@ -170,14 +170,47 @@
     .top nav { margin-left: 0; }
     main { padding: 16px; }
   }
+  /* ---------- impressão / PDF ---------- */
+  #printArea { display: none; }
   @media print {
-    .top, .topscroll, .f-tools, .seg, .del, .hint, .no-print { display: none !important; }
-    body { background: #fff; color: #000; }
-    main { padding: 0; }
-    .wrap { border: none; overflow: visible; max-height: none; box-shadow: none; }
-    table { min-width: 0; font-size: 10px; }
-    td input { border: none !important; padding: 0; }
-    @page { size: landscape; margin: 10mm; }
+    @page { size: A4 landscape; margin: 7mm; }
+    body { background: #fff !important; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block; font: 7.6px/1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .p-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;
+      border-bottom: 2px solid #6b55c9; padding-bottom: 4px; }
+    .p-head h1 { font-size: 14px; margin: 0; color: #2d2a32; }
+    .p-head .p-st { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: #ece5fd; color: #6b55c9; margin-left: 8px; }
+    .p-head small { color: #777; font-size: 8px; }
+    .p-sum { display: flex; gap: 6px; margin-bottom: 6px; }
+    .p-sum div { border: 1px solid #ddd; border-radius: 5px; padding: 3px 8px; font-size: 8px; color: #666; }
+    .p-sum b { display: block; font-size: 10.5px; color: #222; font-variant-numeric: tabular-nums; }
+    .p-sum .lav { background: #ece5fd; border-color: #ece5fd; }
+    .p-sum .pink { background: #fbe1e7; border-color: #fbe1e7; }
+    .p-sum .mint { background: #daf2e7; border-color: #daf2e7; }
+    .p-tab { width: 100%; min-width: 0 !important; border-collapse: collapse; table-layout: fixed; }
+    .p-tab th, .p-tab td { border: 1px solid #d9d6e0; padding: 2.5px 3px; text-align: right;
+      font-variant-numeric: tabular-nums; overflow: hidden; }
+    .p-tab td { white-space: nowrap; }
+    .p-tab th { white-space: normal; vertical-align: bottom; position: static; box-shadow: none; font-size: 6.8px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; color: #444; line-height: 1.15; }
+    .p-tab .g th { font-size: 7.5px; text-align: center; letter-spacing: .08em; }
+    .p-tab .gp { background: #dfecfb; } .p-tab .gd { background: #fbe1e7; } .p-tab .gr { background: #daf2e7; }
+    .p-tab thead tr:not(.g) th { background: #f3f1ee; }
+    .p-tab th.nome, .p-tab td.nome { text-align: left; white-space: normal; }
+    .p-tab td.nome { font-weight: 600; }
+    .p-tab td.n { color: #999; text-align: center; }
+    .p-tab tbody tr:nth-child(even) td { background: #faf9f7; }
+    .p-tab td.z { color: #c4c0ca; }
+    .p-tab td small { display: block; color: #888; font-size: 6.3px; }
+    .p-tab td.liq { background: #f3effe !important; font-weight: 700; color: #4b3a99; }
+    .p-tab td.if { background: #fdf0f3 !important; }
+    .p-tab td.ct { background: #e9f8f1 !important; font-weight: 800; color: #1f6b47; }
+    .p-tab td.neg { color: #c0445a !important; }
+    .p-tab tfoot td { position: static; box-shadow: none; background: #ece9f2 !important; font-weight: 800; border-top: 2px solid #6b55c9; }
+    .p-tab tr { page-break-inside: avoid; }
+    .p-tab thead { display: table-header-group; }
+    .p-tab tfoot { display: table-footer-group; }
+    .p-foot { margin-top: 5px; color: #888; font-size: 7px; }
   }
 </style>
 </head>
@@ -195,6 +228,7 @@
 </div>
 
 <main id="app"></main>
+<div id="printArea"></div>
 
 <!-- login -->
 <dialog id="dlgLogin">
@@ -684,11 +718,64 @@ function renderFolha() {
     document.getElementById('novoNome').value = '';
     document.getElementById('dlgNovo').showModal();
   };
-  document.getElementById('btnPrint').onclick = () => window.print();
+  document.getElementById('btnPrint').onclick = () => { buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
   renderTotals();
   syncScroll();
 }
+
+// ---------- versão para impressão / PDF ----------
+function buildPrint() {
+  const list = rows().slice().sort(byName);
+  const t = totals(list);
+  const v = n => n ? brl(n).replace(/^R\$\s?/, '') : '–';
+  const td = (n, cls = '') => `<td class="${n ? '' : 'z '}${cls}${n < 0 ? ' neg' : ''}">${v(n)}</td>`;
+  const comQtd = (val, qtd, un) => !val && !qtd ? '<td class="z">–</td>'
+    : `<td>${v(val)}<small>${num(qtd || 0)} ${un}</small></td>`;
+  const linhas = list.map((r, i) => {
+    const c = calc(r);
+    return `<tr><td class="n">${i + 1}</td><td class="nome">${esc(r.nome)}</td>
+      ${td(r.salario)}${td(r.bonif)}${td(r.bonifVar)}
+      ${comQtd(c.diaTrabV, r.diasTrab, 'd')}${comQtd(c.dia361V, r.dias361, 'd')}
+      ${td(r.grat)}${td(r.ajuda)}
+      ${comQtd(c.heSemV, r.heSem, 'h')}${comQtd(c.heSdfV, r.heSdf, 'h')}
+      ${td(r.adiant)}${td(c.inss)}${td(r.desc)}
+      ${td(c.liquido, 'liq')}${td(r.ifood, 'if')}${td(c.conta, 'ct')}</tr>`;
+  }).join('');
+  const st = STATUS_LABEL[statusOf(mes)];
+  const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  document.getElementById('printArea').innerHTML = `
+    <div class="p-head">
+      <div><h1 style="display:inline">Folha de pagamento — <span style="text-transform:capitalize">${nomeMes(mes)}</span></h1><span class="p-st">${st}</span></div>
+      <small>${list.length} funcionários · valores em R$ · gerado em ${agora}</small>
+    </div>
+    <div class="p-sum">
+      <div>Total proventos<b>${brl(t.bruto)}</b></div>
+      <div>Adiantamentos<b>${brl(t.adiant)}</b></div>
+      <div>INSS<b>${brl(t.inss)}</b></div>
+      <div>Descontos<b>${brl(t.desc)}</b></div>
+      <div class="lav">Líquido<b>${brl(t.liquido)}</b></div>
+      <div class="pink">iFood<b>${brl(t.ifood)}</b></div>
+      <div class="mint">Na conta<b>${brl(t.conta)}</b></div>
+    </div>
+    <table class="p-tab">
+      <colgroup><col style="width:2.2%"><col style="width:10.5%">${'<col>'.repeat(15)}</colgroup>
+      <thead>
+        <tr class="g"><th colspan="2"></th><th colspan="9" class="gp">Proventos</th><th colspan="3" class="gd">Descontos</th><th colspan="3" class="gr">Resultado</th></tr>
+        <tr><th>#</th><th class="nome">Nome</th><th>Salário base</th><th>Bonif. fixa</th><th>Bonif. variada</th>
+          <th>Bonif. dias trab.</th><th>Bonif. 361/380</th><th>Gratifi&shy;cação</th><th>Ajuda combinada</th>
+          <th>HE semana</th><th>HE SDF</th><th>Adianta&shy;mento</th><th>INSS</th><th>Descontos</th>
+          <th>Líquido</th><th>iFood</th><th>Na conta</th></tr>
+      </thead>
+      <tbody>${linhas}</tbody>
+      <tfoot><tr><td></td><td class="nome">Total</td>
+        ${td(t.salario)}${td(t.bonif)}${td(t.bonifVar)}${td(t.diaTrabV)}${td(t.dia361V)}${td(t.grat)}${td(t.ajuda)}
+        ${td(t.heSemV)}${td(t.heSdfV)}${td(t.adiant)}${td(t.inss)}${td(t.desc)}
+        ${td(t.liquido, 'liq')}${td(t.ifood, 'if')}${td(t.conta, 'ct')}</tr></tfoot>
+    </table>
+    <div class="p-foot">Líquido = proventos − adiantamento − INSS − descontos · Na conta = líquido − iFood · “–” = sem valor</div>`;
+}
+window.addEventListener('beforeprint', () => { if (view === 'folha') buildPrint(); });
 
 // barra de rolagem horizontal também em cima da tabela
 function syncScroll() {

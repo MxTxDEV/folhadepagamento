@@ -403,16 +403,18 @@ const byName = (a, b) => {
   return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
 };
 
+const SEED_VER = 2;
 function seed() {
-  if (state.seed >= 1) return;
-  for (let m = currentMonth(); m <= SEED_ATE; m = addMonth(m, 1)) {
+  if (state.seed >= SEED_VER) return;
+  const inicio = currentMonth() < '2026-10' ? currentMonth() : '2026-10';
+  for (let m = inicio; m <= SEED_ATE; m = addMonth(m, 1)) {
     const list = state.meses[m] || (state.meses[m] = []);
     SEED_NOMES.forEach(nome => {
       if (!list.some(r => sameName(r.nome, nome))) list.push({ id: uid(), nome });
     });
     list.sort(byName);
   }
-  state.seed = 1;
+  state.seed = SEED_VER;
   save();
 }
 
@@ -744,7 +746,7 @@ document.getElementById('fileRestore').onchange = async e => {
     const s = normalize(JSON.parse(await file.text()));
     if (!s) throw new Error('arquivo inválido');
     if (!confirm('Substituir todos os dados atuais pelo backup?')) return;
-    state = s; state.seed = 1;
+    state = s; state.seed = SEED_VER;
     save(); dlg.close(); render();
   } catch (err) { alert('Erro ao restaurar: ' + err.message); }
   e.target.value = '';
@@ -786,6 +788,7 @@ $('cSave').onclick = () => {
   save(); dlg.close(); render();
 };
 
+seed();
 route();
 connect();
 </script>

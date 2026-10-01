@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folha de Pagamento</title>
+<style>
+  :root {
+    --bg: #fafafa; --fg: #1a1a1a; --muted: #777; --line: #e4e4e4;
+    --card: #fff; --accent: #1a1a1a; --pos: #0a7a3d; --neg: #b3261e; --hl: #f3f3f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141414; --fg: #eaeaea; --muted: #8a8a8a; --line: #2a2a2a;
+      --card: #1b1b1b; --accent: #eaeaea; --pos: #4cc38a; --neg: #ff6b60; --hl: #222;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 16px; font-weight: 600; margin: 0 auto 0 0; }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: transparent; border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; }
+  button:hover { background: var(--hl); }
+  button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  input[type=month] { background: var(--card); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 8px; }
+  main { padding: 20px; }
+  .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; min-width: 1400px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .03em; background: var(--card); position: sticky; top: 0; }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:hover { background: var(--hl); }
+  td input { width: 100%; min-width: 80px; border: 1px solid transparent; background: transparent;
+    padding: 4px 6px; border-radius: 4px; text-align: right; }
+  td input:hover { border-color: var(--line); }
+  td input:focus { outline: none; border-color: var(--muted); background: var(--card); }
+  td:first-child input { text-align: left; min-width: 160px; }
+  td input::placeholder { color: var(--muted); }
+  .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 6px; }
+  .calc { font-variant-numeric: tabular-nums; padding-right: 14px; }
+  .liq { font-weight: 600; }
+  .conta { font-weight: 700; color: var(--pos); }
+  .neg { color: var(--neg) !important; }
+  tfoot td { font-weight: 600; border-bottom: none; background: var(--hl); font-variant-numeric: tabular-nums; padding-right: 14px; }
+  .del { border: none; color: var(--muted); padding: 2px 8px; }
+  .del:hover { color: var(--neg); background: transparent; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
+
+  dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+    color: var(--fg); padding: 20px; width: min(460px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog h2 { font-size: 15px; margin: 0 0 16px; }
+  dialog h3 { font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; letter-spacing: .03em; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { flex: 1; }
+  .row input, .row select { width: 130px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 8px; }
+  .row input { text-align: right; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+  @media print {
+    header button, .actions, .del, .hint, input[type=month] { display: none !important; }
+    body { background: #fff; color: #000; }
+    main { padding: 0; }
+    .wrap { border: none; overflow: visible; }
+    table { min-width: 0; font-size: 10px; }
+    td input { border: none !important; padding: 0; }
+    @page { size: landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Folha de Pagamento <span id="printMonth" style="font-weight:400;color:var(--muted)"></span></h1>
+  <input type="month" id="mes" title="Competência">
+  <button id="btnConfig">Configurações</button>
+  <button class="primary" id="btnAdd">+ Funcionário</button>
+</header>
+
+<main>
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Salário base</th>
+          <th>Bonif. fixa</th>
+          <th>Gratificação</th>
+          <th>HE semana (h)</th>
+          <th>HE SDF (h)</th>
+          <th>Adiantamento</th>
+          <th title="Em branco = automático">INSS</th>
+          <th>Descontos</th>
+          <th>Valor líquido</th>
+          <th>iFood Benefícios</th>
+          <th>Na conta</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+    <div id="empty" class="empty" hidden></div>
+  </div>
+
+  <div class="actions">
+    <button id="btnCsv">Exportar CSV</button>
+    <button id="btnPrint">Imprimir / PDF</button>
+    <button id="btnBackup">Backup (JSON)</button>
+    <button id="btnRestore">Restaurar backup</button>
+    <input type="file" id="fileRestore" accept="application/json" hidden>
+  </div>
+  <p class="hint">
+    HE: digite as horas — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
+    Líquido = salário + bonificação + gratificação + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
+    Dados salvos apenas neste navegador — faça backup de vez em quando.
+  </p>
+</main>
+
+<dialog id="dlg">
+  <h2>Configurações</h2>
+
+  <h3>Hora extra</h3>
+  <div class="row">
+    <label>Divisor de horas/mês</label>
+    <input id="cDivisor" inputmode="decimal">
+  </div>
+  <div class="row">
+    <label>HE semana</label>
+    <select id="cHeSemModo"><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
+    <input id="cHeSemValor" inputmode="decimal" style="width:80px">
+  </div>
+  <div class="row">
+    <label>HE SDF</label>
+    <select id="cHeSdfModo"><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
+    <input id="cHeSdfValor" inputmode="decimal" style="width:80px">
+  </div>
+  <p class="hint" style="margin-top:0">Em "%", valor da hora = salário base ÷ divisor × (1 + %). Ex.: 50% semana, 100% SDF.</p>
+
+  <h3>Tabela INSS (progressiva)</h3>
+  <div id="cInss"></div>
+  <p class="hint" style="margin-top:0">Base do INSS: salário + bonificação + gratificação + HE. Acima do último teto, o desconto é fixo.</p>
+
+  <div class="dlg-actions">
+    <button id="cCancel">Cancelar</button>
+    <button class="primary" id="cSave">Salvar</button>
+  </div>
+</dialog>
+
+<script>
+const KEY = 'folha-pagamento-v1';
+const DEFAULT_CONFIG = {
+  divisor: 220,
+  heSem: { modo: 'pct', valor: 50 },
+  heSdf: { modo: 'pct', valor: 100 },
+  // faixas: até (R$) / alíquota (%)
+  inss: [
+    { ate: 1518.00, aliq: 7.5 },
+    { ate: 2793.88, aliq: 9 },
+    { ate: 4190.83, aliq: 12 },
+    { ate: 8157.41, aliq: 14 },
+  ],
+};
+const FIELDS = ['salario', 'bonif', 'grat', 'heSem', 'heSdf', 'adiant', 'inss', 'desc', 'ifood'];
+
+let state = load();
+let mes = currentMonth();
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.meses) return { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
+  } catch (e) {}
+  return { config: structuredClone(DEFAULT_CONFIG), meses: {} };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { alert('Não foi possível salvar: ' + e.message); }
+}
+function currentMonth() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function prevMonth(m) {
+  let [y, mo] = m.split('-').map(Number);
+  mo--; if (mo === 0) { mo = 12; y--; }
+  return y + '-' + String(mo).padStart(2, '0');
+}
+function rows() { return state.meses[mes] || (state.meses[mes] = []); }
+
+// ---------- números ----------
+function parse(v) {
+  if (v == null) return null;
+  v = String(v).trim().replace(/[R$\s]/g, '');
+  if (v === '') return null;
+  if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+}
+const brl = n => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const num = n => n == null ? '' : n.toLocaleString('pt-BR', { maximumFractionDigits: 2, useGrouping: false });
+const r2 = n => Math.round(n * 100) / 100;
+
+// ---------- cálculo ----------
+function valorHora(salario, cfg) {
+  if (cfg.modo === 'fixo') return cfg.valor || 0;
+  const div = state.config.divisor || 220;
+  return (salario || 0) / div * (1 + (cfg.valor || 0) / 100);
+}
+function calcInss(base) {
+  let total = 0, prev = 0;
+  for (const f of state.config.inss) {
+    if (base <= prev) break;
+    total += (Math.min(base, f.ate) - prev) * f.aliq / 100;
+    prev = f.ate;
+  }
+  return r2(total);
+}
+function calc(r) {
+  const heSemV = r2((r.heSem || 0) * valorHora(r.salario, state.config.heSem));
+  const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, state.config.heSdf));
+  const bruto = (r.salario || 0) + (r.bonif || 0) + (r.grat || 0) + heSemV + heSdfV;
+  const inssAuto = calcInss(bruto);
+  const inss = r.inss != null ? r.inss : inssAuto;
+  const liquido = r2(bruto - (r.adiant || 0) - inss - (r.desc || 0));
+  const conta = r2(liquido - (r.ifood || 0));
+  return { heSemV, heSdfV, bruto, inssAuto, inss, liquido, conta };
+}
+
+// ---------- render ----------
+const tbody = document.getElementById('tbody');
+const tfoot = document.getElementById('tfoot');
+
+function render() {
+  document.getElementById('mes').value = mes;
+  const [y, m] = mes.split('-');
+  document.getElementById('printMonth').textContent = '· ' + m + '/' + y;
+  const list = rows();
+  tbody.innerHTML = '';
+  list.forEach(r => tbody.appendChild(rowEl(r)));
+  const empty = document.getElementById('empty');
+  empty.hidden = list.length > 0;
+  if (!list.length) {
+    const prev = state.meses[prevMonth(mes)];
+    empty.innerHTML = prev && prev.length
+      ? `Nenhum lançamento neste mês.<br><br><button class="primary" id="btnCopy">Copiar funcionários de ${prevMonth(mes).split('-').reverse().join('/')}</button>`
+      : 'Nenhum funcionário. Clique em "+ Funcionário".';
+    const b = document.getElementById('btnCopy');
+    if (b) b.onclick = copyPrev;
+  }
+  renderTotals();
+}
+
+function input(r, field, extra = '') {
+  return `<input data-f="${field}" inputmode="decimal" value="${num(r[field])}" ${extra}>`;
+}
+
+function rowEl(r) {
+  const tr = document.createElement('tr');
+  tr.dataset.id = r.id;
+  tr.innerHTML = `
+    <td><input data-f="nome" value="${(r.nome || '').replace(/"/g, '&quot;')}" placeholder="Nome"></td>
+    <td>${input(r, 'salario')}</td>
+    <td>${input(r, 'bonif')}</td>
+    <td>${input(r, 'grat')}</td>
+    <td>${input(r, 'heSem')}<span class="sub" data-c="heSemV"></span></td>
+    <td>${input(r, 'heSdf')}<span class="sub" data-c="heSdfV"></span></td>
+    <td>${input(r, 'adiant')}</td>
+    <td>${input(r, 'inss')}</td>
+    <td>${input(r, 'desc')}</td>
+    <td class="calc liq" data-c="liquido"></td>
+    <td>${input(r, 'ifood')}</td>
+    <td class="calc conta" data-c="conta"></td>
+    <td><button class="del" title="Remover">✕</button></td>`;
+  tr.addEventListener('input', e => {
+    const f = e.target.dataset.f;
+    if (!f) return;
+    r[f] = f === 'nome' ? e.target.value : parse(e.target.value);
+    save();
+    updateRow(tr, r);
+    renderTotals();
+  });
+  tr.querySelector('.del').onclick = () => {
+    if (!confirm(`Remover ${r.nome || 'este funcionário'} deste mês?`)) return;
+    state.meses[mes] = rows().filter(x => x !== r);
+    save(); render();
+  };
+  updateRow(tr, r);
+  return tr;
+}
+
+function updateRow(tr, r) {
+  const c = calc(r);
+  tr.querySelector('[data-c=heSemV]').textContent = r.heSem ? brl(c.heSemV) : '';
+  tr.querySelector('[data-c=heSdfV]').textContent = r.heSdf ? brl(c.heSdfV) : '';
+  tr.querySelector('[data-f=inss]').placeholder = num(c.inssAuto);
+  const liq = tr.querySelector('[data-c=liquido]');
+  liq.textContent = brl(c.liquido); liq.classList.toggle('neg', c.liquido < 0);
+  const ct = tr.querySelector('[data-c=conta]');
+  ct.textContent = brl(c.conta); ct.classList.toggle('neg', c.conta < 0);
+}
+
+function renderTotals() {
+  const list = rows();
+  if (!list.length) { tfoot.innerHTML = ''; return; }
+  const t = { salario: 0, bonif: 0, grat: 0, heSemV: 0, heSdfV: 0, adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0 };
+  list.forEach(r => {
+    const c = calc(r);
+    t.salario += r.salario || 0; t.bonif += r.bonif || 0; t.grat += r.grat || 0;
+    t.heSemV += c.heSemV; t.heSdfV += c.heSdfV; t.adiant += r.adiant || 0;
+    t.inss += c.inss; t.desc += r.desc || 0; t.liquido += c.liquido;
+    t.ifood += r.ifood || 0; t.conta += c.conta;
+  });
+  tfoot.innerHTML = `<tr>
+    <td>Total (${list.length})</td>
+    <td>${brl(t.salario)}</td><td>${brl(t.bonif)}</td><td>${brl(t.grat)}</td>
+    <td>${brl(t.heSemV)}</td><td>${brl(t.heSdfV)}</td><td>${brl(t.adiant)}</td>
+    <td>${brl(t.inss)}</td><td>${brl(t.desc)}</td><td>${brl(t.liquido)}</td>
+    <td>${brl(t.ifood)}</td><td>${brl(t.conta)}</td><td></td></tr>`;
+}
+
+// ---------- ações ----------
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+document.getElementById('btnAdd').onclick = () => {
+  rows().push({ id: uid(), nome: '' });
+  save(); render();
+  tbody.lastElementChild.querySelector('input').focus();
+};
+
+function copyPrev() {
+  const prev = state.meses[prevMonth(mes)] || [];
+  // mantém valores fixos, zera os variáveis do mês
+  state.meses[mes] = prev.map(r => ({
+    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood,
+  }));
+  save(); render();
+}
+
+document.getElementById('mes').onchange = e => {
+  if (!e.target.value) return;
+  mes = e.target.value; render();
+};
+
+document.getElementById('btnPrint').onclick = () => window.print();
+
+document.getElementById('btnCsv').onclick = () => {
+  const head = ['Nome', 'Salário base', 'Bonificação fixa', 'Gratificação', 'HE semana (h)', 'HE semana (R$)',
+    'HE SDF (h)', 'HE SDF (R$)', 'Adiantamento', 'INSS', 'Descontos', 'Valor líquido', 'iFood Benefícios', 'Valor na conta'];
+  const f = n => (n || 0).toFixed(2).replace('.', ',');
+  const lines = rows().map(r => {
+    const c = calc(r);
+    return [`"${(r.nome || '').replace(/"/g, '""')}"`, f(r.salario), f(r.bonif), f(r.grat),
+      f(r.heSem), f(c.heSemV), f(r.heSdf), f(c.heSdfV), f(r.adiant), f(c.inss), f(r.desc),
+      f(c.liquido), f(r.ifood), f(c.conta)].join(';');
+  });
+  download(`folha-${mes}.csv`, '﻿' + [head.join(';'), ...lines].join('\r\n'), 'text/csv');
+};
+
+document.getElementById('btnBackup').onclick = () =>
+  download(`folha-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state, null, 2), 'application/json');
+
+document.getElementById('btnRestore').onclick = () => document.getElementById('fileRestore').click();
+document.getElementById('fileRestore').onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const s = JSON.parse(await file.text());
+    if (!s.meses) throw new Error('arquivo inválido');
+    if (!confirm('Substituir todos os dados atuais pelo backup?')) return;
+    state = { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
+    save(); render();
+  } catch (err) { alert('Erro ao restaurar: ' + err.message); }
+  e.target.value = '';
+};
+
+function download(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------- configurações ----------
+const dlg = document.getElementById('dlg');
+const $ = id => document.getElementById(id);
+
+$('btnConfig').onclick = () => {
+  const c = state.config;
+  $('cDivisor').value = num(c.divisor);
+  $('cHeSemModo').value = c.heSem.modo; $('cHeSemValor').value = num(c.heSem.valor);
+  $('cHeSdfModo').value = c.heSdf.modo; $('cHeSdfValor').value = num(c.heSdf.valor);
+  $('cInss').innerHTML = c.inss.map((f, i) => `
+    <div class="row">
+      <label>Faixa ${i + 1} — até R$</label>
+      <input data-i="${i}" data-k="ate" value="${num(f.ate)}" inputmode="decimal">
+      <input data-i="${i}" data-k="aliq" value="${num(f.aliq)}" inputmode="decimal" style="width:60px"> %
+    </div>`).join('');
+  dlg.showModal();
+};
+$('cCancel').onclick = () => dlg.close();
+$('cSave').onclick = () => {
+  const c = state.config;
+  c.divisor = parse($('cDivisor').value) || 220;
+  c.heSem = { modo: $('cHeSemModo').value, valor: parse($('cHeSemValor').value) || 0 };
+  c.heSdf = { modo: $('cHeSdfModo').value, valor: parse($('cHeSdfValor').value) || 0 };
+  $('cInss').querySelectorAll('input').forEach(inp => {
+    c.inss[inp.dataset.i][inp.dataset.k] = parse(inp.value) || 0;
+  });
+  save(); dlg.close(); render();
+};
+
+render();
+</script>
+</body>
+</html>

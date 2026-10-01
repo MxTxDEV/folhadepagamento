@@ -6,74 +6,159 @@
 <title>Folha de Pagamento</title>
 <style>
   :root {
-    --bg: #fafafa; --fg: #1a1a1a; --muted: #777; --line: #e4e4e4;
-    --card: #fff; --accent: #1a1a1a; --pos: #0a7a3d; --neg: #b3261e; --hl: #f3f3f3;
+    --bg: #f6f4f0; --card: #fff; --fg: #2d2a32; --muted: #8a8494; --line: #ebe7e0; --hl: #faf8f5;
+    --lav: #ece5fd; --lav-d: #6b55c9;
+    --mint: #daf2e7; --mint-d: #2f8a5f;
+    --peach: #ffe8d6; --peach-d: #b8642a;
+    --sky: #dfecfb; --sky-d: #3b6fb0;
+    --pink: #fbe1e7; --pink-d: #b0435c;
+    --neg: #c0445a; --shadow: 0 1px 2px rgba(60,50,80,.05), 0 4px 14px rgba(60,50,80,.05);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #141414; --fg: #eaeaea; --muted: #8a8a8a; --line: #2a2a2a;
-      --card: #1b1b1b; --accent: #eaeaea; --pos: #4cc38a; --neg: #ff6b60; --hl: #222;
+      --bg: #1c1b20; --card: #25242b; --fg: #ece9f1; --muted: #9a95a3; --line: #34323b; --hl: #2b2a31;
+      --lav: #352f4a; --lav-d: #c7b8ff;
+      --mint: #233d34; --mint-d: #8fdcb6;
+      --peach: #44331f; --peach-d: #ffc194;
+      --sky: #233246; --sky-d: #a8c8f2;
+      --pink: #44262f; --pink-d: #f3a6b8;
+      --neg: #ff8a9b; --shadow: none;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg);
-    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-    padding: 16px 20px; border-bottom: 1px solid var(--line); }
-  h1 { font-size: 16px; font-weight: 600; margin: 0 auto 0 0; }
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   button, input, select { font: inherit; color: inherit; }
-  button { background: transparent; border: 1px solid var(--line); border-radius: 6px;
-    padding: 6px 12px; cursor: pointer; }
-  button:hover { background: var(--hl); }
-  button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-  input[type=month] { background: var(--card); border: 1px solid var(--line);
-    border-radius: 6px; padding: 5px 8px; }
-  main { padding: 20px; }
-  .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
-  table { border-collapse: collapse; width: 100%; min-width: 1400px; }
+  button { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 14px; cursor: pointer; transition: background .15s, border-color .15s; }
+  button:hover { background: var(--hl); border-color: var(--muted); }
+  button.primary { background: var(--lav); color: var(--lav-d); border-color: transparent; font-weight: 600; }
+  button.primary:hover { filter: brightness(.97); }
+  button.ghost { background: transparent; border-color: transparent; }
+  button.ghost:hover { background: var(--hl); }
+  button.icon { padding: 6px 10px; }
+
+  /* ---------- topo ---------- */
+  .top { display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .brand { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .brand .dot { width: 22px; height: 22px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--lav), var(--mint)); }
+  .top nav { display: flex; gap: 4px; margin-left: 16px; }
+  .top nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+  .top nav a.on { background: var(--lav); color: var(--lav-d); font-weight: 600; }
+  .top .sp { flex: 1; }
+  #sync { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  #sync::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  #sync.ok::before { background: var(--mint-d); }
+  #sync.err { color: var(--neg); }
+  #sync.err::before { background: var(--neg); }
+
+  main { padding: 24px; max-width: 1700px; margin: 0 auto; }
+  .muted { color: var(--muted); }
+
+  /* ---------- status ---------- */
+  .st-aberta { --s: var(--sky); --sd: var(--sky-d); }
+  .st-conferencia { --s: var(--peach); --sd: var(--peach-d); }
+  .st-fechada { --s: var(--lav); --sd: var(--lav-d); }
+  .st-paga { --s: var(--mint); --sd: var(--mint-d); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; background: var(--s); color: var(--sd); white-space: nowrap; }
+  .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .seg { display: inline-flex; background: var(--hl); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .seg button { border: none; background: transparent; border-radius: 9px; padding: 6px 12px; color: var(--muted); font-size: 13px; }
+  .seg button:hover { background: var(--card); }
+  .seg button.on { background: var(--s); color: var(--sd); font-weight: 600; }
+
+  /* ---------- calendário ---------- */
+  .cal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .cal-head h2 { margin: 0; font-size: 22px; min-width: 70px; text-align: center; }
+  .cal-sum { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; }
+  .chip small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .chip b { font-variant-numeric: tabular-nums; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
+    box-shadow: var(--shadow); cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .15s, box-shadow .15s; min-height: 170px; display: flex; flex-direction: column; }
+  .card:hover { transform: translateY(-2px); }
+  .card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--s, var(--line)); }
+  .card.now { outline: 2px solid var(--lav-d); outline-offset: -1px; }
+  .card .ch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card .mname { font-size: 17px; font-weight: 700; text-transform: capitalize; }
+  .card .big small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .card .big div { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .card .meta { margin-top: auto; padding-top: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px;
+    font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); }
+  .card.empty { background: transparent; border-style: dashed; box-shadow: none; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
+  .card.empty::before { display: none; }
+  .card.empty .mname { color: var(--fg); }
+  .foot-actions { display: flex; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
+
+  /* ---------- folha ---------- */
+  .f-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .f-head h2 { margin: 0; font-size: 22px; text-transform: capitalize; }
+  .f-sum { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .f-sum .chip.lav { background: var(--lav); border-color: transparent; }
+  .f-sum .chip.mint { background: var(--mint); border-color: transparent; }
+  .f-sum .chip.pink { background: var(--pink); border-color: transparent; }
+  .f-tools { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1250px; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
   th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
-    letter-spacing: .03em; background: var(--card); position: sticky; top: 0; }
-  th:first-child, td:first-child { text-align: left; }
-  tbody tr:hover { background: var(--hl); }
-  td input { width: 100%; min-width: 80px; border: 1px solid transparent; background: transparent;
-    padding: 4px 6px; border-radius: 4px; text-align: right; }
-  td input:hover { border-color: var(--line); }
-  td input:focus { outline: none; border-color: var(--muted); background: var(--card); }
-  td:first-child input { text-align: left; min-width: 160px; }
-  td input::placeholder { color: var(--muted); }
-  .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 6px; }
+    letter-spacing: .04em; background: var(--hl); padding-top: 12px; padding-bottom: 12px; }
+  th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; }
+  th:first-child { background: var(--hl); z-index: 2; }
+  th.c-liq, td.c-liq { background: var(--lav); }
+  th.c-if, td.c-if { background: var(--pink); }
+  th.c-conta, td.c-conta { background: var(--mint); }
+  th.c-liq, th.c-if, th.c-conta { color: var(--fg); }
+  tbody tr:hover td { background-image: linear-gradient(rgba(127,110,180,.06), rgba(127,110,180,.06)); }
+  td .n { color: var(--muted); font-size: 12px; display: inline-block; width: 20px; }
+  td input { width: 100%; min-width: 70px; border: 1px solid transparent; background: transparent;
+    padding: 5px 7px; border-radius: 7px; text-align: right; }
+  td input:hover { border-color: var(--line); background: var(--card); }
+  td input:focus { outline: none; border-color: var(--lav-d); background: var(--card); }
+  td:first-child input { text-align: left; min-width: 150px; width: calc(100% - 24px); font-weight: 500; }
+  td input::placeholder { color: var(--muted); opacity: .7; }
+  .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 8px; }
   .calc { font-variant-numeric: tabular-nums; padding-right: 14px; }
-  .liq { font-weight: 600; }
-  .conta { font-weight: 700; color: var(--pos); }
+  td.c-liq { font-weight: 600; color: var(--lav-d); }
+  td.c-conta { font-weight: 700; color: var(--mint-d); }
   .neg { color: var(--neg) !important; }
-  tfoot td { font-weight: 600; border-bottom: none; background: var(--hl); font-variant-numeric: tabular-nums; padding-right: 14px; }
-  .del { border: none; color: var(--muted); padding: 2px 8px; }
-  .del:hover { color: var(--neg); background: transparent; }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .empty { padding: 40px; text-align: center; color: var(--muted); }
-  #sync { font-size: 12px; color: var(--muted); }
-  #sync.ok { color: var(--pos); }
-  #sync.err { color: var(--neg); }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
+  tfoot td { font-weight: 700; border-bottom: none; background: var(--hl); font-variant-numeric: tabular-nums; padding: 12px 14px 12px 8px; }
+  tfoot td:first-child { background: var(--hl); }
+  .del { border: none; background: transparent; color: var(--muted); padding: 2px 8px; }
+  .del:hover { color: var(--neg); background: var(--pink); }
+  .empty-f { padding: 50px; text-align: center; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 14px; }
 
-  dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--card);
-    color: var(--fg); padding: 20px; width: min(460px, 92vw); }
-  dialog::backdrop { background: rgba(0,0,0,.4); }
-  dialog h2 { font-size: 15px; margin: 0 0 16px; }
-  dialog h3 { font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; letter-spacing: .03em; }
+  /* ---------- diálogos ---------- */
+  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--card);
+    color: var(--fg); padding: 22px; width: min(460px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.15); }
+  dialog::backdrop { background: rgba(40,30,60,.3); backdrop-filter: blur(2px); }
+  dialog h2 { font-size: 16px; margin: 0 0 16px; }
+  dialog h3 { font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; letter-spacing: .04em; }
   .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
   .row label { flex: 1; }
-  .row input, .row select { width: 130px; background: var(--bg); border: 1px solid var(--line);
-    border-radius: 6px; padding: 5px 8px; }
-  .row input { text-align: right; }
-  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .row input:not([type=checkbox]), .row select { width: 130px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 9px; }
+  .row input:not([type=checkbox]) { text-align: right; }
+  .row input.full { width: 100%; text-align: left; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  button.danger { background: var(--pink); color: var(--pink-d); border-color: transparent; font-weight: 600; }
 
+  @media (max-width: 700px) {
+    .top { padding: 12px 16px; flex-wrap: wrap; }
+    .top nav { margin-left: 0; }
+    main { padding: 16px; }
+  }
   @media print {
-    header button, #sync, .actions, .del, .hint, input[type=month] { display: none !important; }
+    .top, .f-tools, .seg, .del, .hint, .no-print { display: none !important; }
     body { background: #fff; color: #000; }
     main { padding: 0; }
-    .wrap { border: none; overflow: visible; }
+    .wrap { border: none; overflow: visible; box-shadow: none; }
     table { min-width: 0; font-size: 10px; }
     td input { border: none !important; padding: 0; }
     @page { size: landscape; margin: 10mm; }
@@ -82,63 +167,54 @@
 </head>
 <body>
 
-<header>
-  <h1>Folha de Pagamento <span id="printMonth" style="font-weight:400;color:var(--muted)"></span></h1>
+<div class="top">
+  <div class="brand" onclick="location.hash='#/'"><span class="dot"></span>Folha de Pagamento</div>
+  <nav>
+    <a href="#/" id="navCal">Calendário</a>
+    <a href="#" id="navFolha">Folha do mês</a>
+  </nav>
+  <span class="sp"></span>
   <span id="sync"></span>
-  <input type="month" id="mes" title="Competência">
-  <button id="btnConfig">Configurações</button>
-  <button class="primary" id="btnAdd">+ Funcionário</button>
-</header>
+  <button class="ghost icon" id="btnConfig" title="Configurações">⚙︎</button>
+</div>
 
-<main>
-  <div class="wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Salário base</th>
-          <th>Bonif. fixa</th>
-          <th>Gratificação</th>
-          <th>HE semana (h)</th>
-          <th>HE SDF (h)</th>
-          <th>Adiantamento</th>
-          <th title="Em branco = automático">INSS</th>
-          <th>Descontos</th>
-          <th>Valor líquido</th>
-          <th>iFood Benefícios</th>
-          <th>Na conta</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-      <tfoot id="tfoot"></tfoot>
-    </table>
-    <div id="empty" class="empty" hidden></div>
-  </div>
+<main id="app"></main>
 
-  <div class="actions">
-    <button id="btnCsv">Exportar CSV</button>
-    <button id="btnPrint">Imprimir / PDF</button>
-    <button id="btnBackup">Backup (JSON)</button>
-    <button id="btnRestore">Restaurar backup</button>
-    <input type="file" id="fileRestore" accept="application/json" hidden>
-  </div>
-  <p class="hint">
-    HE: digite as horas — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
-    Líquido = salário + bonificação + gratificação + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
-    Dados salvos online automaticamente (com cópia diária de segurança).
-  </p>
-</main>
-
+<!-- login -->
 <dialog id="dlgLogin">
   <form id="loginForm">
     <h2>Entrar</h2>
-    <div class="row"><input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" style="width:100%;text-align:left" required></div>
+    <div class="row"><input id="loginSenha" class="full" type="password" placeholder="Senha" autocomplete="current-password" required></div>
     <p id="loginErr" class="hint" style="color:var(--neg);margin:0"></p>
     <div class="dlg-actions"><button class="primary">Entrar</button></div>
   </form>
 </dialog>
 
+<!-- novo funcionário -->
+<dialog id="dlgNovo">
+  <form id="novoForm">
+    <h2>Novo funcionário</h2>
+    <div class="row"><input id="novoNome" class="full" placeholder="Nome" required></div>
+    <div class="row"><label><input type="checkbox" id="novoSeguintes" checked> Incluir também nos meses seguintes já criados</label></div>
+    <div class="dlg-actions">
+      <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="primary">Adicionar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- remover funcionário -->
+<dialog id="dlgDel">
+  <h2 id="delTitulo">Remover funcionário</h2>
+  <p class="muted" style="margin:0">Remover só desta folha ou também das folhas dos meses seguintes?</p>
+  <div class="dlg-actions">
+    <button onclick="this.closest('dialog').close()">Cancelar</button>
+    <button class="danger" id="delMes">Só deste mês</button>
+    <button class="danger" id="delSeg">Deste e dos seguintes</button>
+  </div>
+</dialog>
+
+<!-- configurações -->
 <dialog id="dlg">
   <h2>Configurações</h2>
 
@@ -163,6 +239,13 @@
   <div id="cInss"></div>
   <p class="hint" style="margin-top:0">Base do INSS: salário + bonificação + gratificação + HE. Acima do último teto, o desconto é fixo.</p>
 
+  <h3>Dados</h3>
+  <div class="row" style="flex-wrap:wrap">
+    <button type="button" id="btnBackup">Baixar backup (JSON)</button>
+    <button type="button" id="btnRestore">Restaurar backup</button>
+    <input type="file" id="fileRestore" accept="application/json" hidden>
+  </div>
+
   <div class="dlg-actions">
     <button id="cCancel">Cancelar</button>
     <button class="primary" id="cSave">Salvar</button>
@@ -183,13 +266,30 @@ const DEFAULT_CONFIG = {
     { ate: 8157.41, aliq: 14 },
   ],
 };
-const FIELDS = ['salario', 'bonif', 'grat', 'heSem', 'heSdf', 'adiant', 'inss', 'desc', 'ifood'];
+const STATUS = [
+  ['aberta', 'Em aberto'],
+  ['conferencia', 'Em conferência'],
+  ['fechada', 'Fechada'],
+  ['paga', 'Paga'],
+];
+const STATUS_LABEL = Object.fromEntries(STATUS);
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+// Funcionários iniciais, lançados uma única vez do mês atual até dez/2026
+const SEED_ATE = '2026-12';
+const SEED_NOMES = ['Daniel Souza', 'Diego Inácio', 'Elias Gomes', 'Elivelton Vinicius', 'Gustavo Luiz',
+  'Lucas Haniel', 'Luiz Jacinto', 'Mirely Marta', 'Naiara Carvalho', 'Rafael Vitor', 'Renato Marques',
+  'Rodrigo Paulo', 'Rosalino Rafael', 'Sayuri dos Santos', 'Sidney Pedrosa', 'Davi', 'Gabriel', 'Italo',
+  'Gizele', 'Joao Otavio', 'Cristiano', 'Fabio Soldador'];
 
 let state = load();
-let mes = currentMonth();
+let view = 'cal', mes = currentMonth(), ano = Number(mes.slice(0, 4));
 
 function normalize(s) {
-  if (s && s.meses) return { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
+  if (s && s.meses) return {
+    config: { ...DEFAULT_CONFIG, ...s.config },
+    meses: s.meses, status: s.status || {}, seed: s.seed || 0,
+  };
   return null;
 }
 function load() {
@@ -197,7 +297,7 @@ function load() {
     const s = normalize(JSON.parse(localStorage.getItem(KEY)));
     if (s) return s;
   } catch (e) {}
-  return { config: structuredClone(DEFAULT_CONFIG), meses: {} };
+  return { config: structuredClone(DEFAULT_CONFIG), meses: {}, status: {}, seed: 0 };
 }
 
 // ---------- sincronização online ----------
@@ -254,11 +354,12 @@ async function connect() {
     } else {
       setSync('Salvo online', 'ok');
     }
-    render();
   } catch (e) {
     online = false;
     setSync('Sem conexão — salvando só neste navegador', 'err');
   }
+  seed();
+  render();
 }
 function askSenha(msg = '') {
   online = false;
@@ -277,16 +378,43 @@ document.getElementById('loginForm').onsubmit = e => {
 };
 document.getElementById('dlgLogin').addEventListener('cancel', e => e.preventDefault());
 window.addEventListener('beforeunload', e => { if (pending) e.preventDefault(); });
+
+// ---------- meses ----------
 function currentMonth() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
-function prevMonth(m) {
+function addMonth(m, n) {
   let [y, mo] = m.split('-').map(Number);
-  mo--; if (mo === 0) { mo = 12; y--; }
+  mo += n;
+  while (mo < 1) { mo += 12; y--; }
+  while (mo > 12) { mo -= 12; y++; }
   return y + '-' + String(mo).padStart(2, '0');
 }
+const prevMonth = m => addMonth(m, -1);
+const nomeMes = m => MESES[Number(m.slice(5)) - 1] + ' ' + m.slice(0, 4);
+const rowsOf = m => state.meses[m] || [];
 function rows() { return state.meses[mes] || (state.meses[mes] = []); }
+const statusOf = m => state.status[m] || 'aberta';
+const sameName = (a, b) => (a || '').trim().toLocaleLowerCase('pt-BR') === (b || '').trim().toLocaleLowerCase('pt-BR');
+const byName = (a, b) => {
+  if (!a.nome) return 1;
+  if (!b.nome) return -1;
+  return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+};
+
+function seed() {
+  if (state.seed >= 1) return;
+  for (let m = currentMonth(); m <= SEED_ATE; m = addMonth(m, 1)) {
+    const list = state.meses[m] || (state.meses[m] = []);
+    SEED_NOMES.forEach(nome => {
+      if (!list.some(r => sameName(r.nome, nome))) list.push({ id: uid(), nome });
+    });
+    list.sort(byName);
+  }
+  state.seed = 1;
+  save();
+}
 
 // ---------- números ----------
 function parse(v) {
@@ -300,6 +428,8 @@ function parse(v) {
 const brl = n => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const num = n => n == null ? '' : n.toLocaleString('pt-BR', { maximumFractionDigits: 2, useGrouping: false });
 const r2 = n => Math.round(n * 100) / 100;
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---------- cálculo ----------
 function valorHora(salario, cfg) {
@@ -326,40 +456,173 @@ function calc(r) {
   const conta = r2(liquido - (r.ifood || 0));
   return { heSemV, heSdfV, bruto, inssAuto, inss, liquido, conta };
 }
+function totals(list) {
+  const t = { salario: 0, bonif: 0, grat: 0, heSemV: 0, heSdfV: 0, adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0 };
+  list.forEach(r => {
+    const c = calc(r);
+    t.salario += r.salario || 0; t.bonif += r.bonif || 0; t.grat += r.grat || 0;
+    t.heSemV += c.heSemV; t.heSdfV += c.heSdfV; t.adiant += r.adiant || 0;
+    t.inss += c.inss; t.desc += r.desc || 0; t.liquido += c.liquido;
+    t.ifood += r.ifood || 0; t.conta += c.conta;
+  });
+  return t;
+}
 
-// ---------- render ----------
-const tbody = document.getElementById('tbody');
-const tfoot = document.getElementById('tfoot');
+// ---------- rotas ----------
+const app = document.getElementById('app');
+function route() {
+  const h = location.hash.replace(/^#\/?/, '');
+  if (/^\d{4}-\d{2}$/.test(h)) { view = 'folha'; mes = h; ano = Number(h.slice(0, 4)); }
+  else { view = 'cal'; const a = h.match(/^ano\/(\d{4})$/); if (a) ano = Number(a[1]); }
+  render();
+}
+window.addEventListener('hashchange', route);
 
 function render() {
-  document.getElementById('mes').value = mes;
-  const [y, m] = mes.split('-');
-  document.getElementById('printMonth').textContent = '· ' + m + '/' + y;
-  const list = rows();
-  tbody.innerHTML = '';
-  list.forEach(r => tbody.appendChild(rowEl(r)));
-  const empty = document.getElementById('empty');
+  document.getElementById('navCal').classList.toggle('on', view === 'cal');
+  document.getElementById('navCal').href = '#/ano/' + ano;
+  const nf = document.getElementById('navFolha');
+  nf.classList.toggle('on', view === 'folha');
+  nf.href = '#/' + mes;
+  nf.textContent = 'Folha · ' + nomeMes(mes);
+  if (view === 'cal') renderCal(); else renderFolha();
+}
+
+// ---------- calendário ----------
+function renderCal() {
+  const hoje = currentMonth();
+  let anoConta = 0, anoIfood = 0, pagas = 0;
+  const cards = MESES.map((nm, i) => {
+    const m = ano + '-' + String(i + 1).padStart(2, '0');
+    const list = rowsOf(m);
+    const now = m === hoje ? ' now' : '';
+    if (!list.length) {
+      return `<div class="card empty${now}" data-m="${m}">
+        <div class="mname">${nm}</div><div>Sem folha</div>
+        <button class="primary" data-criar="${m}">Criar folha</button></div>`;
+    }
+    const t = totals(list), st = statusOf(m);
+    anoConta += t.conta; anoIfood += t.ifood; if (st === 'paga') pagas++;
+    return `<div class="card st-${st}${now}" data-m="${m}">
+      <div class="ch"><span class="mname">${nm}</span><span class="pill">${STATUS_LABEL[st]}</span></div>
+      <div class="big"><small>Na conta</small><div>${brl(t.conta)}</div></div>
+      <div class="meta"><span>${list.length} funcionário${list.length > 1 ? 's' : ''}</span>
+        <span>Líq. ${brl(t.liquido)}</span><span>iFood ${brl(t.ifood)}</span></div>
+    </div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="cal-head">
+      <button class="icon" onclick="location.hash='#/ano/${ano - 1}'">‹</button>
+      <h2>${ano}</h2>
+      <button class="icon" onclick="location.hash='#/ano/${ano + 1}'">›</button>
+      <div class="cal-sum">
+        <div class="chip"><small>Folhas pagas</small><b>${pagas} / 12</b></div>
+        <div class="chip"><small>Na conta no ano</small><b>${brl(anoConta)}</b></div>
+        <div class="chip"><small>iFood no ano</small><b>${brl(anoIfood)}</b></div>
+      </div>
+    </div>
+    <div class="grid">${cards}</div>`;
+
+  app.querySelectorAll('.card').forEach(c => c.onclick = e => {
+    const criar = e.target.dataset.criar;
+    if (criar) { e.stopPropagation(); criarFolha(criar); }
+    location.hash = '#/' + c.dataset.m;
+  });
+}
+
+// cria a folha copiando os funcionários do último mês anterior que tem folha
+function criarFolha(m) {
+  let src = null;
+  for (let p = prevMonth(m), i = 0; i < 36; p = prevMonth(p), i++) {
+    if (rowsOf(p).length) { src = rowsOf(p); break; }
+  }
+  state.meses[m] = (src || []).map(r => ({
+    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood,
+  }));
+  save();
+}
+
+// ---------- folha ----------
+function renderFolha() {
+  const list = rows().sort(byName);
+  const st = statusOf(mes);
+  app.innerHTML = `
+    <div class="f-head">
+      <button class="icon" onclick="location.hash='#/${prevMonth(mes)}'" title="Mês anterior">‹</button>
+      <h2>${nomeMes(mes)}</h2>
+      <button class="icon" onclick="location.hash='#/${addMonth(mes, 1)}'" title="Próximo mês">›</button>
+      <div class="seg st-${st}" id="seg">
+        ${STATUS.map(([k, l]) => `<button data-st="${k}" class="${k === st ? 'on' : ''}">${l}</button>`).join('')}
+      </div>
+      <div class="f-tools">
+        <button class="primary" id="btnAdd">+ Funcionário</button>
+        <button id="btnCsv">Exportar CSV</button>
+        <button id="btnPrint">Imprimir / PDF</button>
+      </div>
+    </div>
+    <div class="f-sum" id="fsum"></div>
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Salário base</th>
+            <th>Bonif. fixa</th>
+            <th>Gratificação</th>
+            <th>HE semana (h)</th>
+            <th>HE SDF (h)</th>
+            <th>Adiantamento</th>
+            <th title="Em branco = automático">INSS</th>
+            <th>Descontos</th>
+            <th class="c-liq">Valor líquido</th>
+            <th class="c-if">iFood Benefícios</th>
+            <th class="c-conta">Na conta</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+      <div id="emptyF" class="empty-f" hidden></div>
+    </div>
+    <p class="hint">
+      HE: digite as horas — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
+      Líquido = salário + bonificação + gratificação + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
+    </p>`;
+
+  const tbody = document.getElementById('tbody');
+  list.forEach((r, i) => tbody.appendChild(rowEl(r, i + 1)));
+
+  const empty = document.getElementById('emptyF');
   empty.hidden = list.length > 0;
   if (!list.length) {
-    const prev = state.meses[prevMonth(mes)];
-    empty.innerHTML = prev && prev.length
-      ? `Nenhum lançamento neste mês.<br><br><button class="primary" id="btnCopy">Copiar funcionários de ${prevMonth(mes).split('-').reverse().join('/')}</button>`
-      : 'Nenhum funcionário. Clique em "+ Funcionário".';
-    const b = document.getElementById('btnCopy');
-    if (b) b.onclick = copyPrev;
+    empty.innerHTML = `Nenhum funcionário nesta folha.<br><br>
+      <button class="primary" id="btnCopy">Copiar funcionários do mês anterior</button>`;
+    document.getElementById('btnCopy').onclick = () => { criarFolha(mes); render(); };
   }
+
+  document.querySelectorAll('#seg button').forEach(b => b.onclick = () => {
+    state.status[mes] = b.dataset.st;
+    save(); render();
+  });
+  document.getElementById('btnAdd').onclick = () => {
+    document.getElementById('novoNome').value = '';
+    document.getElementById('dlgNovo').showModal();
+  };
+  document.getElementById('btnPrint').onclick = () => window.print();
+  document.getElementById('btnCsv').onclick = exportCsv;
   renderTotals();
 }
 
-function input(r, field, extra = '') {
-  return `<input data-f="${field}" inputmode="decimal" value="${num(r[field])}" ${extra}>`;
+function input(r, field) {
+  return `<input data-f="${field}" inputmode="decimal" value="${num(r[field])}">`;
 }
 
-function rowEl(r) {
+function rowEl(r, n) {
   const tr = document.createElement('tr');
-  tr.dataset.id = r.id;
   tr.innerHTML = `
-    <td><input data-f="nome" value="${(r.nome || '').replace(/"/g, '&quot;')}" placeholder="Nome"></td>
+    <td><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"></td>
     <td>${input(r, 'salario')}</td>
     <td>${input(r, 'bonif')}</td>
     <td>${input(r, 'grat')}</td>
@@ -368,9 +631,9 @@ function rowEl(r) {
     <td>${input(r, 'adiant')}</td>
     <td>${input(r, 'inss')}</td>
     <td>${input(r, 'desc')}</td>
-    <td class="calc liq" data-c="liquido"></td>
-    <td>${input(r, 'ifood')}</td>
-    <td class="calc conta" data-c="conta"></td>
+    <td class="calc c-liq" data-c="liquido"></td>
+    <td class="c-if">${input(r, 'ifood')}</td>
+    <td class="calc c-conta" data-c="conta"></td>
     <td><button class="del" title="Remover">✕</button></td>`;
   tr.addEventListener('input', e => {
     const f = e.target.dataset.f;
@@ -380,11 +643,7 @@ function rowEl(r) {
     updateRow(tr, r);
     renderTotals();
   });
-  tr.querySelector('.del').onclick = () => {
-    if (!confirm(`Remover ${r.nome || 'este funcionário'} deste mês?`)) return;
-    state.meses[mes] = rows().filter(x => x !== r);
-    save(); render();
-  };
+  tr.querySelector('.del').onclick = () => abrirRemover(r);
   updateRow(tr, r);
   return tr;
 }
@@ -402,15 +661,16 @@ function updateRow(tr, r) {
 
 function renderTotals() {
   const list = rows();
+  const tfoot = document.getElementById('tfoot');
+  const t = totals(list);
+  document.getElementById('fsum').innerHTML = `
+    <div class="chip"><small>Funcionários</small><b>${list.length}</b></div>
+    <div class="chip"><small>Total bruto + HE</small><b>${brl(t.salario + t.bonif + t.grat + t.heSemV + t.heSdfV)}</b></div>
+    <div class="chip"><small>INSS</small><b>${brl(t.inss)}</b></div>
+    <div class="chip lav"><small>Líquido</small><b>${brl(t.liquido)}</b></div>
+    <div class="chip pink"><small>iFood</small><b>${brl(t.ifood)}</b></div>
+    <div class="chip mint"><small>Na conta</small><b>${brl(t.conta)}</b></div>`;
   if (!list.length) { tfoot.innerHTML = ''; return; }
-  const t = { salario: 0, bonif: 0, grat: 0, heSemV: 0, heSdfV: 0, adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0 };
-  list.forEach(r => {
-    const c = calc(r);
-    t.salario += r.salario || 0; t.bonif += r.bonif || 0; t.grat += r.grat || 0;
-    t.heSemV += c.heSemV; t.heSdfV += c.heSdfV; t.adiant += r.adiant || 0;
-    t.inss += c.inss; t.desc += r.desc || 0; t.liquido += c.liquido;
-    t.ifood += r.ifood || 0; t.conta += c.conta;
-  });
   tfoot.innerHTML = `<tr>
     <td>Total (${list.length})</td>
     <td>${brl(t.salario)}</td><td>${brl(t.bonif)}</td><td>${brl(t.grat)}</td>
@@ -419,32 +679,48 @@ function renderTotals() {
     <td>${brl(t.ifood)}</td><td>${brl(t.conta)}</td><td></td></tr>`;
 }
 
-// ---------- ações ----------
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-
-document.getElementById('btnAdd').onclick = () => {
-  rows().push({ id: uid(), nome: '' });
-  save(); render();
-  tbody.lastElementChild.querySelector('input').focus();
+// ---------- adicionar / remover ----------
+document.getElementById('novoForm').onsubmit = e => {
+  e.preventDefault();
+  const nome = document.getElementById('novoNome').value.trim();
+  if (!nome) return;
+  const alvo = [mes];
+  if (document.getElementById('novoSeguintes').checked) {
+    Object.keys(state.meses).filter(m => m > mes && state.meses[m].length).forEach(m => alvo.push(m));
+  }
+  alvo.forEach(m => {
+    const list = state.meses[m] || (state.meses[m] = []);
+    if (!list.some(r => sameName(r.nome, nome))) list.push({ id: uid(), nome });
+  });
+  save();
+  document.getElementById('dlgNovo').close();
+  render();
 };
 
-function copyPrev() {
-  const prev = state.meses[prevMonth(mes)] || [];
-  // mantém valores fixos, zera os variáveis do mês
-  state.meses[mes] = prev.map(r => ({
-    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood,
-  }));
-  save(); render();
+let removendo = null;
+function abrirRemover(r) {
+  removendo = r;
+  document.getElementById('delTitulo').textContent = 'Remover ' + (r.nome || 'funcionário');
+  document.getElementById('delSeg').hidden = !r.nome;
+  document.getElementById('dlgDel').showModal();
 }
+function remover(seguintes) {
+  const r = removendo;
+  state.meses[mes] = rows().filter(x => x !== r);
+  if (seguintes) {
+    Object.keys(state.meses).filter(m => m > mes).forEach(m => {
+      state.meses[m] = state.meses[m].filter(x => !sameName(x.nome, r.nome));
+    });
+  }
+  save();
+  document.getElementById('dlgDel').close();
+  render();
+}
+document.getElementById('delMes').onclick = () => remover(false);
+document.getElementById('delSeg').onclick = () => remover(true);
 
-document.getElementById('mes').onchange = e => {
-  if (!e.target.value) return;
-  mes = e.target.value; render();
-};
-
-document.getElementById('btnPrint').onclick = () => window.print();
-
-document.getElementById('btnCsv').onclick = () => {
+// ---------- exportação / backup ----------
+function exportCsv() {
   const head = ['Nome', 'Salário base', 'Bonificação fixa', 'Gratificação', 'HE semana (h)', 'HE semana (R$)',
     'HE SDF (h)', 'HE SDF (R$)', 'Adiantamento', 'INSS', 'Descontos', 'Valor líquido', 'iFood Benefícios', 'Valor na conta'];
   const f = n => (n || 0).toFixed(2).replace('.', ',');
@@ -455,7 +731,7 @@ document.getElementById('btnCsv').onclick = () => {
       f(c.liquido), f(r.ifood), f(c.conta)].join(';');
   });
   download(`folha-${mes}.csv`, '﻿' + [head.join(';'), ...lines].join('\r\n'), 'text/csv');
-};
+}
 
 document.getElementById('btnBackup').onclick = () =>
   download(`folha-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state, null, 2), 'application/json');
@@ -465,11 +741,11 @@ document.getElementById('fileRestore').onchange = async e => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    const s = JSON.parse(await file.text());
-    if (!s.meses) throw new Error('arquivo inválido');
+    const s = normalize(JSON.parse(await file.text()));
+    if (!s) throw new Error('arquivo inválido');
     if (!confirm('Substituir todos os dados atuais pelo backup?')) return;
-    state = { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
-    save(); render();
+    state = s; state.seed = 1;
+    save(); dlg.close(); render();
   } catch (err) { alert('Erro ao restaurar: ' + err.message); }
   e.target.value = '';
 };
@@ -510,7 +786,7 @@ $('cSave').onclick = () => {
   save(); dlg.close(); render();
 };
 
-render();
+route();
 connect();
 </script>
 </body>

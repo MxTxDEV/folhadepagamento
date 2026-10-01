@@ -238,7 +238,7 @@
     <p class="hint" style="margin-top:0" id="fPadrao"></p>
     <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
     <h3>Aplicar em</h3>
-    <div class="row"><label><input type="checkbox" id="fSeguintes" checked> Este mês e os meses seguintes</label></div>
+    <div class="row"><label><input type="checkbox" id="fSeguintes" checked> Todos os meses (desmarque para alterar só este mês)</label></div>
     <div class="dlg-actions">
       <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
       <button class="primary">Salvar</button>
@@ -779,8 +779,8 @@ $('funcForm').onsubmit = e => {
   const cfg = c.heSem || c.heSdf || c.foraInss ? c : null;
   r.cfg = cfg;
   if ($('fSeguintes').checked && r.nome) {
-    Object.keys(state.meses).filter(m => m > mes).forEach(m => {
-      state.meses[m].forEach(x => { if (sameName(x.nome, r.nome)) x.cfg = cfg && structuredClone(cfg); });
+    Object.keys(state.meses).forEach(m => {
+      state.meses[m].forEach(x => { if (x !== r && sameName(x.nome, r.nome)) x.cfg = cfg && structuredClone(cfg); });
     });
   }
   save();

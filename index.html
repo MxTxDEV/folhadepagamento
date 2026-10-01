@@ -104,7 +104,7 @@
   .f-sum .chip.pink { background: var(--pink); border-color: transparent; }
   .f-tools { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
   .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1250px; }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1750px; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
   th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
     letter-spacing: .04em; background: var(--hl); padding-top: 12px; padding-bottom: 12px; }
@@ -237,6 +237,9 @@
     </div>
     <p class="hint" style="margin-top:0" id="fPadrao"></p>
     <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
+    <h3>Bonificação por dia (em branco = padrão geral)</h3>
+    <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="fDiaTrab" inputmode="decimal" style="width:100px"></div>
+    <div class="row"><label>361/380 — R$ por dia</label><input id="fDia361" inputmode="decimal" style="width:100px"></div>
     <h3>Aplicar em</h3>
     <div class="row"><label><input type="checkbox" id="fSeguintes" checked> Todos os meses (desmarque para alterar só este mês)</label></div>
     <div class="dlg-actions">
@@ -267,9 +270,14 @@
   </div>
   <p class="hint" style="margin-top:0">Em "%", valor da hora = salário base ÷ divisor × (1 + %). Ex.: 50% semana, 100% SDF.</p>
 
+  <h3>Bonificação por dia</h3>
+  <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="cDiaTrab" inputmode="decimal"></div>
+  <div class="row"><label>361/380 — R$ por dia</label><input id="cDia361" inputmode="decimal"></div>
+  <p class="hint" style="margin-top:0">Na folha você digita a quantidade de dias; o valor é dias × R$ por dia. Dá para ter valor próprio por funcionário no ⚙︎ dele.</p>
+
   <h3>Tabela INSS (progressiva)</h3>
   <div id="cInss"></div>
-  <p class="hint" style="margin-top:0">Base do INSS: salário + bonificação + gratificação + HE. Acima do último teto, o desconto é fixo.</p>
+  <p class="hint" style="margin-top:0">Base do INSS: salário + bonificações + gratificação + HE (a ajuda combinada não entra). Acima do último teto, o desconto é fixo.</p>
 
   <h3>Dados</h3>
   <div class="row" style="flex-wrap:wrap">
@@ -288,6 +296,8 @@
 const KEY = 'folha-pagamento-v1';
 const DEFAULT_CONFIG = {
   divisor: 220,
+  diaTrab: 0,
+  dia361: 0,
   heSem: { modo: 'pct', valor: 50 },
   heSdf: { modo: 'pct', valor: 100 },
   // faixas: até (R$) / alíquota (%)
@@ -489,18 +499,24 @@ function calc(r) {
   const cfg = r.cfg || {};
   const heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
   const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, cfg.heSdf || state.config.heSdf));
-  const bruto = (r.salario || 0) + (r.bonif || 0) + (r.grat || 0) + heSemV + heSdfV;
+  const diaTrabV = r2((r.diasTrab || 0) * (cfg.diaTrab != null ? cfg.diaTrab : state.config.diaTrab || 0));
+  const dia361V = r2((r.dias361 || 0) * (cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0));
+  const bruto = (r.salario || 0) + (r.bonif || 0) + (r.bonifVar || 0) + diaTrabV + dia361V
+    + (r.grat || 0) + heSemV + heSdfV;
   const inssAuto = calcInss(cfg.foraInss ? bruto - heSemV - heSdfV : bruto);
   const inss = r.inss != null ? r.inss : inssAuto;
-  const liquido = r2(bruto - (r.adiant || 0) - inss - (r.desc || 0));
+  const liquido = r2(bruto + (r.ajuda || 0) - (r.adiant || 0) - inss - (r.desc || 0));
   const conta = r2(liquido - (r.ifood || 0));
-  return { heSemV, heSdfV, bruto, inssAuto, inss, liquido, conta };
+  return { heSemV, heSdfV, diaTrabV, dia361V, bruto, inssAuto, inss, liquido, conta };
 }
 function totals(list) {
-  const t = { salario: 0, bonif: 0, grat: 0, heSemV: 0, heSdfV: 0, adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0 };
+  const t = { salario: 0, bonif: 0, bonifVar: 0, diaTrabV: 0, dia361V: 0, grat: 0, ajuda: 0, heSemV: 0, heSdfV: 0,
+    adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0, bruto: 0 };
   list.forEach(r => {
     const c = calc(r);
     t.salario += r.salario || 0; t.bonif += r.bonif || 0; t.grat += r.grat || 0;
+    t.bonifVar += r.bonifVar || 0; t.diaTrabV += c.diaTrabV; t.dia361V += c.dia361V;
+    t.ajuda += r.ajuda || 0; t.bruto += c.bruto + (r.ajuda || 0);
     t.heSemV += c.heSemV; t.heSdfV += c.heSdfV; t.adiant += r.adiant || 0;
     t.inss += c.inss; t.desc += r.desc || 0; t.liquido += c.liquido;
     t.ifood += r.ifood || 0; t.conta += c.conta;
@@ -578,7 +594,7 @@ function criarFolha(m) {
     if (rowsOf(p).length) { src = rowsOf(p); break; }
   }
   state.meses[m] = (src || []).map(r => ({
-    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ifood: r.ifood, cfg: r.cfg,
+    id: uid(), nome: r.nome, salario: r.salario, bonif: r.bonif, ajuda: r.ajuda, ifood: r.ifood, cfg: r.cfg,
   }));
   save();
 }
@@ -609,7 +625,11 @@ function renderFolha() {
             <th>Nome</th>
             <th>Salário base</th>
             <th>Bonif. fixa</th>
+            <th>Bonif. variada</th>
+            <th title="Quantidade de dias × valor por dia">Bonif. dias trab. (dias)</th>
+            <th title="Quantidade de dias × valor por dia">Bonif. 361/380 (dias)</th>
             <th>Gratificação</th>
+            <th>Ajuda combinada</th>
             <th>HE semana (h)</th>
             <th>HE SDF (h)</th>
             <th>Adiantamento</th>
@@ -627,8 +647,8 @@ function renderFolha() {
       <div id="emptyF" class="empty-f" hidden></div>
     </div>
     <p class="hint">
-      HE: digite as horas — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
-      Líquido = salário + bonificação + gratificação + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
+      HE e bonificações por dia: digite as horas/dias — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
+      Líquido = salário + bonificações + gratificação + ajuda combinada + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
     </p>`;
 
   const tbody = document.getElementById('tbody');
@@ -665,7 +685,11 @@ function rowEl(r, n) {
     <td><div class="namecell"><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}</td>
     <td>${input(r, 'salario')}</td>
     <td>${input(r, 'bonif')}</td>
+    <td>${input(r, 'bonifVar')}</td>
+    <td>${input(r, 'diasTrab')}<span class="sub" data-c="diaTrabV"></span></td>
+    <td>${input(r, 'dias361')}<span class="sub" data-c="dia361V"></span></td>
     <td>${input(r, 'grat')}</td>
+    <td>${input(r, 'ajuda')}</td>
     <td>${input(r, 'heSem')}<span class="sub" data-c="heSemV"></span></td>
     <td>${input(r, 'heSdf')}<span class="sub" data-c="heSdfV"></span></td>
     <td>${input(r, 'adiant')}</td>
@@ -691,6 +715,8 @@ function rowEl(r, n) {
 
 function updateRow(tr, r) {
   const c = calc(r);
+  tr.querySelector('[data-c=diaTrabV]').textContent = r.diasTrab ? brl(c.diaTrabV) : '';
+  tr.querySelector('[data-c=dia361V]').textContent = r.dias361 ? brl(c.dia361V) : '';
   tr.querySelector('[data-c=heSemV]').textContent = r.heSem ? brl(c.heSemV) : '';
   tr.querySelector('[data-c=heSdfV]').textContent = r.heSdf ? brl(c.heSdfV) : '';
   tr.querySelector('[data-f=inss]').placeholder = num(c.inssAuto);
@@ -706,7 +732,7 @@ function renderTotals() {
   const t = totals(list);
   document.getElementById('fsum').innerHTML = `
     <div class="chip"><small>Funcionários</small><b>${list.length}</b></div>
-    <div class="chip"><small>Total bruto + HE</small><b>${brl(t.salario + t.bonif + t.grat + t.heSemV + t.heSdfV)}</b></div>
+    <div class="chip"><small>Total proventos</small><b>${brl(t.bruto)}</b></div>
     <div class="chip"><small>INSS</small><b>${brl(t.inss)}</b></div>
     <div class="chip lav"><small>Líquido</small><b>${brl(t.liquido)}</b></div>
     <div class="chip pink"><small>iFood</small><b>${brl(t.ifood)}</b></div>
@@ -714,7 +740,8 @@ function renderTotals() {
   if (!list.length) { tfoot.innerHTML = ''; return; }
   tfoot.innerHTML = `<tr>
     <td>Total (${list.length})</td>
-    <td>${brl(t.salario)}</td><td>${brl(t.bonif)}</td><td>${brl(t.grat)}</td>
+    <td>${brl(t.salario)}</td><td>${brl(t.bonif)}</td><td>${brl(t.bonifVar)}</td>
+    <td>${brl(t.diaTrabV)}</td><td>${brl(t.dia361V)}</td><td>${brl(t.grat)}</td><td>${brl(t.ajuda)}</td>
     <td>${brl(t.heSemV)}</td><td>${brl(t.heSdfV)}</td><td>${brl(t.adiant)}</td>
     <td>${brl(t.inss)}</td><td>${brl(t.desc)}</td><td>${brl(t.liquido)}</td>
     <td>${brl(t.ifood)}</td><td>${brl(t.conta)}</td><td></td></tr>`;
@@ -745,6 +772,8 @@ function cfgResumo(c) {
   if (c.heSem) p.push('HE sem. ' + heTxt(c.heSem));
   if (c.heSdf) p.push('SDF ' + heTxt(c.heSdf));
   if (c.foraInss) p.push('HE por fora');
+  if (c.diaTrab != null) p.push('Dia trab. ' + brl(c.diaTrab) + '/dia');
+  if (c.dia361 != null) p.push('361/380 ' + brl(c.dia361) + '/dia');
   return p.join(' · ');
 }
 let editandoFunc = null;
@@ -755,6 +784,8 @@ function abrirFunc(r) {
   $('fHeSemModo').value = c.heSem ? c.heSem.modo : ''; $('fHeSemValor').value = c.heSem ? num(c.heSem.valor) : '';
   $('fHeSdfModo').value = c.heSdf ? c.heSdf.modo : ''; $('fHeSdfValor').value = c.heSdf ? num(c.heSdf.valor) : '';
   $('fFora').checked = !!c.foraInss;
+  $('fDiaTrab').value = num(c.diaTrab); $('fDia361').value = num(c.dia361);
+  $('fDiaTrab').placeholder = num(g.diaTrab || 0); $('fDia361').placeholder = num(g.dia361 || 0);
   $('fPadrao').textContent = `Padrão geral: HE semana ${heTxt(g.heSem)}, HE SDF ${heTxt(g.heSdf)}.`;
   syncFuncInputs();
   $('dlgFunc').showModal();
@@ -775,8 +806,9 @@ $('funcForm').onsubmit = e => {
     const modo = $('fHe' + k + 'Modo').value;
     return modo ? { modo, valor: parse($('fHe' + k + 'Valor').value) || 0 } : null;
   };
-  const c = { heSem: he('Sem'), heSdf: he('Sdf'), foraInss: $('fFora').checked };
-  const cfg = c.heSem || c.heSdf || c.foraInss ? c : null;
+  const c = { heSem: he('Sem'), heSdf: he('Sdf'), foraInss: $('fFora').checked,
+    diaTrab: parse($('fDiaTrab').value), dia361: parse($('fDia361').value) };
+  const cfg = c.heSem || c.heSdf || c.foraInss || c.diaTrab != null || c.dia361 != null ? c : null;
   r.cfg = cfg;
   if ($('fSeguintes').checked && r.nome) {
     Object.keys(state.meses).forEach(m => {
@@ -812,12 +844,14 @@ document.getElementById('delTodos').onclick = () => remover('todos');
 
 // ---------- exportação / backup ----------
 function exportCsv() {
-  const head = ['Nome', 'Salário base', 'Bonificação fixa', 'Gratificação', 'HE semana (h)', 'HE semana (R$)',
+  const head = ['Nome', 'Salário base', 'Bonificação fixa', 'Bonificação variada', 'Dias trabalhados', 'Bonif. dias trabalhados (R$)',
+    'Dias 361/380', 'Bonif. 361/380 (R$)', 'Gratificação', 'Ajuda combinada', 'HE semana (h)', 'HE semana (R$)',
     'HE SDF (h)', 'HE SDF (R$)', 'Adiantamento', 'INSS', 'Descontos', 'Valor líquido', 'iFood Benefícios', 'Valor na conta'];
   const f = n => (n || 0).toFixed(2).replace('.', ',');
   const lines = rows().map(r => {
     const c = calc(r);
-    return [`"${(r.nome || '').replace(/"/g, '""')}"`, f(r.salario), f(r.bonif), f(r.grat),
+    return [`"${(r.nome || '').replace(/"/g, '""')}"`, f(r.salario), f(r.bonif), f(r.bonifVar),
+      f(r.diasTrab), f(c.diaTrabV), f(r.dias361), f(c.dia361V), f(r.grat), f(r.ajuda),
       f(r.heSem), f(c.heSemV), f(r.heSdf), f(c.heSdfV), f(r.adiant), f(c.inss), f(r.desc),
       f(c.liquido), f(r.ifood), f(c.conta)].join(';');
   });
@@ -854,6 +888,7 @@ const dlg = document.getElementById('dlg');
 $('btnConfig').onclick = () => {
   const c = state.config;
   $('cDivisor').value = num(c.divisor);
+  $('cDiaTrab').value = num(c.diaTrab); $('cDia361').value = num(c.dia361);
   $('cHeSemModo').value = c.heSem.modo; $('cHeSemValor').value = num(c.heSem.valor);
   $('cHeSdfModo').value = c.heSdf.modo; $('cHeSdfValor').value = num(c.heSdf.valor);
   $('cInss').innerHTML = c.inss.map((f, i) => `
@@ -868,6 +903,8 @@ $('cCancel').onclick = () => dlg.close();
 $('cSave').onclick = () => {
   const c = state.config;
   c.divisor = parse($('cDivisor').value) || 220;
+  c.diaTrab = parse($('cDiaTrab').value) || 0;
+  c.dia361 = parse($('cDia361').value) || 0;
   c.heSem = { modo: $('cHeSemModo').value, valor: parse($('cHeSemValor').value) || 0 };
   c.heSdf = { modo: $('cHeSdfModo').value, valor: parse($('cHeSdfValor').value) || 0 };
   $('cInss').querySelectorAll('input').forEach(inp => {

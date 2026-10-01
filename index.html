@@ -128,6 +128,8 @@
   .tag { display: block; font-size: 11px; color: var(--lav-d); padding-left: 31px; margin-top: -2px; }
   td input::placeholder { color: var(--muted); opacity: .7; }
   .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 8px; }
+  .sub.dia { cursor: pointer; }
+  .sub.dia:hover { color: var(--lav-d); text-decoration: underline; }
   .calc { font-variant-numeric: tabular-nums; padding-right: 14px; }
   td.c-liq { font-weight: 600; color: var(--lav-d); }
   td.c-conta { font-weight: 700; color: var(--mint-d); }
@@ -237,7 +239,7 @@
     </div>
     <p class="hint" style="margin-top:0" id="fPadrao"></p>
     <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
-    <h3>Bonificação por dia (em branco = padrão geral)</h3>
+    <h3>Valor por dia deste funcionário (em branco = padrão geral)</h3>
     <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="fDiaTrab" inputmode="decimal" style="width:100px"></div>
     <div class="row"><label>361/380 — R$ por dia</label><input id="fDia361" inputmode="decimal" style="width:100px"></div>
     <h3>Aplicar em</h3>
@@ -499,15 +501,17 @@ function calc(r) {
   const cfg = r.cfg || {};
   const heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
   const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, cfg.heSdf || state.config.heSdf));
-  const diaTrabV = r2((r.diasTrab || 0) * (cfg.diaTrab != null ? cfg.diaTrab : state.config.diaTrab || 0));
-  const dia361V = r2((r.dias361 || 0) * (cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0));
+  const valDiaTrab = cfg.diaTrab != null ? cfg.diaTrab : state.config.diaTrab || 0;
+  const valDia361 = cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0;
+  const diaTrabV = r2((r.diasTrab || 0) * valDiaTrab);
+  const dia361V = r2((r.dias361 || 0) * valDia361);
   const bruto = (r.salario || 0) + (r.bonif || 0) + (r.bonifVar || 0) + diaTrabV + dia361V
     + (r.grat || 0) + heSemV + heSdfV;
   const inssAuto = calcInss(cfg.foraInss ? bruto - heSemV - heSdfV : bruto);
   const inss = r.inss != null ? r.inss : inssAuto;
   const liquido = r2(bruto + (r.ajuda || 0) - (r.adiant || 0) - inss - (r.desc || 0));
   const conta = r2(liquido - (r.ifood || 0));
-  return { heSemV, heSdfV, diaTrabV, dia361V, bruto, inssAuto, inss, liquido, conta };
+  return { heSemV, heSdfV, diaTrabV, dia361V, valDiaTrab, valDia361, bruto, inssAuto, inss, liquido, conta };
 }
 function totals(list) {
   const t = { salario: 0, bonif: 0, bonifVar: 0, diaTrabV: 0, dia361V: 0, grat: 0, ajuda: 0, heSemV: 0, heSdfV: 0,
@@ -686,8 +690,8 @@ function rowEl(r, n) {
     <td>${input(r, 'salario')}</td>
     <td>${input(r, 'bonif')}</td>
     <td>${input(r, 'bonifVar')}</td>
-    <td>${input(r, 'diasTrab')}<span class="sub" data-c="diaTrabV"></span></td>
-    <td>${input(r, 'dias361')}<span class="sub" data-c="dia361V"></span></td>
+    <td>${input(r, 'diasTrab')}<span class="sub dia" data-c="diaTrabV" title="Valor por dia deste funcionário — clique para alterar"></span></td>
+    <td>${input(r, 'dias361')}<span class="sub dia" data-c="dia361V" title="Valor por dia deste funcionário — clique para alterar"></span></td>
     <td>${input(r, 'grat')}</td>
     <td>${input(r, 'ajuda')}</td>
     <td>${input(r, 'heSem')}<span class="sub" data-c="heSemV"></span></td>
@@ -709,14 +713,15 @@ function rowEl(r, n) {
   });
   tr.querySelector('.del').onclick = () => abrirRemover(r);
   tr.querySelector('.cfg').onclick = () => abrirFunc(r);
+  tr.querySelectorAll('.sub.dia').forEach(el => el.onclick = () => abrirFunc(r));
   updateRow(tr, r);
   return tr;
 }
 
 function updateRow(tr, r) {
   const c = calc(r);
-  tr.querySelector('[data-c=diaTrabV]').textContent = r.diasTrab ? brl(c.diaTrabV) : '';
-  tr.querySelector('[data-c=dia361V]').textContent = r.dias361 ? brl(c.dia361V) : '';
+  tr.querySelector('[data-c=diaTrabV]').textContent = `× ${brl(c.valDiaTrab)}` + (r.diasTrab ? ` = ${brl(c.diaTrabV)}` : '');
+  tr.querySelector('[data-c=dia361V]').textContent = `× ${brl(c.valDia361)}` + (r.dias361 ? ` = ${brl(c.dia361V)}` : '');
   tr.querySelector('[data-c=heSemV]').textContent = r.heSem ? brl(c.heSemV) : '';
   tr.querySelector('[data-c=heSdfV]').textContent = r.heSdf ? brl(c.heSdfV) : '';
   tr.querySelector('[data-f=inss]').placeholder = num(c.inssAuto);

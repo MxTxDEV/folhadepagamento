@@ -206,11 +206,12 @@
 <!-- remover funcionário -->
 <dialog id="dlgDel">
   <h2 id="delTitulo">Remover funcionário</h2>
-  <p class="muted" style="margin:0">Remover só desta folha ou também das folhas dos meses seguintes?</p>
+  <p class="muted" style="margin:0">De quais folhas deseja remover?</p>
   <div class="dlg-actions">
     <button onclick="this.closest('dialog').close()">Cancelar</button>
     <button class="danger" id="delMes">Só deste mês</button>
     <button class="danger" id="delSeg">Deste e dos seguintes</button>
+    <button class="danger" id="delTodos">De todos os meses</button>
   </div>
 </dialog>
 
@@ -707,14 +708,13 @@ let removendo = null;
 function abrirRemover(r) {
   removendo = r;
   document.getElementById('delTitulo').textContent = 'Remover ' + (r.nome || 'funcionário');
-  document.getElementById('delSeg').hidden = !r.nome;
   document.getElementById('dlgDel').showModal();
 }
-function remover(seguintes) {
+function remover(modo) {
   const r = removendo;
   state.meses[mes] = rows().filter(x => x !== r);
-  if (seguintes) {
-    Object.keys(state.meses).filter(m => m > mes).forEach(m => {
+  if (modo !== 'mes') {
+    Object.keys(state.meses).filter(m => modo === 'todos' || m > mes).forEach(m => {
       state.meses[m] = state.meses[m].filter(x => !sameName(x.nome, r.nome));
     });
   }
@@ -722,8 +722,9 @@ function remover(seguintes) {
   document.getElementById('dlgDel').close();
   render();
 }
-document.getElementById('delMes').onclick = () => remover(false);
-document.getElementById('delSeg').onclick = () => remover(true);
+document.getElementById('delMes').onclick = () => remover('mes');
+document.getElementById('delSeg').onclick = () => remover('seguintes');
+document.getElementById('delTodos').onclick = () => remover('todos');
 
 // ---------- exportação / backup ----------
 function exportCsv() {

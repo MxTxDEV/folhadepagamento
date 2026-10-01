@@ -103,6 +103,12 @@
   .f-sum .chip.mint { background: var(--mint); border-color: transparent; }
   .f-sum .chip.pink { background: var(--pink); border-color: transparent; }
   .f-tools { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .topscroll { overflow-x: auto; overflow-y: hidden; margin-bottom: 4px; position: sticky; top: 61px; z-index: 4;
+    background: var(--bg); }
+  .topscroll div { height: 1px; }
+  .topscroll::-webkit-scrollbar { height: 12px; }
+  .topscroll::-webkit-scrollbar-track { background: var(--hl); border-radius: 6px; }
+  .topscroll::-webkit-scrollbar-thumb { background: var(--lav-d); opacity: .6; border-radius: 6px; border: 3px solid var(--hl); }
   .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
   table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1750px; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -162,7 +168,7 @@
     main { padding: 16px; }
   }
   @media print {
-    .top, .f-tools, .seg, .del, .hint, .no-print { display: none !important; }
+    .top, .topscroll, .f-tools, .seg, .del, .hint, .no-print { display: none !important; }
     body { background: #fff; color: #000; }
     main { padding: 0; }
     .wrap { border: none; overflow: visible; box-shadow: none; }
@@ -622,7 +628,8 @@ function renderFolha() {
       </div>
     </div>
     <div class="f-sum" id="fsum"></div>
-    <div class="wrap">
+    <div class="topscroll" id="topscroll"><div></div></div>
+    <div class="wrap" id="wrap">
       <table>
         <thead>
           <tr>
@@ -677,6 +684,22 @@ function renderFolha() {
   document.getElementById('btnPrint').onclick = () => window.print();
   document.getElementById('btnCsv').onclick = exportCsv;
   renderTotals();
+  syncScroll();
+}
+
+// barra de rolagem horizontal também em cima da tabela
+function syncScroll() {
+  const top = document.getElementById('topscroll'), wrap = document.getElementById('wrap');
+  if (!top || !wrap) return;
+  const ajusta = () => {
+    top.firstElementChild.style.width = wrap.scrollWidth + 'px';
+    top.style.display = wrap.scrollWidth > wrap.clientWidth ? '' : 'none';
+  };
+  ajusta();
+  let lock = false;
+  top.onscroll = () => { if (lock) { lock = false; return; } lock = true; wrap.scrollLeft = top.scrollLeft; };
+  wrap.onscroll = () => { if (lock) { lock = false; return; } lock = true; top.scrollLeft = wrap.scrollLeft; };
+  window.onresize = ajusta;
 }
 
 function input(r, field) {
@@ -720,8 +743,9 @@ function rowEl(r, n) {
 
 function updateRow(tr, r) {
   const c = calc(r);
-  tr.querySelector('[data-c=diaTrabV]').textContent = `× ${brl(c.valDiaTrab)}` + (r.diasTrab ? ` = ${brl(c.diaTrabV)}` : '');
-  tr.querySelector('[data-c=dia361V]').textContent = `× ${brl(c.valDia361)}` + (r.dias361 ? ` = ${brl(c.dia361V)}` : '');
+  const dia = (dias, val, tot) => !dias && !val ? '' : `× ${brl(val)}` + (dias ? ` = ${brl(tot)}` : '');
+  tr.querySelector('[data-c=diaTrabV]').textContent = dia(r.diasTrab, c.valDiaTrab, c.diaTrabV);
+  tr.querySelector('[data-c=dia361V]').textContent = dia(r.dias361, c.valDia361, c.dia361V);
   tr.querySelector('[data-c=heSemV]').textContent = r.heSem ? brl(c.heSemV) : '';
   tr.querySelector('[data-c=heSdfV]').textContent = r.heSdf ? brl(c.heSdfV) : '';
   tr.querySelector('[data-f=inss]').placeholder = num(c.inssAuto);

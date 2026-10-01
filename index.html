@@ -52,6 +52,9 @@
   .del:hover { color: var(--neg); background: transparent; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .empty { padding: 40px; text-align: center; color: var(--muted); }
+  #sync { font-size: 12px; color: var(--muted); }
+  #sync.ok { color: var(--pos); }
+  #sync.err { color: var(--neg); }
   .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
 
   dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--card);
@@ -67,7 +70,7 @@
   .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
   @media print {
-    header button, .actions, .del, .hint, input[type=month] { display: none !important; }
+    header button, #sync, .actions, .del, .hint, input[type=month] { display: none !important; }
     body { background: #fff; color: #000; }
     main { padding: 0; }
     .wrap { border: none; overflow: visible; }
@@ -81,6 +84,7 @@
 
 <header>
   <h1>Folha de Pagamento <span id="printMonth" style="font-weight:400;color:var(--muted)"></span></h1>
+  <span id="sync"></span>
   <input type="month" id="mes" title="Competência">
   <button id="btnConfig">Configurações</button>
   <button class="primary" id="btnAdd">+ Funcionário</button>
@@ -122,9 +126,18 @@
   <p class="hint">
     HE: digite as horas — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
     Líquido = salário + bonificação + gratificação + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
-    Dados salvos apenas neste navegador — faça backup de vez em quando.
+    Dados salvos online automaticamente (com cópia diária de segurança).
   </p>
 </main>
+
+<dialog id="dlgLogin">
+  <form id="loginForm">
+    <h2>Entrar</h2>
+    <div class="row"><input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" style="width:100%;text-align:left" required></div>
+    <p id="loginErr" class="hint" style="color:var(--neg);margin:0"></p>
+    <div class="dlg-actions"><button class="primary">Entrar</button></div>
+  </form>
+</dialog>
 
 <dialog id="dlg">
   <h2>Configurações</h2>
@@ -175,16 +188,95 @@ const FIELDS = ['salario', 'bonif', 'grat', 'heSem', 'heSdf', 'adiant', 'inss', 
 let state = load();
 let mes = currentMonth();
 
+function normalize(s) {
+  if (s && s.meses) return { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
+  return null;
+}
 function load() {
   try {
-    const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && s.meses) return { config: { ...DEFAULT_CONFIG, ...s.config }, meses: s.meses };
+    const s = normalize(JSON.parse(localStorage.getItem(KEY)));
+    if (s) return s;
   } catch (e) {}
   return { config: structuredClone(DEFAULT_CONFIG), meses: {} };
 }
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { alert('Não foi possível salvar: ' + e.message); }
+
+// ---------- sincronização online ----------
+const SENHA_KEY = 'folha-senha';
+let senha = null, online = false, pending = false, saveTimer = null;
+try { senha = localStorage.getItem(SENHA_KEY); } catch (e) {}
+
+function setSync(txt, cls = '') {
+  const el = document.getElementById('sync');
+  el.textContent = txt; el.className = cls;
 }
+function api(method, body) {
+  return fetch('api/data', {
+    method,
+    headers: { 'x-senha': senha || '', 'Content-Type': 'application/json' },
+    body: body && JSON.stringify(body),
+  });
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  if (!online) return;
+  pending = true;
+  setSync('Salvando…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushRemote, 700);
+}
+async function pushRemote() {
+  try {
+    const r = await api('PUT', state);
+    if (r.status === 401) return askSenha('Senha inválida.');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    pending = false;
+    setSync('Salvo online', 'ok');
+  } catch (e) {
+    setSync('Erro ao salvar — tentando de novo…', 'err');
+    saveTimer = setTimeout(pushRemote, 5000);
+  }
+}
+async function connect() {
+  if (!senha) return askSenha();
+  setSync('Conectando…');
+  try {
+    const r = await api('GET');
+    if (r.status === 401) return askSenha('Senha inválida.');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const remote = normalize(await r.json());
+    online = true;
+    if (remote) {
+      state = remote;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      setSync('Salvo online', 'ok');
+    } else if (Object.keys(state.meses).length) {
+      save(); // primeira vez: envia o que já estava no navegador
+    } else {
+      setSync('Salvo online', 'ok');
+    }
+    render();
+  } catch (e) {
+    online = false;
+    setSync('Sem conexão — salvando só neste navegador', 'err');
+  }
+}
+function askSenha(msg = '') {
+  online = false;
+  setSync('Desconectado', 'err');
+  document.getElementById('loginErr').textContent = msg;
+  document.getElementById('loginSenha').value = '';
+  const d = document.getElementById('dlgLogin');
+  if (!d.open) d.showModal();
+}
+document.getElementById('loginForm').onsubmit = e => {
+  e.preventDefault();
+  senha = document.getElementById('loginSenha').value;
+  try { localStorage.setItem(SENHA_KEY, senha); } catch (err) {}
+  document.getElementById('dlgLogin').close();
+  connect();
+};
+document.getElementById('dlgLogin').addEventListener('cancel', e => e.preventDefault());
+window.addEventListener('beforeunload', e => { if (pending) e.preventDefault(); });
 function currentMonth() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -419,6 +511,7 @@ $('cSave').onclick = () => {
 };
 
 render();
+connect();
 </script>
 </body>
 </html>

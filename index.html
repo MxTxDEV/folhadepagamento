@@ -103,19 +103,22 @@
   .f-sum .chip.mint { background: var(--mint); border-color: transparent; }
   .f-sum .chip.pink { background: var(--pink); border-color: transparent; }
   .f-tools { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
-  .topscroll { overflow-x: auto; overflow-y: hidden; margin-bottom: 4px; position: sticky; top: 61px; z-index: 4;
+  .topscroll { overflow-x: auto; overflow-y: hidden; margin-bottom: 4px;
     background: var(--bg); }
   .topscroll div { height: 1px; }
   .topscroll::-webkit-scrollbar { height: 12px; }
   .topscroll::-webkit-scrollbar-track { background: var(--hl); border-radius: 6px; }
   .topscroll::-webkit-scrollbar-thumb { background: var(--lav-d); opacity: .6; border-radius: 6px; border: 3px solid var(--hl); }
-  .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  .wrap { overflow: auto; max-height: calc(100vh - 90px); background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
   table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1750px; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
   th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
     letter-spacing: .04em; background: var(--hl); padding-top: 12px; padding-bottom: 12px; }
   th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; }
-  th:first-child { background: var(--hl); z-index: 2; }
+  th:first-child { background: var(--hl); z-index: 4; }
+  thead th { position: sticky; top: 0; z-index: 3; box-shadow: inset 0 -1px 0 var(--line); }
+  tfoot td { position: sticky; bottom: 0; z-index: 2; box-shadow: inset 0 1px 0 var(--line); }
+  tfoot td:first-child { z-index: 3; }
   th.c-liq, td.c-liq { background: var(--lav); }
   th.c-if, td.c-if { background: var(--pink); }
   th.c-conta, td.c-conta { background: var(--mint); }
@@ -171,7 +174,7 @@
     .top, .topscroll, .f-tools, .seg, .del, .hint, .no-print { display: none !important; }
     body { background: #fff; color: #000; }
     main { padding: 0; }
-    .wrap { border: none; overflow: visible; box-shadow: none; }
+    .wrap { border: none; overflow: visible; max-height: none; box-shadow: none; }
     table { min-width: 0; font-size: 10px; }
     td input { border: none !important; padding: 0; }
     @page { size: landscape; margin: 10mm; }

@@ -23,7 +23,8 @@ export default async function handler(req, res) {
   if (req.method === 'PUT') {
     const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     const s = JSON.parse(body);
-    if (!s || typeof s.meses !== 'object') return res.status(400).json({ erro: 'dados inválidos' });
+    // exige o formato com empresas (evita que uma aba antiga sobrescreva os dados)
+    if (!s || !Array.isArray(s.empresas)) return res.status(409).json({ erro: 'versão antiga da página — recarregue' });
     const opts = { access: 'private', allowOverwrite: true, addRandomSuffix: false, contentType: 'application/json' };
     await put(FILE, body, opts);
     // cópia diária de segurança

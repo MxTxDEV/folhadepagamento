@@ -738,6 +738,31 @@ function criarFolha(m) {
   save();
 }
 
+// copia os valores do último mês anterior com folha para os campos vazios deste mês
+const VALORES = ['salario', 'bonif', 'bonifVar', 'diasTrab', 'dias361', 'grat', 'ajuda', 'heSem', 'heSdf', 'adiant', 'inss', 'desc', 'ifood'];
+function mesOrigem(m) {
+  for (let p = prevMonth(m), i = 0; i < 36; p = prevMonth(p), i++) if (rowsOf(p).length) return p;
+  return null;
+}
+function copiarValores() {
+  const origem = mesOrigem(mes);
+  if (!origem) return alert('Não há folha anterior com dados nesta empresa.');
+  if (!confirm(`Copiar os valores de ${nomeMes(origem)} para ${nomeMes(mes)}?\n\nSó os campos vazios de ${nomeMes(mes)} serão preenchidos — o que você já lançou não muda. Funcionários que faltarem serão incluídos.`)) return;
+  const list = rows();
+  let campos = 0, novos = 0;
+  rowsOf(origem).forEach(src => {
+    let dst = list.find(r => src.nome && sameName(r.nome, src.nome));
+    if (!dst) { list.push(dst = { id: uid(), nome: src.nome }); novos++; }
+    VALORES.forEach(k => {
+      if (src[k] != null && dst[k] == null) { dst[k] = src[k]; campos++; }
+    });
+    if (!dst.cfg && src.cfg) dst.cfg = structuredClone(src.cfg);
+    if (!dst.recebe && src.recebe) dst.recebe = { ...src.recebe };
+  });
+  save(); render();
+  alert(`Pronto: ${campos} valores copiados de ${nomeMes(origem)}` + (novos ? ` e ${novos} funcionário(s) incluído(s).` : '.'));
+}
+
 // ---------- folha ----------
 function renderFolha() {
   const list = rows().sort(byName);
@@ -752,6 +777,7 @@ function renderFolha() {
       </div>
       <div class="f-tools">
         <button class="primary" id="btnAdd">+ Funcionário</button>
+        <button id="btnCopiarVal" title="Preenche os campos vazios com os valores do mês anterior">Copiar valores do mês anterior</button>
         <button id="btnCsv">Exportar CSV</button>
         <button id="btnPrint">Imprimir / PDF</button>
       </div>
@@ -834,6 +860,7 @@ function renderFolha() {
   };
   document.getElementById('btnPrint').onclick = () => { buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
+  $('btnCopiarVal').onclick = copiarValores;
   renderTotals();
   syncScroll();
 }

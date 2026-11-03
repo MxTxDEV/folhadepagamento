@@ -11,7 +11,7 @@
     --mint: #daf2e7; --mint-d: #2f8a5f;
     --peach: #ffe8d6; --peach-d: #b8642a;
     --sky: #dfecfb; --sky-d: #3b6fb0;
-    --pink: #fbe1e7; --pink-d: #b0435c;
+    --pink: #fbe1e7; --pink-d: #b0435c; --ok: #c6ecd8;
     --neg: #c0445a; --shadow: 0 1px 2px rgba(60,50,80,.05), 0 4px 14px rgba(60,50,80,.05);
   }
   @media (prefers-color-scheme: dark) {
@@ -21,7 +21,7 @@
       --mint: #233d34; --mint-d: #8fdcb6;
       --peach: #44331f; --peach-d: #ffc194;
       --sky: #233246; --sky-d: #a8c8f2;
-      --pink: #44262f; --pink-d: #f3a6b8;
+      --pink: #44262f; --pink-d: #f3a6b8; --ok: #2b5a45;
       --neg: #ff8a9b; --shadow: none;
     }
   }
@@ -55,6 +55,10 @@
   .filt:hover { color: var(--lav-d); }
   .filt::after { content: ' ⏷'; opacity: 0; font-size: 10px; }
   .filt:hover::after { opacity: .6; }
+  .okchk { width: 16px !important; min-width: 16px !important; height: 16px; margin: 0 2px 0 0; accent-color: var(--mint-d); cursor: pointer; flex: none; }
+  tbody tr.ok td, tbody tr.ok td.c-liq, tbody tr.ok td.c-if, tbody tr.ok td.c-conta, tbody tr.ok td.fcol { background: var(--ok) !important; }
+  tbody tr.ok td input { color: var(--mint-d); }
+  tbody tr.ok td.c-liq, tbody tr.ok td.c-conta { color: var(--mint-d); }
   td.fcol { background: color-mix(in srgb, var(--lav) 55%, transparent); }
   td.fcol input { font-weight: 600; }
   th.filt.on { background: var(--lav) !important; color: var(--lav-d); }
@@ -149,7 +153,7 @@
     padding: 5px 7px; border-radius: 7px; text-align: right; }
   td input:hover { border-color: var(--line); background: var(--card); }
   td input:focus { outline: none; border-color: var(--lav-d); background: var(--card); }
-  td:first-child input { text-align: left; min-width: 150px; width: calc(100% - 58px); font-weight: 500; }
+  td:first-child input:not(.okchk) { text-align: left; min-width: 150px; width: calc(100% - 80px); font-weight: 500; }
   .namecell { display: flex; align-items: center; gap: 4px; }
   .cfg { border: none; background: transparent; color: var(--muted); padding: 3px 7px; border-radius: 7px; font-size: 14px; line-height: 1; }
   .cfg:hover { background: var(--lav); color: var(--lav-d); }
@@ -940,7 +944,7 @@ function input(r, field) {
 function rowEl(r, n) {
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><div class="namecell"><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}</td>
+    <td><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}</td>
     <td>${input(r, 'salario')}</td>
     <td>${input(r, 'bonif')}</td>
     <td>${input(r, 'bonifVar')}</td>
@@ -959,13 +963,19 @@ function rowEl(r, n) {
     <td><button class="del" title="Remover">✕</button></td>`;
   tr.addEventListener('input', e => {
     const f = e.target.dataset.f;
-    if (!f) return;
+    if (!f || f === 'ok') return;
     r[f] = f === 'nome' ? e.target.value : parse(e.target.value);
     if (FILTROS[f] && r[f] && !(r.recebe && r.recebe[f])) marcaRecebe(r, f, true);
     save();
     updateRow(tr, r);
     renderTotals();
   });
+  tr.classList.toggle('ok', !!r.ok);
+  tr.querySelector('.okchk').onchange = e => {
+    r.ok = e.target.checked;
+    tr.classList.toggle('ok', r.ok);
+    save(); renderTotals();
+  };
   tr.querySelector('.del').onclick = () => abrirRemover(r);
   tr.querySelector('.cfg').onclick = () => abrirFunc(r);
   tr.querySelectorAll('.sub.dia').forEach(el => el.onclick = () => abrirFunc(r));
@@ -993,6 +1003,7 @@ function renderTotals() {
   const t = totals(list);
   document.getElementById('fsum').innerHTML = `
     <div class="chip"><small>Funcionários</small><b>${list.length}</b></div>
+    <div class="chip mint"><small>Conferidos</small><b>${list.filter(r => r.ok).length} / ${list.length}</b></div>
     <div class="chip"><small>Total proventos</small><b>${brl(t.bruto)}</b></div>
     <div class="chip"><small>INSS</small><b>${brl(t.inss)}</b></div>
     <div class="chip lav"><small>Líquido</small><b>${brl(t.liquido)}</b></div>

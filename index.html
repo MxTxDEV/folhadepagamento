@@ -134,10 +134,28 @@
   .topscroll::-webkit-scrollbar-track { background: var(--hl); border-radius: 6px; }
   .topscroll::-webkit-scrollbar-thumb { background: var(--lav-d); opacity: .6; border-radius: 6px; border: 3px solid var(--hl); }
   .wrap { overflow: auto; max-height: calc(100vh - 90px); background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1750px; }
-  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-  th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
-    letter-spacing: .04em; background: var(--hl); padding-top: 12px; padding-bottom: 12px; }
+  table { border-collapse: separate; border-spacing: 0; }
+  th, td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
+    background: var(--hl); padding-top: 10px; padding-bottom: 10px; white-space: normal; line-height: 1.25;
+    min-width: 72px; max-width: 100px; vertical-align: bottom; }
+  th small { font-size: 9.5px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+  td.vcell { position: relative; padding-right: 10px; }
+  .nota { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; padding: 0; border: none; border-radius: 4px;
+    background: transparent; cursor: pointer; opacity: 0; font-size: 9px; line-height: 15px; text-align: center; }
+  .nota::before { content: '💬'; }
+  td.vcell:hover .nota { opacity: .55; }
+  .nota:hover { opacity: 1 !important; background: var(--lav); }
+  .nota.on { opacity: 1; }
+  .nota.on::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 10px 10px 0;
+    border-color: transparent #e8952f transparent transparent; }
+  textarea { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical; }
+  .col-list { max-height: 52vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+  .col-row { margin: 0; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .col-row:last-child { border-bottom: none; }
+  .col-row input[data-nome] { flex: 1; width: auto !important; text-align: left !important; }
+  .col-row select { width: 190px !important; }
+  .col-tag { font-size: 11px; color: var(--muted); width: 70px; text-align: center; }
   th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; }
   th:first-child { background: var(--hl); z-index: 4; }
   thead th { position: sticky; top: 0; z-index: 3; box-shadow: inset 0 -1px 0 var(--line); }
@@ -149,11 +167,11 @@
   th.c-liq, th.c-if, th.c-conta { color: var(--fg); }
   tbody tr:hover td { background-image: linear-gradient(rgba(127,110,180,.06), rgba(127,110,180,.06)); }
   td .n { color: var(--muted); font-size: 12px; display: inline-block; width: 20px; }
-  td input { width: 100%; min-width: 70px; border: 1px solid transparent; background: transparent;
+  td input { width: 78px; border: 1px solid transparent; background: transparent;
     padding: 5px 7px; border-radius: 7px; text-align: right; }
   td input:hover { border-color: var(--line); background: var(--card); }
   td input:focus { outline: none; border-color: var(--lav-d); background: var(--card); }
-  td:first-child input:not(.okchk) { text-align: left; min-width: 150px; width: calc(100% - 80px); font-weight: 500; }
+  td:first-child input:not(.okchk) { text-align: left; width: 160px; font-weight: 500; }
   .namecell { display: flex; align-items: center; gap: 4px; }
   .cfg { border: none; background: transparent; color: var(--muted); padding: 3px 7px; border-radius: 7px; font-size: 14px; line-height: 1; }
   .cfg:hover { background: var(--lav); color: var(--lav-d); }
@@ -163,11 +181,11 @@
   .sub { display: block; font-size: 11px; color: var(--muted); padding-right: 8px; }
   .sub.dia { cursor: pointer; }
   .sub.dia:hover { color: var(--lav-d); text-decoration: underline; }
-  .calc { font-variant-numeric: tabular-nums; padding-right: 14px; }
+  .calc { font-variant-numeric: tabular-nums; padding-right: 10px; }
   td.c-liq { font-weight: 600; color: var(--lav-d); }
   td.c-conta { font-weight: 700; color: var(--mint-d); }
   .neg { color: var(--neg) !important; }
-  tfoot td { font-weight: 700; border-bottom: none; background: var(--hl); font-variant-numeric: tabular-nums; padding: 12px 14px 12px 8px; }
+  tfoot td { font-weight: 700; border-bottom: none; background: var(--hl); font-variant-numeric: tabular-nums; padding: 10px 10px 10px 6px; font-size: 13px; }
   tfoot td:first-child { background: var(--hl); }
   .del { border: none; background: transparent; color: var(--muted); padding: 2px 8px; }
   .del:hover { color: var(--neg); background: var(--pink); }
@@ -231,11 +249,16 @@
     .p-tab td.if { background: #fdf0f3 !important; }
     .p-tab td.ct { background: #e9f8f1 !important; font-weight: 800; color: #1f6b47; }
     .p-tab td.neg { color: #c0445a !important; }
-    .p-tab tfoot td { position: static; box-shadow: none; background: #ece9f2 !important; font-weight: 800; border-top: 2px solid #6b55c9; }
+    .p-tab tfoot td { position: static; box-shadow: none; font-size: 7.6px; padding: 2.5px 3px; background: #ece9f2 !important; font-weight: 800; border-top: 2px solid #6b55c9; }
     .p-tab tr { page-break-inside: avoid; }
     .p-tab thead { display: table-header-group; }
     .p-tab tfoot { display: table-footer-group; }
     .p-foot { margin-top: 5px; color: #888; font-size: 7px; }
+    .p-tab .gi { background: #f3f1ee; }
+    .p-tab sup { color: #e8952f; font-weight: 700; font-size: 6px; }
+    .p-notas { margin-top: 6px; font-size: 7.5px; color: #444; border: 1px solid #eee2cc; background: #fdf7ec; border-radius: 5px; padding: 4px 8px; }
+    .p-notas b { display: block; margin-bottom: 2px; }
+    .p-notas sup { color: #e8952f; font-weight: 700; }
   }
 </style>
 </head>
@@ -352,6 +375,42 @@
   </form>
 </dialog>
 
+<!-- colunas -->
+<dialog id="dlgCols" style="width:min(620px,94vw)">
+  <h2>Colunas da folha</h2>
+  <p class="hint" style="margin-top:0">Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
+  <div class="col-list" id="colList"></div>
+  <h3>Nova coluna</h3>
+  <form id="colNovaForm" class="row">
+    <input id="colNovaNome" class="full" placeholder="Nome da coluna (ex.: Vale transporte)" required>
+    <select id="colNovaTipo" style="width:200px">
+      <option value="provento">Provento (entra no INSS)</option>
+      <option value="proventoSem">Provento (fora do INSS)</option>
+      <option value="desconto">Desconto</option>
+      <option value="info">Só informativo</option>
+    </select>
+    <button class="primary">Adicionar</button>
+  </form>
+  <div class="dlg-actions">
+    <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+    <button type="button" class="primary" id="colSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<!-- comentário de um valor -->
+<dialog id="dlgNota">
+  <form id="notaForm">
+    <h2>Comentário</h2>
+    <p class="muted" id="notaTitulo" style="margin:-8px 0 10px"></p>
+    <textarea id="notaTexto" rows="4" placeholder="O que significa esse valor? (ex.: adiantamento do dia 15, desconto de uniforme…)"></textarea>
+    <div class="dlg-actions">
+      <button type="button" class="danger" id="notaApagar">Apagar comentário</button>
+      <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- configurações -->
 <dialog id="dlg">
   <h2>Configurações</h2>
@@ -399,6 +458,9 @@
 const KEY = 'folha-pagamento-v1';
 const DEFAULT_CONFIG = {
   divisor: 220,
+  colExtras: [],   // colunas criadas: { k, nome, tipo: 'provento' | 'desconto' | 'info', inss }
+  colNomes: {},    // nomes editados das colunas fixas
+  colOcultas: {},  // colunas fixas escondidas
   diaTrab: 0,
   dia361: 0,
   heSem: { modo: 'pct', valor: 50 },
@@ -452,7 +514,7 @@ function normalize(s) {
     // formato antigo: uma única empresa
     empresas = [{ id: 'principal', nome: 'Empresa principal', meses: s.meses, status: s.status || {} }];
   } else return null;
-  return { config: { ...DEFAULT_CONFIG, ...s.config }, empresas, seed: s.seed || 0 };
+  return { config: { ...structuredClone(DEFAULT_CONFIG), ...s.config }, empresas, seed: s.seed || 0 };
 }
 function load() {
   try {
@@ -635,6 +697,45 @@ function calcInss(base) {
   }
   return r2(total);
 }
+// ---------- colunas ----------
+// g: grupo (p = provento, d = desconto, r = resultado) · un: unidade digitada · v: valor em R$ calculado
+const COLS_BASE = [
+  { k: 'salario', nome: 'Salário base', g: 'p' },
+  { k: 'bonif', nome: 'Bonif. fixa', g: 'p' },
+  { k: 'bonifVar', nome: 'Bonif. variada', g: 'p' },
+  { k: 'diasTrab', nome: 'Bonif. dias trab.', g: 'p', un: 'dias', v: 'diaTrabV', dia: true },
+  { k: 'dias361', nome: 'Bonif. 361/380', g: 'p', un: 'dias', v: 'dia361V', dia: true },
+  { k: 'grat', nome: 'Gratificação', g: 'p' },
+  { k: 'ajuda', nome: 'Ajuda combinada', g: 'p' },
+  { k: 'heSem', nome: 'HE semana', g: 'p', un: 'h', v: 'heSemV' },
+  { k: 'heSdf', nome: 'HE SDF', g: 'p', un: 'h', v: 'heSdfV' },
+  { k: 'adiant', nome: 'Adiantamento', g: 'd' },
+  { k: 'inss', nome: 'INSS', g: 'd', v: 'inss', semFiltro: true },
+  { k: 'desc', nome: 'Descontos', g: 'd' },
+  { k: 'liquido', nome: 'Valor líquido', g: 'r', calc: true, cls: 'c-liq', fixa: true },
+  { k: 'ifood', nome: 'iFood Benefícios', g: 'r', cls: 'c-if' },
+  { k: 'conta', nome: 'Na conta', g: 'r', calc: true, cls: 'c-conta', fixa: true },
+];
+const TIPOS = { provento: 'Provento (entra no INSS)', proventoSem: 'Provento (fora do INSS)', desconto: 'Desconto', info: 'Só informativo' };
+const extras = () => state.config.colExtras || [];
+// todas as colunas na ordem da tabela (extras de provento depois da HE, as outras depois de Descontos)
+function todasColunas() {
+  const ex = extras().map(x => ({ k: x.k, nome: x.nome, g: x.tipo === 'desconto' ? 'd' : x.tipo === 'info' ? 'i' : 'p', extra: x, oculta: !!x.oculta }));
+  const out = [];
+  COLS_BASE.forEach(c => {
+    out.push({ ...c, nome: (state.config.colNomes || {})[c.k] || c.nome, padrao: c.nome, oculta: !!(state.config.colOcultas || {})[c.k] });
+    if (c.k === 'heSdf') ex.filter(x => x.g === 'p').forEach(x => out.push(x));
+    if (c.k === 'desc') ex.filter(x => x.g !== 'p').forEach(x => out.push(x));
+  });
+  return out;
+}
+const cols = () => todasColunas().filter(c => !c.oculta);
+const colDe = k => todasColunas().find(c => c.k === k);
+const rotulo = k => (colDe(k) || {}).nome || k;
+const filtravel = k => { const c = colDe(k); return !!c && !c.calc && !c.semFiltro; };
+// valor em R$ de uma coluna para um funcionário
+const valorCol = (col, r, c) => col.calc ? c[col.k] : col.v ? c[col.v] : (r[col.k] || 0);
+
 function calc(r) {
   const cfg = r.cfg || {};
   const heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
@@ -643,25 +744,30 @@ function calc(r) {
   const valDia361 = cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0;
   const diaTrabV = r2((r.diasTrab || 0) * valDiaTrab);
   const dia361V = r2((r.dias361 || 0) * valDia361);
+  let exInss = 0, exSem = 0, exDesc = 0;
+  extras().forEach(x => {
+    const n = r[x.k] || 0;
+    if (x.tipo === 'provento') exInss += n;
+    else if (x.tipo === 'proventoSem') exSem += n;
+    else if (x.tipo === 'desconto') exDesc += n;
+  });
   const bruto = (r.salario || 0) + (r.bonif || 0) + (r.bonifVar || 0) + diaTrabV + dia361V
-    + (r.grat || 0) + heSemV + heSdfV;
+    + (r.grat || 0) + heSemV + heSdfV + exInss;
   const inssAuto = calcInss(cfg.foraInss ? bruto - heSemV - heSdfV : bruto);
   const inss = r.inss != null ? r.inss : inssAuto;
-  const liquido = r2(bruto + (r.ajuda || 0) - (r.adiant || 0) - inss - (r.desc || 0));
+  const proventos = bruto + (r.ajuda || 0) + exSem;
+  const liquido = r2(proventos - (r.adiant || 0) - inss - (r.desc || 0) - exDesc);
   const conta = r2(liquido - (r.ifood || 0));
-  return { heSemV, heSdfV, diaTrabV, dia361V, valDiaTrab, valDia361, bruto, inssAuto, inss, liquido, conta };
+  return { heSemV, heSdfV, diaTrabV, dia361V, valDiaTrab, valDia361, bruto, proventos, inssAuto, inss, liquido, conta };
 }
 function totals(list) {
-  const t = { salario: 0, bonif: 0, bonifVar: 0, diaTrabV: 0, dia361V: 0, grat: 0, ajuda: 0, heSemV: 0, heSdfV: 0,
-    adiant: 0, inss: 0, desc: 0, liquido: 0, ifood: 0, conta: 0, bruto: 0 };
+  const all = todasColunas();
+  const t = { bruto: 0 };
+  all.forEach(col => { t[col.k] = 0; });
   list.forEach(r => {
     const c = calc(r);
-    t.salario += r.salario || 0; t.bonif += r.bonif || 0; t.grat += r.grat || 0;
-    t.bonifVar += r.bonifVar || 0; t.diaTrabV += c.diaTrabV; t.dia361V += c.dia361V;
-    t.ajuda += r.ajuda || 0; t.bruto += c.bruto + (r.ajuda || 0);
-    t.heSemV += c.heSemV; t.heSdfV += c.heSdfV; t.adiant += r.adiant || 0;
-    t.inss += c.inss; t.desc += r.desc || 0; t.liquido += c.liquido;
-    t.ifood += r.ifood || 0; t.conta += c.conta;
+    all.forEach(col => { t[col.k] += valorCol(col, r, c); });
+    t.bruto += c.proventos;
   });
   return t;
 }
@@ -743,7 +849,7 @@ function criarFolha(m) {
 }
 
 // copia os valores do último mês anterior com folha para os campos vazios deste mês
-const VALORES = ['salario', 'bonif', 'bonifVar', 'diasTrab', 'dias361', 'grat', 'ajuda', 'heSem', 'heSdf', 'adiant', 'inss', 'desc', 'ifood'];
+const camposValor = () => todasColunas().filter(c => !c.calc).map(c => c.k);
 function mesOrigem(m) {
   for (let p = prevMonth(m), i = 0; i < 36; p = prevMonth(p), i++) if (rowsOf(p).length) return p;
   return null;
@@ -757,7 +863,7 @@ function copiarValores() {
   rowsOf(origem).forEach(src => {
     let dst = list.find(r => src.nome && sameName(r.nome, src.nome));
     if (!dst) { list.push(dst = { id: uid(), nome: src.nome }); novos++; }
-    VALORES.forEach(k => {
+    camposValor().forEach(k => {
       if (src[k] != null && dst[k] == null) { dst[k] = src[k]; campos++; }
     });
     if (!dst.cfg && src.cfg) dst.cfg = structuredClone(src.cfg);
@@ -782,6 +888,7 @@ function renderFolha() {
       <div class="f-tools">
         <button class="primary" id="btnAdd">+ Funcionário</button>
         <button id="btnCopiarVal" title="Preenche os campos vazios com os valores do mês anterior">Copiar valores do mês anterior</button>
+        <button id="btnCols" title="Editar, adicionar ou remover colunas">Colunas</button>
         <button id="btnCsv">Exportar CSV</button>
         <button id="btnPrint">Imprimir / PDF</button>
       </div>
@@ -794,21 +901,7 @@ function renderFolha() {
         <thead>
           <tr>
             <th>Nome</th>
-            <th data-filtro="salario">Salário base</th>
-            <th data-filtro="bonif">Bonif. fixa</th>
-            <th data-filtro="bonifVar">Bonif. variada</th>
-            <th data-filtro="diasTrab">Bonif. dias trab. (dias)</th>
-            <th data-filtro="dias361">Bonif. 361/380 (dias)</th>
-            <th data-filtro="grat">Gratificação</th>
-            <th data-filtro="ajuda">Ajuda combinada</th>
-            <th data-filtro="heSem">HE semana (h)</th>
-            <th data-filtro="heSdf">HE SDF (h)</th>
-            <th data-filtro="adiant">Adiantamento</th>
-            <th title="Em branco = automático">INSS</th>
-            <th data-filtro="desc">Descontos</th>
-            <th class="c-liq">Valor líquido</th>
-            <th class="c-if" data-filtro="ifood">iFood Benefícios</th>
-            <th class="c-conta">Na conta</th>
+            ${cols().map(c => `<th class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.k === 'inss' ? ' title="Em branco = automático"' : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
             <th></th>
           </tr>
         </thead>
@@ -819,7 +912,8 @@ function renderFolha() {
     </div>
     <p class="hint">
       HE e bonificações por dia: digite as horas/dias — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
-      Líquido = salário + bonificações + gratificação + ajuda combinada + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.
+      Líquido = salário + bonificações + gratificação + ajuda combinada + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.<br>
+      Comentário: passe o mouse sobre um valor e clique no 💬 para explicar o que ele significa. Células com comentário ficam com um canto laranja.
     </p>`;
 
   const tbody = document.getElementById('tbody');
@@ -832,7 +926,7 @@ function renderFolha() {
     th.onclick = () => { filtro = filtro === th.dataset.filtro ? null : th.dataset.filtro; render(); };
   });
   if (filtro) {
-    $('fbar').innerHTML = `<div class="fbar">Mostrando só quem recebe <b>${FILTROS[filtro]}</b> — ${visiveis.length} de ${list.length} funcionários
+    $('fbar').innerHTML = `<div class="fbar">Mostrando só quem recebe <b>${esc(rotulo(filtro))}</b> — ${visiveis.length} de ${list.length} funcionários
       <span class="sp"></span><button id="fbarEdit">Escolher quem recebe</button><button id="fbarAll">Mostrar todos</button></div>`;
     $('fbarAll').onclick = () => { filtro = null; render(); };
     $('fbarEdit').onclick = () => abrirRecebe(filtro);
@@ -865,6 +959,7 @@ function renderFolha() {
   document.getElementById('btnPrint').onclick = () => { buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
   $('btnCopiarVal').onclick = copiarValores;
+  $('btnCols').onclick = abrirColunas;
   renderTotals();
   syncScroll();
 }
@@ -873,20 +968,28 @@ function renderFolha() {
 function buildPrint() {
   const list = rows().slice().sort(byName);
   const t = totals(list);
+  const cs = cols();
   const v = n => n ? brl(n).replace(/^R\$\s?/, '') : '–';
-  const td = (n, cls = '') => `<td class="${n ? '' : 'z '}${cls}${n < 0 ? ' neg' : ''}">${v(n)}</td>`;
-  const comQtd = (val, qtd, un) => !val && !qtd ? '<td class="z">–</td>'
-    : `<td>${v(val)}<small>${num(qtd || 0)} ${un}</small></td>`;
+  const td = (n, cls = '', extra = '') => `<td class="${n ? '' : 'z '}${cls}${n < 0 ? ' neg' : ''}">${v(n)}${extra}</td>`;
+  const CLS = { liquido: 'liq', ifood: 'if', conta: 'ct' };
+  const notas = [];
   const linhas = list.map((r, i) => {
     const c = calc(r);
-    return `<tr><td class="n">${i + 1}</td><td class="nome">${esc(r.nome)}</td>
-      ${td(r.salario)}${td(r.bonif)}${td(r.bonifVar)}
-      ${comQtd(c.diaTrabV, r.diasTrab, 'd')}${comQtd(c.dia361V, r.dias361, 'd')}
-      ${td(r.grat)}${td(r.ajuda)}
-      ${comQtd(c.heSemV, r.heSem, 'h')}${comQtd(c.heSdfV, r.heSdf, 'h')}
-      ${td(r.adiant)}${td(c.inss)}${td(r.desc)}
-      ${td(c.liquido, 'liq')}${td(r.ifood, 'if')}${td(c.conta, 'ct')}</tr>`;
+    const marca = k => {
+      const tx = r.notas && r.notas[k];
+      if (!tx) return '';
+      notas.push({ nome: r.nome, col: k === 'nome' ? 'Funcionário' : rotulo(k), tx });
+      return `<sup>${notas.length}</sup>`;
+    };
+    return `<tr><td class="n">${i + 1}</td><td class="nome">${esc(r.nome)}${marca('nome')}</td>
+      ${cs.map(col => {
+        const val = valorCol(col, r, c), q = col.un ? r[col.k] : null;
+        if (col.un && (val || q)) return `<td>${v(val)}${marca(col.k)}<small>${num(q || 0)} ${col.un === 'dias' ? 'd' : col.un}</small></td>`;
+        return td(val, CLS[col.k] || '', marca(col.k));
+      }).join('')}</tr>`;
   }).join('');
+  const grupos = [['p', 'Proventos', 'gp'], ['d', 'Descontos', 'gd'], ['i', 'Informativo', 'gi'], ['r', 'Resultado', 'gr']]
+    .map(([g, nome, cls]) => [cs.filter(c => c.g === g).length, nome, cls]).filter(([n]) => n);
   const st = STATUS_LABEL[statusOf(mes)];
   const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   document.getElementById('printArea').innerHTML = `
@@ -904,20 +1007,16 @@ function buildPrint() {
       <div class="mint">Na conta<b>${brl(t.conta)}</b></div>
     </div>
     <table class="p-tab">
-      <colgroup><col style="width:2.2%"><col style="width:10.5%">${'<col>'.repeat(15)}</colgroup>
+      <colgroup><col style="width:2.2%"><col style="width:10.5%">${'<col>'.repeat(cs.length)}</colgroup>
       <thead>
-        <tr class="g"><th colspan="2"></th><th colspan="9" class="gp">Proventos</th><th colspan="3" class="gd">Descontos</th><th colspan="3" class="gr">Resultado</th></tr>
-        <tr><th>#</th><th class="nome">Nome</th><th>Salário base</th><th>Bonif. fixa</th><th>Bonif. variada</th>
-          <th>Bonif. dias trab.</th><th>Bonif. 361/380</th><th>Gratifi&shy;cação</th><th>Ajuda combinada</th>
-          <th>HE semana</th><th>HE SDF</th><th>Adianta&shy;mento</th><th>INSS</th><th>Descontos</th>
-          <th>Líquido</th><th>iFood</th><th>Na conta</th></tr>
+        <tr class="g"><th colspan="2"></th>${grupos.map(([n, nome, cls]) => `<th colspan="${n}" class="${cls}">${nome}</th>`).join('')}</tr>
+        <tr><th>#</th><th class="nome">Nome</th>${cs.map(c => `<th>${esc(c.nome)}</th>`).join('')}</tr>
       </thead>
       <tbody>${linhas}</tbody>
-      <tfoot><tr><td></td><td class="nome">Total</td>
-        ${td(t.salario)}${td(t.bonif)}${td(t.bonifVar)}${td(t.diaTrabV)}${td(t.dia361V)}${td(t.grat)}${td(t.ajuda)}
-        ${td(t.heSemV)}${td(t.heSdfV)}${td(t.adiant)}${td(t.inss)}${td(t.desc)}
-        ${td(t.liquido, 'liq')}${td(t.ifood, 'if')}${td(t.conta, 'ct')}</tr></tfoot>
+      <tfoot><tr><td></td><td class="nome">Total</td>${cs.map(c => td(t[c.k], CLS[c.k] || '')).join('')}</tr></tfoot>
     </table>
+    ${notas.length ? `<div class="p-notas"><b>Observações</b>${notas.map((n, i) =>
+      `<div><sup>${i + 1}</sup> ${esc(n.nome)} — ${esc(n.col)}: ${esc(n.tx)}</div>`).join('')}</div>` : ''}
     <div class="p-foot">Líquido = proventos − adiantamento − INSS − descontos · Na conta = líquido − iFood · “–” = sem valor</div>`;
 }
 window.addEventListener('beforeprint', () => { if (view === 'folha') buildPrint(); });
@@ -940,32 +1039,28 @@ function syncScroll() {
 function input(r, field) {
   return `<input data-f="${field}" inputmode="decimal" value="${num(r[field])}">`;
 }
+const notaBtn = (r, k) => {
+  const tx = r.notas && r.notas[k];
+  return `<button class="nota${tx ? ' on' : ''}" data-nota="${k}" title="${tx ? esc(tx) : 'Adicionar comentário'}" tabindex="-1"></button>`;
+};
 
 function rowEl(r, n) {
   const tr = document.createElement('tr');
+  const celulas = cols().map(col => {
+    if (col.calc) return `<td class="calc ${col.cls || ''}" data-c="${col.k}"></td>`;
+    const sub = col.dia ? `<span class="sub dia" data-c="${col.v}" title="Valor por dia deste funcionário — clique para alterar"></span>`
+      : col.un ? `<span class="sub" data-c="${col.v}"></span>` : '';
+    return `<td class="vcell ${col.cls || ''}">${input(r, col.k)}${sub}${notaBtn(r, col.k)}</td>`;
+  }).join('');
   tr.innerHTML = `
-    <td><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}</td>
-    <td>${input(r, 'salario')}</td>
-    <td>${input(r, 'bonif')}</td>
-    <td>${input(r, 'bonifVar')}</td>
-    <td>${input(r, 'diasTrab')}<span class="sub dia" data-c="diaTrabV" title="Valor por dia deste funcionário — clique para alterar"></span></td>
-    <td>${input(r, 'dias361')}<span class="sub dia" data-c="dia361V" title="Valor por dia deste funcionário — clique para alterar"></span></td>
-    <td>${input(r, 'grat')}</td>
-    <td>${input(r, 'ajuda')}</td>
-    <td>${input(r, 'heSem')}<span class="sub" data-c="heSemV"></span></td>
-    <td>${input(r, 'heSdf')}<span class="sub" data-c="heSdfV"></span></td>
-    <td>${input(r, 'adiant')}</td>
-    <td>${input(r, 'inss')}</td>
-    <td>${input(r, 'desc')}</td>
-    <td class="calc c-liq" data-c="liquido"></td>
-    <td class="c-if">${input(r, 'ifood')}</td>
-    <td class="calc c-conta" data-c="conta"></td>
+    <td class="vcell"><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}${notaBtn(r, 'nome')}</td>
+    ${celulas}
     <td><button class="del" title="Remover">✕</button></td>`;
   tr.addEventListener('input', e => {
     const f = e.target.dataset.f;
-    if (!f || f === 'ok') return;
+    if (!f) return;
     r[f] = f === 'nome' ? e.target.value : parse(e.target.value);
-    if (FILTROS[f] && r[f] && !(r.recebe && r.recebe[f])) marcaRecebe(r, f, true);
+    if (filtravel(f) && r[f] && !(r.recebe && r.recebe[f])) marcaRecebe(r, f, true);
     save();
     updateRow(tr, r);
     renderTotals();
@@ -979,22 +1074,31 @@ function rowEl(r, n) {
   tr.querySelector('.del').onclick = () => abrirRemover(r);
   tr.querySelector('.cfg').onclick = () => abrirFunc(r);
   tr.querySelectorAll('.sub.dia').forEach(el => el.onclick = () => abrirFunc(r));
+  tr.querySelectorAll('.nota').forEach(b => b.onclick = () => abrirNota(r, b.dataset.nota));
   updateRow(tr, r);
   return tr;
 }
 
 function updateRow(tr, r) {
   const c = calc(r);
-  const dia = (dias, val, tot) => !dias && !val ? '' : `× ${brl(val)}` + (dias ? ` = ${brl(tot)}` : '');
-  tr.querySelector('[data-c=diaTrabV]').textContent = dia(r.diasTrab, c.valDiaTrab, c.diaTrabV);
-  tr.querySelector('[data-c=dia361V]').textContent = dia(r.dias361, c.valDia361, c.dia361V);
-  tr.querySelector('[data-c=heSemV]').textContent = r.heSem ? brl(c.heSemV) : '';
-  tr.querySelector('[data-c=heSdfV]').textContent = r.heSdf ? brl(c.heSdfV) : '';
-  tr.querySelector('[data-f=inss]').placeholder = num(c.inssAuto);
-  const liq = tr.querySelector('[data-c=liquido]');
-  liq.textContent = brl(c.liquido); liq.classList.toggle('neg', c.liquido < 0);
-  const ct = tr.querySelector('[data-c=conta]');
-  ct.textContent = brl(c.conta); ct.classList.toggle('neg', c.conta < 0);
+  const set = (sel, txt) => { const el = tr.querySelector(sel); if (el) el.textContent = txt; };
+  // mostra só o total; o detalhe (dias × valor) fica no balão ao passar o mouse
+  const dia = (sel, dias, val, tot) => {
+    const el = tr.querySelector(sel);
+    if (!el) return;
+    el.textContent = dias ? brl(tot) : val ? brl(val) + '/dia' : '';
+    el.title = `${num(dias || 0)} dias × ${brl(val)} — clique para alterar o valor por dia`;
+  };
+  dia('[data-c=diaTrabV]', r.diasTrab, c.valDiaTrab, c.diaTrabV);
+  dia('[data-c=dia361V]', r.dias361, c.valDia361, c.dia361V);
+  set('[data-c=heSemV]', r.heSem ? brl(c.heSemV) : '');
+  set('[data-c=heSdfV]', r.heSdf ? brl(c.heSdfV) : '');
+  const inss = tr.querySelector('[data-f=inss]');
+  if (inss) inss.placeholder = num(c.inssAuto);
+  ['liquido', 'conta'].forEach(k => {
+    const el = tr.querySelector(`[data-c=${k}]`);
+    if (el) { el.textContent = brl(c[k]); el.classList.toggle('neg', c[k] < 0); }
+  });
 }
 
 function renderTotals() {
@@ -1012,20 +1116,10 @@ function renderTotals() {
   if (!list.length) { tfoot.innerHTML = ''; return; }
   tfoot.innerHTML = `<tr>
     <td>Total da folha (${list.length})</td>
-    <td>${brl(t.salario)}</td><td>${brl(t.bonif)}</td><td>${brl(t.bonifVar)}</td>
-    <td>${brl(t.diaTrabV)}</td><td>${brl(t.dia361V)}</td><td>${brl(t.grat)}</td><td>${brl(t.ajuda)}</td>
-    <td>${brl(t.heSemV)}</td><td>${brl(t.heSdfV)}</td><td>${brl(t.adiant)}</td>
-    <td>${brl(t.inss)}</td><td>${brl(t.desc)}</td><td>${brl(t.liquido)}</td>
-    <td>${brl(t.ifood)}</td><td>${brl(t.conta)}</td><td></td></tr>`;
+    ${cols().map(c => `<td>${brl(t[c.k])}</td>`).join('')}<td></td></tr>`;
 }
 
 // ---------- quem recebe cada item (filtro das colunas) ----------
-const FILTROS = {
-  salario: 'Salário base', bonif: 'Bonificação fixa', bonifVar: 'Bonificação variada',
-  diasTrab: 'Bonif. dias trabalhados', dias361: 'Bonif. 361/380', grat: 'Gratificação',
-  ajuda: 'Ajuda combinada', heSem: 'HE semana', heSdf: 'HE SDF', adiant: 'Adiantamento',
-  desc: 'Descontos', ifood: 'iFood Benefícios',
-};
 // marcado manualmente, ou (sem marcação) tem valor lançado neste mês
 function recebe(r, campo) {
   const f = r.recebe && r.recebe[campo];
@@ -1041,7 +1135,7 @@ function marcaRecebe(r, campo, valor) {
 let recebeCampo = null;
 function abrirRecebe(campo) {
   recebeCampo = campo;
-  $('recebeTitulo').textContent = 'Quem recebe ' + FILTROS[campo];
+  $('recebeTitulo').textContent = 'Quem recebe ' + rotulo(campo);
   $('recebeList').innerHTML = rows().slice().sort(byName).map((r, i) =>
     `<label><input type="checkbox" data-i="${i}"${recebe(r, campo) ? ' checked' : ''}> ${esc(r.nome) || '(sem nome)'}</label>`).join('');
   $('dlgRecebe').showModal();
@@ -1056,6 +1150,72 @@ $('recebeForm').onsubmit = e => {
   $('dlgRecebe').close();
   render();
 };
+
+// ---------- editor de colunas ----------
+function abrirColunas() {
+  const lista = todasColunas();
+  $('colList').innerHTML = lista.map(c => `
+    <div class="row col-row" data-k="${c.k}">
+      <input type="checkbox" data-vis title="Mostrar coluna"${c.oculta ? '' : ' checked'}${c.fixa ? ' disabled' : ''}>
+      <input data-nome value="${esc(c.nome)}" placeholder="${esc(c.padrao || '')}">
+      ${c.extra
+        ? `<select data-tipo>${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}"${c.extra.tipo === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+           <button type="button" class="danger" data-rm title="Remover coluna">✕</button>`
+        : `<span class="col-tag">${c.fixa ? 'cálculo' : 'padrão'}</span>`}
+    </div>`).join('');
+  $('colList').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    const row = b.closest('.col-row');
+    if (!confirm(`Remover a coluna "${row.querySelector('[data-nome]').value}"? Os valores lançados nela deixam de contar na folha.`)) return;
+    row.remove();
+  });
+  $('colNovaNome').value = '';
+  $('dlgCols').showModal();
+}
+$('colNovaForm').onsubmit = e => {
+  e.preventDefault();
+  const nome = $('colNovaNome').value.trim();
+  if (!nome) return;
+  state.config.colExtras = [...extras(), { k: 'x_' + uid(), nome, tipo: $('colNovaTipo').value }];
+  save(); render(); abrirColunas();
+};
+$('colSalvar').onclick = () => {
+  const nomes = {}, ocultas = {}, novos = [];
+  $('colList').querySelectorAll('.col-row').forEach(row => {
+    const k = row.dataset.k, nome = row.querySelector('[data-nome]').value.trim();
+    const vis = row.querySelector('[data-vis]').checked;
+    const ex = extras().find(x => x.k === k);
+    if (ex) novos.push({ ...ex, nome: nome || ex.nome, tipo: row.querySelector('[data-tipo]').value, oculta: !vis });
+    else {
+      const base = COLS_BASE.find(c => c.k === k);
+      if (nome && nome !== base.nome) nomes[k] = nome;
+      if (!vis && !base.fixa) ocultas[k] = true;
+    }
+  });
+  state.config.colNomes = nomes;
+  state.config.colOcultas = ocultas;
+  state.config.colExtras = novos;
+  if (filtro && !cols().some(c => c.k === filtro)) filtro = null;
+  save(); $('dlgCols').close(); render();
+};
+
+// ---------- comentários nos valores ----------
+let notaAlvo = null;
+function abrirNota(r, k) {
+  notaAlvo = { r, k };
+  $('notaTitulo').textContent = `${r.nome || 'Funcionário'} · ${k === 'nome' ? 'geral' : rotulo(k)}`;
+  $('notaTexto').value = (r.notas && r.notas[k]) || '';
+  $('dlgNota').showModal();
+  $('notaTexto').focus();
+}
+function salvarNota(texto) {
+  const { r, k } = notaAlvo;
+  const notas = { ...(r.notas || {}) };
+  if (texto) notas[k] = texto; else delete notas[k];
+  r.notas = Object.keys(notas).length ? notas : undefined;
+  save(); $('dlgNota').close(); render();
+}
+$('notaForm').onsubmit = e => { e.preventDefault(); salvarNota($('notaTexto').value.trim()); };
+$('notaApagar').onclick = () => salvarNota('');
 
 // ---------- empresas ----------
 $('empSel').onchange = e => setEmpresa(e.target.value);
@@ -1141,8 +1301,8 @@ function abrirFunc(r) {
   $('fDiaTrab').value = num(c.diaTrab); $('fDia361').value = num(c.dia361);
   $('fDiaTrab').placeholder = num(g.diaTrab || 0); $('fDia361').placeholder = num(g.dia361 || 0);
   $('fPadrao').textContent = `Padrão geral: HE semana ${heTxt(g.heSem)}, HE SDF ${heTxt(g.heSdf)}.`;
-  $('fRecebe').innerHTML = Object.entries(FILTROS).map(([k, l]) =>
-    `<label><input type="checkbox" data-k="${k}"${recebe(r, k) ? ' checked' : ''}> ${l}</label>`).join('');
+  $('fRecebe').innerHTML = cols().filter(c => filtravel(c.k)).map(c =>
+    `<label><input type="checkbox" data-k="${c.k}"${recebe(r, c.k) ? ' checked' : ''}> ${esc(c.nome)}</label>`).join('');
   $('fEmpresa').innerHTML = state.empresas.map(e => `<option value="${e.id}"${e === E() ? ' selected' : ''}>${esc(e.nome)}</option>`).join('');
   syncFuncInputs();
   $('dlgFunc').showModal();
@@ -1209,18 +1369,20 @@ document.getElementById('delTodos').onclick = () => remover('todos');
 
 // ---------- exportação / backup ----------
 function exportCsv() {
-  const head = ['Nome', 'Salário base', 'Bonificação fixa', 'Bonificação variada', 'Dias trabalhados', 'Bonif. dias trabalhados (R$)',
-    'Dias 361/380', 'Bonif. 361/380 (R$)', 'Gratificação', 'Ajuda combinada', 'HE semana (h)', 'HE semana (R$)',
-    'HE SDF (h)', 'HE SDF (R$)', 'Adiantamento', 'INSS', 'Descontos', 'Valor líquido', 'iFood Benefícios', 'Valor na conta'];
+  const cs = cols();
+  const head = ['Nome'];
+  cs.forEach(c => { if (c.un) head.push(`${c.nome} (${c.un})`); head.push(c.un ? `${c.nome} (R$)` : c.nome); });
+  head.push('Comentários');
   const f = n => (n || 0).toFixed(2).replace('.', ',');
+  const q = t => `"${String(t || '').replace(/"/g, '""')}"`;
   const lines = rows().map(r => {
     const c = calc(r);
-    return [`"${(r.nome || '').replace(/"/g, '""')}"`, f(r.salario), f(r.bonif), f(r.bonifVar),
-      f(r.diasTrab), f(c.diaTrabV), f(r.dias361), f(c.dia361V), f(r.grat), f(r.ajuda),
-      f(r.heSem), f(c.heSemV), f(r.heSdf), f(c.heSdfV), f(r.adiant), f(c.inss), f(r.desc),
-      f(c.liquido), f(r.ifood), f(c.conta)].join(';');
+    const out = [q(r.nome)];
+    cs.forEach(col => { if (col.un) out.push(f(r[col.k])); out.push(f(valorCol(col, r, c))); });
+    out.push(q(Object.entries(r.notas || {}).map(([k, tx]) => `${k === 'nome' ? 'Funcionário' : rotulo(k)}: ${tx}`).join(' | ')));
+    return out.join(';');
   });
-  download(`folha-${E().nome.replace(/[^\w\u00C0-\u017F-]+/g, '-')}-${mes}.csv`, '﻿' + [head.join(';'), ...lines].join('\r\n'), 'text/csv');
+  download(`folha-${E().nome.replace(/[^\wÀ-ſ-]+/g, '-')}-${mes}.csv`, '﻿' + [head.join(';'), ...lines].join('\r\n'), 'text/csv');
 }
 
 document.getElementById('btnBackup').onclick = () =>

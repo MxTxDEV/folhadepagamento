@@ -154,7 +154,8 @@
   .col-row { margin: 0; padding: 5px 0; border-bottom: 1px dashed var(--line); }
   .col-row:last-child { border-bottom: none; }
   .col-row input[data-nome] { flex: 1; width: auto !important; text-align: left !important; }
-  .col-row select { width: 190px !important; }
+  .col-row select { width: 210px !important; }
+  .col-rm-vazio { width: 34px; }
   .alca { cursor: grab; color: var(--muted); font-size: 16px; padding: 2px 4px; user-select: none; touch-action: none; }
   .seta { padding: 2px 5px; font-size: 10px; color: var(--muted); }
   .col-row.arrastando, th.arrastando { opacity: .4; }
@@ -383,18 +384,19 @@
 </dialog>
 
 <!-- colunas -->
-<dialog id="dlgCols" style="width:min(620px,94vw)">
+<dialog id="dlgCols" style="width:min(780px,96vw)">
   <h2>Colunas da folha</h2>
-  <p class="hint" style="margin-top:0">Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na folha também dá para arrastar o título da coluna. Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
+  <p class="hint" style="margin-top:0"><b>O que cada coluna faz:</b> escolha na caixa ao lado do nome se ela soma, subtrai ou é só informativa. Líquido = tudo que soma − INSS − o que subtrai do líquido. Na conta = líquido − o que subtrai só do "Na conta".<br>★ = comportamento original da coluna. Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na folha também dá para arrastar o título da coluna. Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
   <div class="col-list" id="colList"></div>
   <h3>Nova coluna</h3>
   <form id="colNovaForm" class="row">
     <input id="colNovaNome" class="full" placeholder="Nome da coluna (ex.: Vale transporte)" required>
     <select id="colNovaTipo" style="width:200px">
-      <option value="provento">Provento (entra no INSS)</option>
-      <option value="proventoSem">Provento (fora do INSS)</option>
-      <option value="desconto">Desconto</option>
-      <option value="info">Só informativo</option>
+      <option value="provento">➕ Soma (entra no INSS)</option>
+      <option value="proventoSem">➕ Soma (fora do INSS)</option>
+      <option value="desconto">➖ Subtrai do líquido</option>
+      <option value="conta">➖ Subtrai só do "Na conta"</option>
+      <option value="info">○ Não soma nem subtrai</option>
     </select>
     <button class="primary">Adicionar</button>
   </form>
@@ -707,30 +709,39 @@ function calcInss(base) {
 // ---------- colunas ----------
 // g: grupo (p = provento, d = desconto, r = resultado) · un: unidade digitada · v: valor em R$ calculado
 const COLS_BASE = [
-  { k: 'salario', nome: 'Salário base', g: 'p' },
-  { k: 'bonif', nome: 'Bonif. fixa', g: 'p' },
-  { k: 'bonifVar', nome: 'Bonif. variada', g: 'p' },
-  { k: 'diasTrab', nome: 'Bonif. dias trab.', g: 'p', un: 'dias', v: 'diaTrabV', dia: true },
-  { k: 'dias361', nome: 'Bonif. 361/380', g: 'p', un: 'dias', v: 'dia361V', dia: true },
-  { k: 'grat', nome: 'Gratificação', g: 'p' },
-  { k: 'ajuda', nome: 'Ajuda combinada', g: 'p' },
-  { k: 'heSem', nome: 'HE semana', g: 'p', un: 'h', v: 'heSemV' },
-  { k: 'heSdf', nome: 'HE SDF', g: 'p', un: 'h', v: 'heSdfV' },
-  { k: 'adiant', nome: 'Adiantamento', g: 'd' },
+  { k: 'salario', tipo: 'provento', nome: 'Salário base', g: 'p' },
+  { k: 'bonif', tipo: 'provento', nome: 'Bonif. fixa', g: 'p' },
+  { k: 'bonifVar', tipo: 'provento', nome: 'Bonif. variada', g: 'p' },
+  { k: 'diasTrab', tipo: 'provento', nome: 'Bonif. dias trab.', g: 'p', un: 'dias', v: 'diaTrabV', dia: true },
+  { k: 'dias361', tipo: 'provento', nome: 'Bonif. 361/380', g: 'p', un: 'dias', v: 'dia361V', dia: true },
+  { k: 'grat', tipo: 'provento', nome: 'Gratificação', g: 'p' },
+  { k: 'ajuda', tipo: 'proventoSem', nome: 'Ajuda combinada', g: 'p' },
+  { k: 'heSem', tipo: 'provento', nome: 'HE semana', g: 'p', un: 'h', v: 'heSemV' },
+  { k: 'heSdf', tipo: 'provento', nome: 'HE SDF', g: 'p', un: 'h', v: 'heSdfV' },
+  { k: 'adiant', tipo: 'desconto', nome: 'Adiantamento', g: 'd' },
   { k: 'inss', nome: 'INSS', g: 'd', v: 'inss', semFiltro: true },
-  { k: 'desc', nome: 'Descontos', g: 'd' },
+  { k: 'desc', tipo: 'desconto', nome: 'Descontos', g: 'd' },
   { k: 'liquido', nome: 'Valor líquido', g: 'r', calc: true, cls: 'c-liq', fixa: true },
-  { k: 'ifood', nome: 'iFood Benefícios', g: 'r', cls: 'c-if' },
+  { k: 'ifood', tipo: 'conta', nome: 'iFood Benefícios', g: 'r', cls: 'c-if' },
   { k: 'conta', nome: 'Na conta', g: 'r', calc: true, cls: 'c-conta', fixa: true },
 ];
-const TIPOS = { provento: 'Provento (entra no INSS)', proventoSem: 'Provento (fora do INSS)', desconto: 'Desconto', info: 'Só informativo' };
+const TIPOS = {
+  provento: '➕ Soma (entra no INSS)',
+  proventoSem: '➕ Soma (fora do INSS)',
+  desconto: '➖ Subtrai do líquido',
+  conta: '➖ Subtrai só do "Na conta"',
+  info: '○ Não soma nem subtrai',
+};
+const grupoDoTipo = t => t === 'desconto' ? 'd' : t === 'info' ? 'i' : t === 'conta' ? 'r' : 'p';
 const extras = () => state.config.colExtras || [];
 // todas as colunas na ordem da tabela (extras de provento depois da HE, as outras depois de Descontos)
 function todasColunas() {
-  const ex = extras().map(x => ({ k: x.k, nome: x.nome, g: x.tipo === 'desconto' ? 'd' : x.tipo === 'info' ? 'i' : 'p', extra: x, oculta: !!x.oculta }));
+  const ex = extras().map(x => ({ k: x.k, nome: x.nome, tipo: x.tipo, g: grupoDoTipo(x.tipo), extra: x, oculta: !!x.oculta }));
   const out = [];
   COLS_BASE.forEach(c => {
-    out.push({ ...c, nome: (state.config.colNomes || {})[c.k] || c.nome, padrao: c.nome, oculta: !!(state.config.colOcultas || {})[c.k] });
+    const tipo = c.tipo && ((state.config.colTipos || {})[c.k] || c.tipo);
+    out.push({ ...c, tipo, tipoPadrao: c.tipo, g: tipo ? grupoDoTipo(tipo) : c.g,
+      nome: (state.config.colNomes || {})[c.k] || c.nome, padrao: c.nome, oculta: !!(state.config.colOcultas || {})[c.k] });
     if (c.k === 'heSdf') ex.filter(x => x.g === 'p').forEach(x => out.push(x));
     if (c.k === 'desc') ex.filter(x => x.g !== 'p').forEach(x => out.push(x));
   });
@@ -758,6 +769,13 @@ function moverColuna(k, alvo, depois) {
   save(); render();
 }
 const cols = () => todasColunas().filter(c => !c.oculta);
+// fórmula em texto, montada pelos tipos das colunas
+function formulaTxt() {
+  const tc = todasColunas(), nomes = t => tc.filter(c => c.tipo === t && !c.oculta).map(c => c.nome);
+  const soma = [...nomes('provento'), ...nomes('proventoSem')], menos = nomes('desconto'), conta = nomes('conta');
+  return `Líquido = ${soma.join(' + ') || '0'} − INSS${menos.length ? ' − ' + menos.join(' − ') : ''}.` +
+    ` Na conta = líquido${conta.length ? ' − ' + conta.join(' − ') : ''}.`;
+}
 const colDe = k => todasColunas().find(c => c.k === k);
 const rotulo = k => (colDe(k) || {}).nome || k;
 const filtravel = k => { const c = colDe(k); return !!c && !c.calc && !c.semFiltro; };
@@ -766,27 +784,30 @@ const valorCol = (col, r, c) => col.calc ? c[col.k] : col.v ? c[col.v] : (r[col.
 
 function calc(r) {
   const cfg = r.cfg || {};
-  const heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
-  const heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, cfg.heSdf || state.config.heSdf));
-  const valDiaTrab = cfg.diaTrab != null ? cfg.diaTrab : state.config.diaTrab || 0;
-  const valDia361 = cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0;
-  const diaTrabV = r2((r.diasTrab || 0) * valDiaTrab);
-  const dia361V = r2((r.dias361 || 0) * valDia361);
-  let exInss = 0, exSem = 0, exDesc = 0;
-  extras().forEach(x => {
-    const n = r[x.k] || 0;
-    if (x.tipo === 'provento') exInss += n;
-    else if (x.tipo === 'proventoSem') exSem += n;
-    else if (x.tipo === 'desconto') exDesc += n;
+  const c = {};
+  c.heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
+  c.heSdfV = r2((r.heSdf || 0) * valorHora(r.salario, cfg.heSdf || state.config.heSdf));
+  c.valDiaTrab = cfg.diaTrab != null ? cfg.diaTrab : state.config.diaTrab || 0;
+  c.valDia361 = cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0;
+  c.diaTrabV = r2((r.diasTrab || 0) * c.valDiaTrab);
+  c.dia361V = r2((r.dias361 || 0) * c.valDia361);
+  // soma cada coluna conforme o tipo definido no painel "Colunas"
+  let base = 0, sem = 0, desc = 0, daConta = 0, heNaBase = 0;
+  todasColunas().forEach(col => {
+    if (!col.tipo) return;
+    const n = col.v ? c[col.v] : (r[col.k] || 0);
+    if (col.tipo === 'provento') { base += n; if (col.k === 'heSem' || col.k === 'heSdf') heNaBase += n; }
+    else if (col.tipo === 'proventoSem') sem += n;
+    else if (col.tipo === 'desconto') desc += n;
+    else if (col.tipo === 'conta') daConta += n;
   });
-  const bruto = (r.salario || 0) + (r.bonif || 0) + (r.bonifVar || 0) + diaTrabV + dia361V
-    + (r.grat || 0) + heSemV + heSdfV + exInss;
-  const inssAuto = calcInss(cfg.foraInss ? bruto - heSemV - heSdfV : bruto);
-  const inss = r.inss != null ? r.inss : inssAuto;
-  const proventos = bruto + (r.ajuda || 0) + exSem;
-  const liquido = r2(proventos - (r.adiant || 0) - inss - (r.desc || 0) - exDesc);
-  const conta = r2(liquido - (r.ifood || 0));
-  return { heSemV, heSdfV, diaTrabV, dia361V, valDiaTrab, valDia361, bruto, proventos, inssAuto, inss, liquido, conta };
+  c.bruto = base;
+  c.inssAuto = calcInss(cfg.foraInss ? base - heNaBase : base);
+  c.inss = r.inss != null ? r.inss : c.inssAuto;
+  c.proventos = base + sem;
+  c.liquido = r2(c.proventos - c.inss - desc);
+  c.conta = r2(c.liquido - daConta);
+  return c;
 }
 function totals(list) {
   const all = todasColunas();
@@ -940,7 +961,7 @@ function renderFolha() {
     </div>
     <p class="hint">
       HE e bonificações por dia: digite as horas/dias — o valor em R$ aparece abaixo. INSS: deixe em branco para cálculo automático pela tabela progressiva, ou digite um valor para fixar.<br>
-      Líquido = salário + bonificações + gratificação + ajuda combinada + HE − adiantamento − INSS − descontos. Na conta = líquido − iFood.<br>
+      ${formulaTxt()}<br>
       Comentário: passe o mouse sobre um valor e clique no 💬 para explicar o que ele significa. Células com comentário ficam com um canto laranja.
     </p>`;
 
@@ -1067,7 +1088,7 @@ function buildPrint() {
     </table>
     ${notas.length ? `<div class="p-notas"><b>Observações</b>${notas.map((n, i) =>
       `<div><sup>${i + 1}</sup> ${esc(n.nome)} — ${esc(n.col)}: ${esc(n.tx)}</div>`).join('')}</div>` : ''}
-    <div class="p-foot">Líquido = proventos − adiantamento − INSS − descontos · Na conta = líquido − iFood · “–” = sem valor</div>`;
+    <div class="p-foot">${esc(formulaTxt())} · “–” = sem valor</div>`;
 }
 window.addEventListener('beforeprint', () => { if (view === 'folha') buildPrint(); });
 
@@ -1211,10 +1232,10 @@ function abrirColunas() {
       <button type="button" class="ghost seta" data-down title="Descer">▼</button>
       <input type="checkbox" data-vis title="Mostrar coluna"${c.oculta ? '' : ' checked'}${c.fixa ? ' disabled' : ''}>
       <input data-nome value="${esc(c.nome)}" placeholder="${esc(c.padrao || '')}">
-      ${c.extra
-        ? `<select data-tipo>${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}"${c.extra.tipo === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
-           <button type="button" class="danger" data-rm title="Remover coluna">✕</button>`
-        : `<span class="col-tag">${c.fixa ? 'cálculo' : 'padrão'}</span>`}
+      ${c.tipo
+        ? `<select data-tipo title="O que esta coluna faz no cálculo">${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}"${c.tipo === k ? ' selected' : ''}>${l}${k === c.tipoPadrao ? ' ★' : ''}</option>`).join('')}</select>`
+        : `<span class="col-tag">${c.k === 'inss' ? '➖ automático' : '= resultado'}</span>`}
+      ${c.extra ? `<button type="button" class="danger" data-rm title="Remover coluna">✕</button>` : '<span class="col-rm-vazio"></span>'}
     </div>`).join('');
   $('colList').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
     const row = b.closest('.col-row');
@@ -1263,7 +1284,7 @@ $('colNovaForm').onsubmit = e => {
 };
 $('colSalvar').onclick = () => { aplicarColunas(); $('dlgCols').close(); render(); };
 function aplicarColunas() {
-  const nomes = {}, ocultas = {}, novos = [];
+  const nomes = {}, ocultas = {}, tipos = {}, novos = [];
   $('colList').querySelectorAll('.col-row').forEach(row => {
     const k = row.dataset.k, nome = row.querySelector('[data-nome]').value.trim();
     const vis = row.querySelector('[data-vis]').checked;
@@ -1273,10 +1294,13 @@ function aplicarColunas() {
       const base = COLS_BASE.find(c => c.k === k);
       if (nome && nome !== base.nome) nomes[k] = nome;
       if (!vis && !base.fixa) ocultas[k] = true;
+      const t = row.querySelector('[data-tipo]');
+      if (t && t.value !== base.tipo) tipos[k] = t.value;
     }
   });
   state.config.colNomes = nomes;
   state.config.colOcultas = ocultas;
+  state.config.colTipos = tipos;
   state.config.colExtras = novos;
   state.config.colOrdem = [...$('colList').querySelectorAll('.col-row')].map(row => row.dataset.k);
   if (filtro && !cols().some(c => c.k === filtro)) filtro = null;

@@ -155,6 +155,13 @@
   .col-row:last-child { border-bottom: none; }
   .col-row input[data-nome] { flex: 1; width: auto !important; text-align: left !important; }
   .col-row select { width: 190px !important; }
+  .alca { cursor: grab; color: var(--muted); font-size: 16px; padding: 2px 4px; user-select: none; touch-action: none; }
+  .seta { padding: 2px 5px; font-size: 10px; color: var(--muted); }
+  .col-row.arrastando, th.arrastando { opacity: .4; }
+  .col-row.nova { background: var(--lav); border-radius: 8px; }
+  th[data-col] { cursor: grab; }
+  th.drop-antes { box-shadow: inset 3px 0 0 var(--lav-d), inset 0 -1px 0 var(--line) !important; }
+  th.drop-depois { box-shadow: inset -3px 0 0 var(--lav-d), inset 0 -1px 0 var(--line) !important; }
   .col-tag { font-size: 11px; color: var(--muted); width: 70px; text-align: center; }
   th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; }
   th:first-child { background: var(--hl); z-index: 4; }
@@ -378,7 +385,7 @@
 <!-- colunas -->
 <dialog id="dlgCols" style="width:min(620px,94vw)">
   <h2>Colunas da folha</h2>
-  <p class="hint" style="margin-top:0">Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
+  <p class="hint" style="margin-top:0">Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na folha também dá para arrastar o título da coluna. Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
   <div class="col-list" id="colList"></div>
   <h3>Nova coluna</h3>
   <form id="colNovaForm" class="row">
@@ -727,7 +734,28 @@ function todasColunas() {
     if (c.k === 'heSdf') ex.filter(x => x.g === 'p').forEach(x => out.push(x));
     if (c.k === 'desc') ex.filter(x => x.g !== 'p').forEach(x => out.push(x));
   });
-  return out;
+  return ordenar(out, state.config.colOrdem);
+}
+// aplica a ordem salva; colunas que não estão nela ficam logo depois da coluna que as precede na ordem padrão
+function ordenar(lista, ordem) {
+  if (!ordem || !ordem.length) return lista;
+  const porK = Object.fromEntries(lista.map(c => [c.k, c]));
+  const res = ordem.filter(k => porK[k]).map(k => porK[k]);
+  lista.forEach((c, i) => {
+    if (res.includes(c)) return;
+    const antes = lista.slice(0, i).reverse().find(x => res.includes(x));
+    res.splice(antes ? res.indexOf(antes) + 1 : 0, 0, c);
+  });
+  return res;
+}
+// move a coluna `k` para antes (ou depois) de `alvo`
+function moverColuna(k, alvo, depois) {
+  const ordem = todasColunas().map(c => c.k).filter(x => x !== k);
+  let i = ordem.indexOf(alvo);
+  if (i < 0) return;
+  ordem.splice(depois ? i + 1 : i, 0, k);
+  state.config.colOrdem = ordem;
+  save(); render();
 }
 const cols = () => todasColunas().filter(c => !c.oculta);
 const colDe = k => todasColunas().find(c => c.k === k);
@@ -901,7 +929,7 @@ function renderFolha() {
         <thead>
           <tr>
             <th>Nome</th>
-            ${cols().map(c => `<th class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.k === 'inss' ? ' title="Em branco = automático"' : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
+            ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.k === 'inss' ? ' title="Em branco = automático"' : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
             <th></th>
           </tr>
         </thead>
@@ -919,6 +947,24 @@ function renderFolha() {
   const tbody = document.getElementById('tbody');
   const visiveis = filtro ? list.filter(r => recebe(r, filtro)) : list;
   visiveis.forEach((r, i) => tbody.appendChild(rowEl(r, i + 1)));
+  // arrastar o título da coluna para mudar a posição
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.ondragstart = e => { e.dataTransfer.setData('text/col', th.dataset.col); e.dataTransfer.effectAllowed = 'move'; th.classList.add('arrastando'); };
+    th.ondragend = () => th.classList.remove('arrastando');
+    th.ondragover = e => {
+      if (!e.dataTransfer.types.includes('text/col')) return;
+      e.preventDefault();
+      const depois = e.offsetX > th.offsetWidth / 2;
+      th.classList.toggle('drop-antes', !depois); th.classList.toggle('drop-depois', depois);
+    };
+    th.ondragleave = () => th.classList.remove('drop-antes', 'drop-depois');
+    th.ondrop = e => {
+      e.preventDefault();
+      th.classList.remove('drop-antes', 'drop-depois');
+      const k = e.dataTransfer.getData('text/col');
+      if (k && k !== th.dataset.col) moverColuna(k, th.dataset.col, e.offsetX > th.offsetWidth / 2);
+    };
+  });
   document.querySelectorAll('th[data-filtro]').forEach(th => {
     th.classList.add('filt');
     th.classList.toggle('on', th.dataset.filtro === filtro);
@@ -988,8 +1034,12 @@ function buildPrint() {
         return td(val, CLS[col.k] || '', marca(col.k));
       }).join('')}</tr>`;
   }).join('');
-  const grupos = [['p', 'Proventos', 'gp'], ['d', 'Descontos', 'gd'], ['i', 'Informativo', 'gi'], ['r', 'Resultado', 'gr']]
-    .map(([g, nome, cls]) => [cs.filter(c => c.g === g).length, nome, cls]).filter(([n]) => n);
+  const GN = { p: ['Proventos', 'gp'], d: ['Descontos', 'gd'], i: ['Informativo', 'gi'], r: ['Resultado', 'gr'] };
+  const grupos = [];
+  cs.forEach(c => {
+    const ult = grupos[grupos.length - 1];
+    if (ult && ult.g === c.g) ult[0]++; else grupos.push(Object.assign([1, ...GN[c.g]], { g: c.g }));
+  });
   const st = STATUS_LABEL[statusOf(mes)];
   const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   document.getElementById('printArea').innerHTML = `
@@ -1156,6 +1206,9 @@ function abrirColunas() {
   const lista = todasColunas();
   $('colList').innerHTML = lista.map(c => `
     <div class="row col-row" data-k="${c.k}">
+      <span class="alca" title="Arraste para mudar a posição">⠿</span>
+      <button type="button" class="ghost seta" data-up title="Subir">▲</button>
+      <button type="button" class="ghost seta" data-down title="Descer">▼</button>
       <input type="checkbox" data-vis title="Mostrar coluna"${c.oculta ? '' : ' checked'}${c.fixa ? ' disabled' : ''}>
       <input data-nome value="${esc(c.nome)}" placeholder="${esc(c.padrao || '')}">
       ${c.extra
@@ -1168,17 +1221,48 @@ function abrirColunas() {
     if (!confirm(`Remover a coluna "${row.querySelector('[data-nome]').value}"? Os valores lançados nela deixam de contar na folha.`)) return;
     row.remove();
   });
+  // arrastar pela alça (mouse ou dedo) e setas ▲▼
+  $('colList').querySelectorAll('.col-row').forEach(row => {
+    const alca = row.querySelector('.alca');
+    alca.onpointerdown = e => {
+      e.preventDefault();
+      alca.setPointerCapture(e.pointerId);
+      row.classList.add('arrastando');
+      alca.onpointermove = ev => {
+        // perto da borda da lista: rola para continuar arrastando
+        const lista = $('colList'), lb = lista.getBoundingClientRect();
+        if (ev.clientY < lb.top + 30) lista.scrollTop -= 12;
+        else if (ev.clientY > lb.bottom - 30) lista.scrollTop += 12;
+        const alvo = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.col-row');
+        if (!alvo || alvo === row || alvo.parentNode !== row.parentNode) return;
+        const box = alvo.getBoundingClientRect();
+        row.parentNode.insertBefore(row, ev.clientY > box.top + box.height / 2 ? alvo.nextSibling : alvo);
+      };
+      alca.onpointerup = alca.onpointercancel = () => {
+        row.classList.remove('arrastando');
+        alca.onpointermove = alca.onpointerup = alca.onpointercancel = null;
+      };
+    };
+    row.querySelector('[data-up]').onclick = () => { const p = row.previousElementSibling; if (p) row.parentNode.insertBefore(row, p); };
+    row.querySelector('[data-down]').onclick = () => { const n = row.nextElementSibling; if (n) row.parentNode.insertBefore(n, row); };
+  });
   $('colNovaNome').value = '';
-  $('dlgCols').showModal();
+  if (!$('dlgCols').open) $('dlgCols').showModal();
 }
 $('colNovaForm').onsubmit = e => {
   e.preventDefault();
   const nome = $('colNovaNome').value.trim();
   if (!nome) return;
-  state.config.colExtras = [...extras(), { k: 'x_' + uid(), nome, tipo: $('colNovaTipo').value }];
+  aplicarColunas(); // guarda o que já foi mexido no painel (ordem, nomes)
+  const k = 'x_' + uid();
+  state.config.colExtras = [...extras(), { k, nome, tipo: $('colNovaTipo').value }];
   save(); render(); abrirColunas();
+  // destaca a nova coluna para arrastar até a posição desejada
+  const row = $('colList').querySelector(`[data-k="${k}"]`);
+  row.classList.add('nova'); row.scrollIntoView({ block: 'nearest' });
 };
-$('colSalvar').onclick = () => {
+$('colSalvar').onclick = () => { aplicarColunas(); $('dlgCols').close(); render(); };
+function aplicarColunas() {
   const nomes = {}, ocultas = {}, novos = [];
   $('colList').querySelectorAll('.col-row').forEach(row => {
     const k = row.dataset.k, nome = row.querySelector('[data-nome]').value.trim();
@@ -1194,9 +1278,10 @@ $('colSalvar').onclick = () => {
   state.config.colNomes = nomes;
   state.config.colOcultas = ocultas;
   state.config.colExtras = novos;
+  state.config.colOrdem = [...$('colList').querySelectorAll('.col-row')].map(row => row.dataset.k);
   if (filtro && !cols().some(c => c.k === filtro)) filtro = null;
-  save(); $('dlgCols').close(); render();
-};
+  save();
+}
 
 // ---------- comentários nos valores ----------
 let notaAlvo = null;

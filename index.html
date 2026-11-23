@@ -79,6 +79,13 @@
   #sync.err::before { background: var(--neg); }
 
   main { padding: 24px; max-width: 1700px; margin: 0 auto; }
+  /* folha e 13º: a tabela rola junto com a página (sem quadro com rolagem própria) */
+  body { padding-top: var(--topH, 62px); }
+  .top { position: fixed !important; top: 0; left: 0; right: 0; }
+  main.largo { max-width: none; width: max-content; min-width: 100%; margin: 0; }
+  main.largo > :not(.wrap) { position: sticky; left: 24px; max-width: calc(100vw - 48px); box-sizing: border-box; }
+  .topscroll { display: none !important; }
+  main.largo > .wrap { width: fit-content; min-width: min(100%, calc(100vw - 48px)); }
   .muted { color: var(--muted); }
 
   /* ---------- status ---------- */
@@ -133,7 +140,7 @@
   .topscroll::-webkit-scrollbar { height: 12px; }
   .topscroll::-webkit-scrollbar-track { background: var(--hl); border-radius: 6px; }
   .topscroll::-webkit-scrollbar-thumb { background: var(--lav-d); opacity: .6; border-radius: 6px; border: 3px solid var(--hl); }
-  .wrap { overflow: auto; max-height: calc(100vh - 90px); background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  .wrap { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
   table { border-collapse: separate; border-spacing: 0; }
   th, td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
   th { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
@@ -187,7 +194,7 @@
   .col-tag { font-size: 11px; color: var(--muted); width: 70px; text-align: center; }
   th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); z-index: 1; }
   th:first-child { background: var(--hl); z-index: 4; }
-  thead th { position: sticky; top: 0; z-index: 3; box-shadow: inset 0 -1px 0 var(--line); }
+  thead th { position: sticky; top: var(--topH, 62px); z-index: 3; box-shadow: inset 0 -1px 0 var(--line); }
   tfoot td { position: sticky; bottom: 0; z-index: 2; box-shadow: inset 0 1px 0 var(--line); }
   tfoot td:first-child { z-index: 3; }
   th.c-liq, td.c-liq { background: var(--lav); }
@@ -246,7 +253,7 @@
   #printArea { display: none; }
   @media print {
     @page { size: A4 landscape; margin: 7mm; }
-    body { background: #fff !important; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { padding-top: 0 !important; background: #fff !important; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body > *:not(#printArea) { display: none !important; }
     #printArea { display: block; font: 7.6px/1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     .p-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;
@@ -865,7 +872,9 @@ function render() {
   nf.textContent = 'Folha · ' + nomeMes(mes);
   $('nav13').classList.toggle('on', view === '13');
   $('nav13').href = '#/13/' + ano;
+  app.classList.toggle('largo', view !== 'cal');
   if (view === 'cal') renderCal(); else if (view === '13') render13(); else renderFolha();
+  ajustaTopo();
 }
 
 // ---------- 13º salário ----------
@@ -1091,6 +1100,12 @@ function cartao13() {
   </div>`;
 }
 
+// altura da barra fixa do topo (o cabeçalho da tabela gruda logo abaixo dela)
+function ajustaTopo() {
+  document.documentElement.style.setProperty('--topH', document.querySelector('.top').offsetHeight + 'px');
+}
+window.addEventListener('resize', ajustaTopo);
+
 // ---------- calendário ----------
 function renderCal() {
   const hoje = currentMonth();
@@ -1252,8 +1267,8 @@ function renderFolha() {
     const idx = [...th.parentNode.children].indexOf(th);
     tbody.querySelectorAll('tr').forEach(tr => tr.children[idx].classList.add('fcol'));
     requestAnimationFrame(() => {
-      const wrap = $('wrap');
-      wrap.scrollLeft = Math.max(0, th.offsetLeft - wrap.clientWidth / 2 + th.offsetWidth / 2);
+      const box = th.getBoundingClientRect();
+      window.scrollBy({ left: box.left - window.innerWidth / 2 + box.width / 2 });
     });
   }
 

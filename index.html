@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>try { var t = localStorage.getItem('folha-tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Folha de Pagamento</title>
@@ -14,15 +15,27 @@
     --pink: #fbe1e7; --pink-d: #b0435c; --ok: #c6ecd8;
     --neg: #c0445a; --shadow: 0 1px 2px rgba(60,50,80,.05), 0 4px 14px rgba(60,50,80,.05);
   }
+  :root { color-scheme: light dark; }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  :root[data-theme="dark"] {
+    --bg: #1c1b20; --card: #25242b; --fg: #ece9f1; --muted: #9a95a3; --line: #34323b; --hl: #2b2a31;
+    --lav: #352f4a; --lav-d: #c7b8ff;
+    --mint: #233d34; --mint-d: #8fdcb6;
+    --peach: #44331f; --peach-d: #ffc194;
+    --sky: #233246; --sky-d: #a8c8f2;
+    --pink: #44262f; --pink-d: #f3a6b8; --ok: #2b5a45;
+    --neg: #ff8a9b; --shadow: none;
+  }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1b20; --card: #25242b; --fg: #ece9f1; --muted: #9a95a3; --line: #34323b; --hl: #2b2a31;
-      --lav: #352f4a; --lav-d: #c7b8ff;
-      --mint: #233d34; --mint-d: #8fdcb6;
-      --peach: #44331f; --peach-d: #ffc194;
-      --sky: #233246; --sky-d: #a8c8f2;
-      --pink: #44262f; --pink-d: #f3a6b8; --ok: #2b5a45;
-      --neg: #ff8a9b; --shadow: none;
+    :root:not([data-theme="light"]) {
+    --bg: #1c1b20; --card: #25242b; --fg: #ece9f1; --muted: #9a95a3; --line: #34323b; --hl: #2b2a31;
+    --lav: #352f4a; --lav-d: #c7b8ff;
+    --mint: #233d34; --mint-d: #8fdcb6;
+    --peach: #44331f; --peach-d: #ffc194;
+    --sky: #233246; --sky-d: #a8c8f2;
+    --pink: #44262f; --pink-d: #f3a6b8; --ok: #2b5a45;
+    --neg: #ff8a9b; --shadow: none;
     }
   }
   * { box-sizing: border-box; }
@@ -298,6 +311,7 @@
     .p-tab tr { page-break-inside: avoid; }
     .p-tab thead { display: table-header-group; }
     .p-tab tfoot { display: table-footer-group; }
+    .p-quebra { break-after: page; page-break-after: always; height: 0; }
     .p-foot { margin-top: 5px; color: #888; font-size: 7px; }
     .p-tab .gi { background: #f3f1ee; }
     .p-tab sup { color: #e8952f; font-weight: 700; font-size: 6px; }
@@ -320,6 +334,7 @@
   <select id="empSel" title="Empresa"></select>
   <button class="ghost" id="btnEmp" title="Gerenciar empresas">Empresas</button>
   <span id="sync"></span>
+  <button class="ghost icon" id="btnTema" title="Alternar modo claro / escuro"></button>
   <button class="ghost icon" id="btnConfig" title="Configurações">⚙︎</button>
 </div>
 
@@ -1286,8 +1301,9 @@ $('col13NovaForm').onsubmit = e => {
 };
 $('col13Salvar').onclick = () => { aplicarColunas13(); $('dlgCols13').close(); render(); };
 
-function buildPrint13() {
+function buildPrint13(anexar) {
   const d = dados13(ano), lista = calc13(ano), cs = cols13();
+  if (anexar && !lista.length) return;
   const v = n => n ? brl(n).replace(/^R\$\s?/, '') : '–';
   const CLS = { total: 'liq', p1: 'if', p2: 'ct' };
   const t = {};
@@ -1297,7 +1313,7 @@ function buildPrint13() {
   const valor = (c, x) => c.tipo === 'data' ? (fmtData(x.f.admissao) || '–')
     : c.tipo === 'avos' ? `${x.avos}/12`
     : v(c.extra ? (x.f[c.k] || 0) : x.v[c.k]) + (c.pago && x.f['pago' + c.pago] ? ' ✓' : '');
-  $('printArea').innerHTML = `
+  $('printArea').innerHTML = (anexar ? $('printArea').innerHTML + '<div class="p-quebra"></div>' : '') + `
     <div class="p-head">
       <div><h1 style="display:inline">${esc(E().nome)} — 13º salário ${ano}</h1></div>
       <small>${lista.length} funcionários · valores em R$ · gerado em ${agora}</small>
@@ -1334,6 +1350,21 @@ function cartao13() {
       <span>2ª ${fmtData(d.datas.p2).slice(0, 5)}: ${brl(tot.p2)} · ${pg(2)}/${lista.length}</span></div>
   </div>`;
 }
+
+// ---------- tema claro / escuro ----------
+const escuroAgora = () => {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+};
+function pintaBotaoTema() { $('btnTema').textContent = escuroAgora() ? '☀' : '☾'; $('btnTema').title = escuroAgora() ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'; }
+$('btnTema').onclick = () => {
+  const novo = escuroAgora() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = novo;
+  try { localStorage.setItem('folha-tema', novo); } catch (e) {}
+  pintaBotaoTema();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pintaBotaoTema);
+pintaBotaoTema();
 
 // altura da barra fixa do topo (o cabeçalho da tabela gruda logo abaixo dela)
 function ajustaTopo() {
@@ -1439,6 +1470,7 @@ function renderFolha() {
         <button id="btnCopiarVal" title="Preenche os campos vazios com os valores do mês anterior">Copiar valores do mês anterior</button>
         <button id="btnCols" title="Editar, adicionar ou remover colunas">Colunas</button>
         <button id="btnCsv">Exportar CSV</button>
+        <label class="chk-media" title="Acrescenta uma página com o 13º salário deste ano ao PDF"><input type="checkbox" id="pdf13"> Incluir 13º no PDF</label>
         <button id="btnPrint">Imprimir / PDF</button>
       </div>
     </div>
@@ -1523,6 +1555,8 @@ function renderFolha() {
     document.getElementById('novoNome').value = '';
     document.getElementById('dlgNovo').showModal();
   };
+  $('pdf13').checked = incluir13();
+  $('pdf13').onchange = e => { try { localStorage.setItem('folha-pdf13', e.target.checked ? '1' : '0'); } catch (err) {} };
   document.getElementById('btnPrint').onclick = () => { buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
   $('btnCopiarVal').onclick = copiarValores;
@@ -1532,6 +1566,7 @@ function renderFolha() {
 }
 
 // ---------- versão para impressão / PDF ----------
+const incluir13 = () => { try { return localStorage.getItem('folha-pdf13') === '1'; } catch (e) { return false; } };
 function buildPrint() {
   const list = rows().slice().sort(byName);
   const t = totals(list);
@@ -1589,6 +1624,7 @@ function buildPrint() {
     ${notas.length ? `<div class="p-notas"><b>Observações</b>${notas.map((n, i) =>
       `<div><sup>${i + 1}</sup> ${esc(n.nome)} — ${esc(n.col)}: ${esc(n.tx)}</div>`).join('')}</div>` : ''}
     <div class="p-foot">${esc(formulaTxt())} · “–” = sem valor</div>`;
+  if (incluir13()) buildPrint13(true);
 }
 window.addEventListener('beforeprint', () => { if (view === 'folha') buildPrint(); else if (view === '13') buildPrint13(); });
 

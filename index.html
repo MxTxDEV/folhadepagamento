@@ -504,6 +504,7 @@
     <input id="col13NovaNome" class="full" placeholder="Nome da coluna (ex.: Adiantamento de 13º)" required>
     <select id="col13NovaTipo" style="width:260px">
       <option value="soma">➕ Soma ao 13º (entra no INSS)</option>
+      <option value="somaP1">➕ Soma na 1ª parcela (fora do 13º e do INSS)</option>
       <option value="somaP2">➕ Soma na 2ª parcela (fora do INSS)</option>
       <option value="desc" selected>➖ Desconta da 2ª parcela</option>
       <option value="info">○ Não soma nem subtrai</option>
@@ -817,6 +818,7 @@ function parse(v) {
 const brl = n => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const num = n => n == null ? '' : n.toLocaleString('pt-BR', { maximumFractionDigits: 2, useGrouping: false });
 const r2 = n => Math.round(n * 100) / 100;
+const r2e = n => Math.round(n * 100 + 1e-6) / 100; // arredonda meio centavo para cima
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const $ = id => document.getElementById(id);
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -1037,6 +1039,7 @@ const COLS13_BASE = [
   { k: 'base', nome: 'Base do 13º', tipo: 'din', dica: 'Remuneração usada no cálculo' },
   { k: 'total', nome: '13º total', tipo: 'din', cls: 'c-liq' },
   { k: 'p1', nome: '1ª parcela', tipo: 'din', cls: 'c-if', pago: 1 },
+  { k: 'liq1', nome: 'A pagar na 1ª parcela', tipo: 'din', cls: 'c-conta', calc: true, dica: '1ª parcela + ajuda alimentação (média) + extras da 1ª parcela — é o valor do contracheque' },
   { k: 'inss', nome: 'INSS', tipo: 'din', dica: 'INSS sobre o 13º inteiro' },
   { k: 'p2', nome: '2ª parcela', tipo: 'din', cls: 'c-conta', pago: 2 },
   { k: 'recebido', nome: 'Total recebido (1ª + 2ª)', tipo: 'din', cls: 'c-liq', calc: true, dica: 'Soma das duas parcelas' },
@@ -1045,11 +1048,12 @@ const COLS13_BASE = [
 const TABELAS13 = [['t1', '1ª parcela'], ['t2', '2ª parcela'], ['tot', 'Total do 13º']];
 const TABS_PADRAO = {
   admissao: ['t1'], avos: ['t1'], salario: ['t1'], media: ['t1'], base: ['t1'],
-  total: ['t1', 't2', 'tot'], p1: ['t1', 't2', 'tot'], inss: ['t2', 'tot'], p2: ['t2', 'tot'], recebido: ['tot'],
+  total: ['t1', 't2', 'tot'], p1: ['t1', 't2', 'tot'], liq1: ['t1'], inss: ['t2', 'tot'], p2: ['t2', 'tot'], recebido: ['tot'],
 };
-const tabsExtraPadrao = papel => papel === 'soma' ? ['t1'] : papel === 'info' ? ['tot'] : ['t2'];
+const tabsExtraPadrao = papel => papel === 'soma' || papel === 'somaP1' ? ['t1'] : papel === 'info' ? ['tot'] : ['t2'];
 const TIPOS13 = {
   soma: '➕ Soma ao 13º (entra no INSS)',
+  somaP1: '➕ Soma na 1ª parcela (fora do 13º e do INSS)',
   somaP2: '➕ Soma na 2ª parcela (fora do INSS)',
   desc: '➖ Desconta da 2ª parcela',
   info: '○ Não soma nem subtrai',
@@ -1072,7 +1076,8 @@ function todasCols13() {
   base.forEach(b => {
     out.push(b);
     if (b.k === 'base') ex.filter(x => x.papel === 'soma').forEach(x => out.push(x));
-    if (b.k === 'inss') ex.filter(x => x.papel !== 'soma').forEach(x => out.push(x));
+    if (b.k === 'p1') ex.filter(x => x.papel === 'somaP1').forEach(x => out.push(x));
+    if (b.k === 'inss') ex.filter(x => x.papel !== 'soma' && x.papel !== 'somaP1').forEach(x => out.push(x));
   });
   return ordenar(out, c.ordem);
 }
@@ -1100,13 +1105,23 @@ function calc13(a) {
   // incluídos à mão (não estão nas folhas do ano)
   (d.extras || []).forEach(nome => { const k = chave(nome); if (!pessoas[k]) pessoas[k] = { nome, linhas: [], manual: true }; });
   const varCols = todasColunas().filter(c => c.tipo === 'provento' && c.k !== 'salario' && c.k !== 'bonif');
+  const semCols = todasColunas().filter(c => c.tipo === 'proventoSem');
   const ov = (f, k, auto) => f[k] != null ? f[k] : auto;
   return Object.entries(pessoas).filter(([k]) => !(d.func[k] || {}).excluido).map(([k, p]) => {
     const f = d.func[k] || {};
-    const ult = p.linhas.length ? p.linhas[p.linhas.length - 1].r : {};
+    // só contam os meses já lançados (com salário) — meses futuros em branco não entram na média nem no salário-base
+    const comSal = p.linhas.filter(({ r }) => (r.salario || 0) > 0);
+    const L = comSal.length ? comSal : p.linhas, nL = L.length;
+    const ult = nL ? L[nL - 1].r : {};
     const salarioAuto = (ult.salario || 0) + (ult.bonif || 0);
-    const somaVar = p.linhas.reduce((s, { m, r }) => { const c = calc(r, m); return s + varCols.reduce((t, col) => t + valorCol(col, r, c), 0); }, 0);
-    const mediaAuto = d.media && p.linhas.length ? r2(somaVar / p.linhas.length) : 0;
+    // horas extras: média das horas × valor da hora (sem arredondar mês a mês)
+    const mediaDe = col => !nL ? 0 : L.reduce((t, { m, r }) => t + (col.k === 'heSem' || col.k === 'heSdf'
+      ? (r[col.k] || 0) * valorHora(r.salario, (r.cfg || {})[col.k] || state.config[col.k]) : valorCol(col, r, calc(r, m))), 0) / nL;
+    const horasDe = col => col.un === 'h' && nL ? L.reduce((t, { r }) => t + (r[col.k] || 0), 0) / nL : null;
+    const cat = col => ({ col, media: mediaDe(col), horas: horasDe(col) });
+    const cats = d.media ? varCols.map(cat).filter(c => c.media) : [];
+    const catsSem = d.media ? semCols.map(cat).filter(c => c.media) : [];
+    const mediaAuto = r2(cats.reduce((t, c) => t + c.media, 0));
     const avosAuto = avosAdmissao(f.admissao, a);
     const avos = ov(f, 'avos', avosAuto);
     const salario = ov(f, 'salario', salarioAuto);
@@ -1116,17 +1131,20 @@ function calc13(a) {
     const soma = (papel) => extras13().filter(x => x.tipo === papel).reduce((t, x) => t + (f[x.k] || 0), 0);
     const totalAuto = r2(base / 12 * avos + soma('soma'));
     const total = ov(f, 'total', totalAuto);
-    // 1ª parcela = metade do 13º sobre o salário (sem a média de variáveis, que entra na 2ª parcela)
-    const baseP1 = ov(f, 'base', salario);
-    const p1Auto = r2((r2(baseP1 / 12 * avos) + soma('soma')) / 2);
+    // 1ª parcela = metade do 13º, item a item (salário, cada média de HE/DSR…), como no contracheque da contabilidade
+    const metade = v => r2e(v / 12 * avos / 2);
+    const itemizado = f.media == null && f.base == null && f.total == null && f.p1 == null;
+    const p1Auto = itemizado ? r2e(metade(salario) + cats.reduce((t, c) => t + metade(c.media), 0) + soma('soma') / 2) : r2(total / 2);
     const p1 = ov(f, 'p1', p1Auto);
+    const ajudaP1 = catsSem.reduce((t, c) => t + metade(c.media), 0);
+    const liq1 = r2(p1 + ajudaP1 + soma('somaP1'));
     const inssAuto = calcInss(total);
     const inss = ov(f, 'inss', inssAuto);
     const p2Auto = r2(total - inss - p1 + soma('somaP2') - soma('desc'));
     const p2 = ov(f, 'p2', p2Auto);
-    const v = { salario, media, base, total, p1, inss, p2, avos, recebido: r2(p1 + p2) };
+    const v = { salario, media, base, total, p1, liq1, inss, p2, avos, recebido: r2(p1 + p2) };
     extras13().forEach(x => { v[x.k] = f[x.k] || 0; });
-    return { k, nome: p.nome, manual: !!p.manual, f, v, avosAuto, salario, media, avos, base, total, p1, inss, p2, meses: p.linhas.length };
+    return { k, nome: p.nome, manual: !!p.manual, f, v, avosAuto, salario, media, avos, base, total, p1, liq1, inss, p2, meses: p.linhas.length, itemizado, cats, catsSem, metade };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -1180,8 +1198,8 @@ function render13() {
       return `<td class="${col.cls || ''}" data-pg="${col.pago}"><label class="pgl"><input type="checkbox" data-pago="${col.pago}" title="Marcar ${col.pago}ª parcela como paga">${input}</label></td>`;
     return `<td class="${col.cls || ''}">${input}</td>`;
   };
-  const subtitulo = t => t === 't1' ? `Metade do salário (sem média), sem descontos · pagar até <b>${fmtData(d.datas.p1)}</b>`
-    : t === 't2' ? `13º (com a média) − INSS − 1ª parcela · pagar até <b>${fmtData(d.datas.p2)}</b>` : 'Resumo final das duas parcelas';
+  const subtitulo = t => t === 't1' ? `Metade do 13º, sem descontos · pagar até <b>${fmtData(d.datas.p1)}</b>`
+    : t === 't2' ? `13º − INSS − 1ª parcela · pagar até <b>${fmtData(d.datas.p2)}</b>` : 'Resumo final das duas parcelas';
   const tabela = ([t, titulo]) => {
     const cs = cols13(t);
     if (!cs.length) return '';
@@ -1229,7 +1247,7 @@ function render13() {
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
-      Três tabelas: <b>1ª parcela</b> (metade do salário, sem descontos e sem a média), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
+      Três tabelas: <b>1ª parcela</b> (metade do 13º, sem descontos), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
       Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa do último mês de ${ano} na folha${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}. Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês).<br>
       <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja embaixo) e apague para voltar ao automático. IRRF não é calculado.<br>
       Use "Colunas" para escolher em quais tabelas cada coluna aparece, renomear, reordenar (também dá para arrastar o título) ou criar colunas.
@@ -1358,7 +1376,7 @@ function pinta13(lista) {
   set('[data-parc=t] .parc-v', brl(soma('total')));
   set('[data-parc=t] .parc-av', `${lista.length} funcionários · INSS ${brl(soma('inss'))}`);
   [1, 2].forEach(n => {
-    set(`[data-parc="${n}"] .parc-v`, brl(soma('p' + n)));
+    set(`[data-parc="${n}"] .parc-v`, brl(soma(n === 1 ? 'liq1' : 'p2')));
     set(`[data-parc="${n}"] .parc-pg`, `${pg(n)} de ${lista.length} pagos`);
     const card = app.querySelector(`[data-parc="${n}"]`);
     if (card) card.classList.toggle('ok', lista.length > 0 && pg(n) === lista.length);
@@ -2253,24 +2271,21 @@ function holerite13Html(x, n) {
   const mesP = (d.datas['p' + n] || `${ano}-${n === 1 ? 11 : 12}-30`).slice(0, 7), [y, mo] = mesP.split('-').map(Number);
   const ultimo = new Date(y, mo, 0).getDate();
   const venc = [], desc = [];
-  let baseFgts = 0, saldoBase = x.salario;
+  let baseFgts = 0; const saldoBase = x.salario;
   const avos = pad2(x.avos) + ',00';
   if (n === 1) {
-    venc.push(['1ª Parcela Décimo Terceiro Salário', avos, x.p1]); baseFgts += x.p1;
-    // verbas do mês da parcela (HE, ajuda, DSR…) que vêm da folha mensal — o salário não entra
-    const linha = d.verbasMes !== false && (E().meses[mesP] || []).find(r => chave(r.nome) === x.k);
-    if (linha) {
-      const c = calc(linha, mesP);
-      todasColunas().forEach(col => {
-        if (col.tipo !== 'provento' && col.tipo !== 'proventoSem') return;
-        if (col.k === 'salario' || col.k === 'bonif') return;
-        const val = valorCol(col, linha, c);
-        if (!val) return;
-        venc.push([col.nome, refHE(linha, col), val]);
-        if (col.tipo === 'provento') baseFgts += val;
-      });
-      saldoBase = linha.salario || x.salario;
+    // salário + média de cada verba variável (horas extras, DSR…), tudo ÷ 12 × avos ÷ 2; ajuda e extras da 1ª parcela ficam fora do FGTS/INSS
+    const metade = x.metade;
+    if (x.itemizado) {
+      const sal = metade(x.salario);
+      venc.push(['1ª Parcela Décimo Terceiro Salário', avos, sal]); baseFgts += sal;
+      x.cats.forEach(c => { const v = metade(c.media); if (v) { venc.push([c.col.nome, c.horas != null ? fmtHM(c.horas) : '', v]); baseFgts += v; } });
+      extras13().filter(e => e.tipo === 'soma' && x.f[e.k]).forEach(e => { const v = r2e(x.f[e.k] / 2); venc.push([e.nome, '', v]); baseFgts += v; });
+    } else {
+      venc.push(['1ª Parcela Décimo Terceiro Salário', avos, x.p1]); baseFgts += x.p1;
     }
+    x.catsSem.forEach(c => { const v = metade(c.media); if (v) venc.push([c.col.nome, c.horas != null ? fmtHM(c.horas) : '', v]); });
+    extras13().filter(e => e.tipo === 'somaP1' && x.f[e.k]).forEach(e => { venc.push([e.nome, '', x.f[e.k]]); baseFgts += x.f[e.k]; });
   } else {
     const extraP2 = soma('somaP2'), extraDesc = soma('desc');
     const bruto2 = r2(x.p2 + x.inss - extraP2 + extraDesc);
@@ -2302,10 +2317,7 @@ function abrirHolerite13(k, n) {
   const mostra = () => {
     const x = calc13(ano).find(y => y.k === k);
     if (!x) return;
-    const d = dados13(ano), marc = d.verbasMes !== false;
-    mostraHolerite(holerite13Html(x, n), n === 1 ? `<label class="chk-media"><input type="checkbox" id="holVerbas"${marc ? ' checked' : ''}> Incluir as verbas do mês da folha (HE, ajuda, DSR…)</label>` : '');
-    const cb = $('holVerbas');
-    if (cb) cb.onchange = () => { const dd = structuredClone(dados13(ano)); dd.verbasMes = cb.checked; grava13(ano, dd); mostra(); };
+    mostraHolerite(holerite13Html(x, n));
   };
   mostra();
 }

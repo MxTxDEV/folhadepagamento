@@ -174,6 +174,8 @@
   .parc-av { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .chk-media { font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--muted); }
   .t13 td input[type=date] { text-align: left; }
+  .nm13 { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .t13 tr.ok td.pg, .t13 tr.ok td { background: var(--ok) !important; }
   .t13 th small { text-transform: none; }
   .pgl { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; justify-content: flex-end; width: 100%; }
   .pgl input { width: 15px !important; accent-color: var(--mint-d); }
@@ -976,7 +978,7 @@ function render13() {
       </div>
     </div>
     <div class="parcs">
-      <div class="parc tot"><div class="parc-t">13º total</div><div class="parc-v">${brl(tot.total)}</div><div class="parc-av">${lista.length} funcionários · INSS ${brl(tot.inss)}</div></div>
+      <div class="parc tot"><div class="parc-t">13º total</div><div class="parc-v">${brl(tot.total)}</div><div class="parc-av">${lista.length} funcionários · INSS ${brl(tot.inss)}</div><div class="parc-av">${lista.filter(x => x.f.ok).length} de ${lista.length} conferidos</div></div>
       ${parcela(1, tot.p1, tot.pg1)}
       ${parcela(2, tot.p2, tot.pg2)}
     </div>
@@ -990,8 +992,8 @@ function render13() {
           <th class="c-if">1ª parcela<br><small>${fmtData(d.datas.p1)}</small></th><th>INSS</th><th class="c-conta">2ª parcela<br><small>${fmtData(d.datas.p2)}</small></th><th></th>
         </tr></thead>
         <tbody>${lista.map(x => `
-          <tr data-k="${esc(x.k)}">
-            <td>${esc(x.nome)}<span class="sub" style="text-align:left">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span></td>
+          <tr data-k="${esc(x.k)}"${x.f.ok ? ' class="ok"' : ''}>
+            <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida"${x.f.ok ? ' checked' : ''}><span>${esc(x.nome)}</span></label><span class="sub" style="text-align:left;padding-left:22px">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span></td>
             <td><input type="date" data-f="admissao" value="${x.f.admissao || ''}" style="width:130px"></td>
             <td><input data-f="avos" inputmode="numeric" value="${x.f.avos != null ? x.f.avos : ''}" placeholder="${x.avosAuto}" style="width:48px">/12</td>
             <td class="calc">${brl(x.salario)}</td>
@@ -1025,6 +1027,7 @@ function render13() {
       const f = dd.func[k] = { ...(dd.func[k] || {}) };
       if (valor == null || valor === '') delete f[campo]; else f[campo] = valor;
     });
+    tr.querySelector('[data-ok]').onchange = e => muda('ok', e.target.checked || null);
     tr.querySelector('[data-f=admissao]').onchange = e => muda('admissao', e.target.value);
     tr.querySelector('[data-f=avos]').onchange = e => { const n = parse(e.target.value); muda('avos', n == null ? null : Math.max(0, Math.min(12, Math.round(n)))); };
     tr.querySelector('[data-f=base]').onchange = e => muda('base', parse(e.target.value));

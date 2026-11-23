@@ -211,6 +211,7 @@
   .pill-ex { background: var(--hl); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 12px; }
   .pill-ex button { border: none; padding: 2px 8px; border-radius: 999px; background: var(--lav); color: var(--lav-d); }
   .lixo { font-size: 14px; }
+  .acoes13 { white-space: nowrap; }
   .card.c13 { border-color: var(--peach-d); }
   .card.c13 .mname { text-transform: none; }
   .t13 td.pg { background: var(--ok) !important; color: var(--mint-d); }
@@ -518,6 +519,7 @@
 <!-- contracheque -->
 <dialog id="dlgHol" style="width:min(780px,96vw)">
   <h2>Contracheque</h2>
+  <div id="holCtrl"></div>
   <div id="holBody" class="hol-prev"></div>
   <p class="hint">Montado com os valores da folha, no mesmo formato do contracheque da contabilidade. Para mudar o que aparece, ajuste a folha ou as colunas.</p>
   <div class="dlg-actions">
@@ -1114,7 +1116,9 @@ function calc13(a) {
     const soma = (papel) => extras13().filter(x => x.tipo === papel).reduce((t, x) => t + (f[x.k] || 0), 0);
     const totalAuto = r2(base / 12 * avos + soma('soma'));
     const total = ov(f, 'total', totalAuto);
-    const p1Auto = r2(total / 2);
+    // 1ª parcela = metade do 13º sobre o salário (sem a média de variáveis, que entra na 2ª parcela)
+    const baseP1 = ov(f, 'base', salario);
+    const p1Auto = r2((r2(baseP1 / 12 * avos) + soma('soma')) / 2);
     const p1 = ov(f, 'p1', p1Auto);
     const inssAuto = calcInss(total);
     const inss = ov(f, 'inss', inssAuto);
@@ -1176,8 +1180,8 @@ function render13() {
       return `<td class="${col.cls || ''}" data-pg="${col.pago}"><label class="pgl"><input type="checkbox" data-pago="${col.pago}" title="Marcar ${col.pago}ª parcela como paga">${input}</label></td>`;
     return `<td class="${col.cls || ''}">${input}</td>`;
   };
-  const subtitulo = t => t === 't1' ? `Metade do 13º, sem descontos · pagar até <b>${fmtData(d.datas.p1)}</b>`
-    : t === 't2' ? `13º − INSS − 1ª parcela · pagar até <b>${fmtData(d.datas.p2)}</b>` : 'Resumo final das duas parcelas';
+  const subtitulo = t => t === 't1' ? `Metade do salário (sem média), sem descontos · pagar até <b>${fmtData(d.datas.p1)}</b>`
+    : t === 't2' ? `13º (com a média) − INSS − 1ª parcela · pagar até <b>${fmtData(d.datas.p2)}</b>` : 'Resumo final das duas parcelas';
   const tabela = ([t, titulo]) => {
     const cs = cols13(t);
     if (!cs.length) return '';
@@ -1195,7 +1199,7 @@ function render13() {
             <tr data-k="${esc(x.k)}" data-t="${t}">
               <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida"><span>${esc(x.nome)}</span></label>${t === 't1' ? `<span class="sub" style="text-align:left;padding-left:22px">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span>` : ''}</td>
               ${cs.map(c => cel(c, x, t)).join('')}
-              <td><button class="del lixo" title="Tirar do 13º">🗑</button></td>
+              <td class="acoes13">${t === 't1' || t === 't2' ? `<button class="del holer13" title="Contracheque da ${t === 't1' ? 1 : 2}ª parcela">🧾</button>` : ''}<button class="del lixo" title="Tirar do 13º">🗑</button></td>
             </tr>`).join('')}</tbody>
           <tfoot><tr><td></td>${cs.map(c => `<td data-tot="${c.k}"></td>`).join('')}<td></td></tr></tfoot>
         </table>
@@ -1211,6 +1215,8 @@ function render13() {
         <label class="chk-media"><input type="checkbox" id="d13media"${d.media ? ' checked' : ''}> Incluir média de HE e bonificações variáveis</label>
         <button class="primary" id="d13Add">+ Funcionário</button>
         <button id="d13Cols" title="Editar, adicionar ou remover colunas">Colunas</button>
+        <button id="d13Hol1" title="Contracheque da 1ª parcela de todos, 2 por página">Contracheques 1ª</button>
+        <button id="d13Hol2" title="Contracheque da 2ª parcela de todos, 2 por página">Contracheques 2ª</button>
         <button id="d13Print">Imprimir / PDF</button>
       </div>
     </div>
@@ -1223,7 +1229,7 @@ function render13() {
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
-      Três tabelas: <b>1ª parcela</b> (metade do 13º, sem descontos), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
+      Três tabelas: <b>1ª parcela</b> (metade do salário, sem descontos e sem a média), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
       Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa do último mês de ${ano} na folha${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}. Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês).<br>
       <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja embaixo) e apague para voltar ao automático. IRRF não é calculado.<br>
       Use "Colunas" para escolher em quais tabelas cada coluna aparece, renomear, reordenar (também dá para arrastar o título) ou criar colunas.
@@ -1242,6 +1248,7 @@ function render13() {
   $('d13media').onchange = e => alterar(dd => { dd.media = e.target.checked; });
   $('d13Print').onclick = () => { printFixo = false; buildPrint13(); window.print(); };
   $('d13Cols').onclick = abrirColunas13;
+  [1, 2].forEach(n => $('d13Hol' + n).onclick = () => imprimirHtmls(calc13(ano).map(x => holerite13Html(x, n))));
   app.querySelectorAll('[data-data]').forEach(inp => inp.onchange = () => alterar(dd => { dd.datas[inp.dataset.data] = inp.value; }));
   app.querySelectorAll('th[data-col]').forEach(th => {
     th.ondragstart = e => { e.dataTransfer.setData('text/col13', th.dataset.col); e.dataTransfer.effectAllowed = 'move'; th.classList.add('arrastando'); };
@@ -1279,6 +1286,8 @@ function render13() {
       mudaF(k, campo, val);
       pinta();
     });
+    const hb = tr.querySelector('.holer13');
+    if (hb) hb.onclick = () => abrirHolerite13(k, t === 't1' ? 1 : 2);
     tr.querySelector('.lixo').onclick = () => {
       const x = calc13(ano).find(y => y.k === k);
       if (!confirm(`Tirar ${x.nome} do 13º de ${ano}? (dá para devolver depois)`)) return;
@@ -2183,59 +2192,130 @@ document.getElementById('delTodos').onclick = () => remover('todos');
 let printFixo = false; // impressão especial: não recriar o conteúdo ao imprimir
 const fmtHM = h => { const t = Math.round((h || 0) * 60); return String(Math.floor(t / 60)).padStart(3, '0') + ':' + String(t % 60).padStart(2, '0'); };
 const brl2 = n => (n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-function holeriteHtml(r, m = mes) {
-  const c = calc(r, m), [y, mo] = m.split('-').map(Number);
-  const ultimo = new Date(y, mo, 0).getDate(), p2 = n => String(n).padStart(2, '0');
-  const venc = [], desc = [];
-  const ref = col => col.k === 'salario' ? fmtHM(state.config.divisor || 220)
-    : col.k === 'heSem' || col.k === 'heSdf' ? fmtHM(r[col.k])
-    : col.k === 'diasTrab' || col.k === 'dias361' ? num(r[col.k]) : '';
-  if (c.inss) desc.push(['INSS Folha', '', c.inss]);
-  todasColunas().forEach(col => {
-    if (!col.tipo || col.tipo === 'info' || col.tipo === 'conta') return;
-    const val = valorCol(col, r, c);
-    if (!val) return;
-    (col.tipo === 'desconto' ? desc : venc).push([col.nome, ref(col), val]);
-  });
-  const totDesc = r2(c.proventos - c.liquido);
-  const n = Math.max(venc.length + desc.length, 8);
-  const todas = [...venc.map(l => ({ l, v: true })), ...desc.map(l => ({ l, v: false }))];
-  const corpo = todas.map(({ l, v }, i) => `<tr><td class="cod">${String(i + 1).padStart(3, '0')}</td><td>${esc(l[0])}</td><td class="ref">${l[1]}</td>
+const pad2 = n => String(n).padStart(2, '0');
+// monta o demonstrativo a partir de dados prontos (serve para o mês e para as parcelas do 13º)
+// o = { periodo, nome, funcao, venc:[[desc, ref, valor]], desc:[...], obs, proventos, descontos, liquido, saldoBase, baseInss, efet, baseFgts, fgts, extras:[[rótulo, valor]] }
+function holeriteLayout(o) {
+  const n = Math.max(o.venc.length + o.desc.length, 8);
+  const todas = [...o.venc.map(l => ({ l, v: true })), ...o.desc.map(l => ({ l, v: false }))];
+  const corpo = todas.map(({ l, v }, i) => `<tr><td class="cod">${String(i + 1).padStart(3, '0')}</td><td>${esc(l[0])}</td><td class="ref">${l[1] || ''}</td>
     <td class="vl">${v ? brl2(l[2]) : ''}</td><td class="vl">${v ? '' : brl2(l[2])}</td></tr>`).join('')
     + '<tr class="folga"><td></td><td></td><td></td><td></td><td></td></tr>'.repeat(Math.max(0, n - todas.length));
-  const efet = c.baseInss ? (c.inss / c.baseInss * 100) : 0;
   const emp = E();
   return `<div class="hol">
-    <div class="hol-top"><div><b>${esc(emp.nome)}</b><br>${esc(emp.info || '')}<br>${p2(1)}/${p2(mo)}/${y} a ${p2(ultimo)}/${p2(mo)}/${y}</div>
+    <div class="hol-top"><div><b>${esc(emp.nome)}</b><br>${esc(emp.info || '')}<br>${o.periodo}</div>
       <div class="hol-tit">Demonstrativo de Pagamento de Salário</div></div>
-    <div class="hol-func"><span>${esc(r.nome)}</span><span>${esc((r.cfg && r.cfg.funcao) || '')}</span></div>
+    <div class="hol-func"><span>${esc(o.nome)}</span><span>${esc(o.funcao || '')}</span></div>
     <table class="hol-tab"><thead><tr><th>Cód.</th><th>Descrição</th><th>Referência</th><th>Vencimentos</th><th>Descontos</th></tr></thead>
       <tbody>${corpo}</tbody>
       <tfoot>
-        <tr><td colspan="3" rowspan="2" class="obs">${c.dsrV ? `DSR: ${infoMes(m).dsrDias} dias de descanso ÷ ${infoMes(m).uteis} dias úteis` : ''}</td><td class="vl">${brl2(c.proventos)}</td><td class="vl">${brl2(totDesc)}</td></tr>
-        <tr><td class="liqt">Valor Líquido</td><td class="vl liq">${brl2(c.liquido)}</td></tr>
+        <tr><td colspan="3" rowspan="2" class="obs">${esc(o.obs || '')}</td><td class="vl">${brl2(o.proventos)}</td><td class="vl">${brl2(o.descontos)}</td></tr>
+        <tr><td class="liqt">Valor Líquido</td><td class="vl liq">${brl2(o.liquido)}</td></tr>
       </tfoot></table>
     <div class="hol-base">
-      <div><small>Saldo Base</small>${brl2(r.salario)}</div>
-      <div><small>Sal. Contr. INSS</small>${brl2(c.baseInss)} <i>${brl2(efet)}</i></div>
-      <div><small>Base Cál. FGTS</small>${brl2(c.baseInss)}</div>
-      <div><small>F.G.T.S do mês</small>${brl2(c.fgts)}</div>
-      ${r.ifood ? `<div><small>iFood Benefícios</small>${brl2(r.ifood)}</div><div><small>Valor na conta</small>${brl2(c.conta)}</div>` : ''}
+      <div><small>Saldo Base</small>${brl2(o.saldoBase)}</div>
+      <div><small>Sal. Contr. INSS</small>${brl2(o.baseInss)} <i>${brl2(o.efet)}</i></div>
+      <div><small>Base Cál. FGTS</small>${brl2(o.baseFgts)}</div>
+      <div><small>F.G.T.S do mês</small>${brl2(o.fgts)}</div>
+      ${(o.extras || []).map(([k, v]) => `<div><small>${esc(k)}</small>${brl2(v)}</div>`).join('')}
     </div>
     <div class="hol-ass">DECLARO TER RECEBIDO A IMPORTÂNCIA LÍQUIDA DISCRIMINADA NESTE RECIBO<br><br>
       <span>____/____/______</span><span class="linha"></span><br><span class="peq">DATA</span><span class="peq">ASSINATURA DO FUNCIONÁRIO</span></div>
   </div>`;
 }
-let holAtual = null;
-function abrirHolerite(r) {
-  holAtual = r;
-  $('holBody').innerHTML = holeriteHtml(r);
-  $('dlgHol').showModal();
+const refHE = (r, col) => col.k === 'salario' ? fmtHM(state.config.divisor || 220)
+  : col.k === 'heSem' || col.k === 'heSdf' ? fmtHM(r[col.k])
+  : col.k === 'diasTrab' || col.k === 'dias361' ? num(r[col.k]) : '';
+function holeriteHtml(r, m = mes) {
+  const c = calc(r, m), [y, mo] = m.split('-').map(Number);
+  const ultimo = new Date(y, mo, 0).getDate();
+  const venc = [], desc = [];
+  if (c.inss) desc.push(['INSS Folha', '', c.inss]);
+  todasColunas().forEach(col => {
+    if (!col.tipo || col.tipo === 'info' || col.tipo === 'conta') return;
+    const val = valorCol(col, r, c);
+    if (!val) return;
+    (col.tipo === 'desconto' ? desc : venc).push([col.nome, refHE(r, col), val]);
+  });
+  return holeriteLayout({
+    periodo: `${pad2(1)}/${pad2(mo)}/${y} a ${pad2(ultimo)}/${pad2(mo)}/${y}`,
+    nome: r.nome, funcao: r.cfg && r.cfg.funcao, venc, desc,
+    obs: c.dsrV ? `DSR: ${infoMes(m).dsrDias} dias de descanso ÷ ${infoMes(m).uteis} dias úteis` : '',
+    proventos: c.proventos, descontos: r2(c.proventos - c.liquido), liquido: c.liquido,
+    saldoBase: r.salario, baseInss: c.baseInss, efet: c.baseInss ? (c.inss / c.baseInss * 100) : 0,
+    baseFgts: c.baseInss, fgts: c.fgts,
+    extras: r.ifood ? [['iFood Benefícios', r.ifood], ['Valor na conta', c.conta]] : [],
+  });
 }
-$('holImprimir').onclick = () => imprimirHolerites([holAtual]);
+// contracheque de uma parcela do 13º (n = 1 ou 2)
+function holerite13Html(x, n) {
+  const d = dados13(ano), soma = papel => extras13().filter(e => e.tipo === papel).reduce((t, e) => t + (x.f[e.k] || 0), 0);
+  const mesP = (d.datas['p' + n] || `${ano}-${n === 1 ? 11 : 12}-30`).slice(0, 7), [y, mo] = mesP.split('-').map(Number);
+  const ultimo = new Date(y, mo, 0).getDate();
+  const venc = [], desc = [];
+  let baseFgts = 0, saldoBase = x.salario;
+  const avos = pad2(x.avos) + ',00';
+  if (n === 1) {
+    venc.push(['1ª Parcela Décimo Terceiro Salário', avos, x.p1]); baseFgts += x.p1;
+    // verbas do mês da parcela (HE, ajuda, DSR…) que vêm da folha mensal — o salário não entra
+    const linha = d.verbasMes !== false && (E().meses[mesP] || []).find(r => chave(r.nome) === x.k);
+    if (linha) {
+      const c = calc(linha, mesP);
+      todasColunas().forEach(col => {
+        if (col.tipo !== 'provento' && col.tipo !== 'proventoSem') return;
+        if (col.k === 'salario' || col.k === 'bonif') return;
+        const val = valorCol(col, linha, c);
+        if (!val) return;
+        venc.push([col.nome, refHE(linha, col), val]);
+        if (col.tipo === 'provento') baseFgts += val;
+      });
+      saldoBase = linha.salario || x.salario;
+    }
+  } else {
+    const extraP2 = soma('somaP2'), extraDesc = soma('desc');
+    const bruto2 = r2(x.p2 + x.inss - extraP2 + extraDesc);
+    venc.push(['2ª Parcela Décimo Terceiro Salário', avos, bruto2]); baseFgts += bruto2;
+    extras13().filter(e => e.tipo === 'somaP2' && x.f[e.k]).forEach(e => venc.push([e.nome, '', x.f[e.k]]));
+    if (x.inss) desc.push(['INSS 13º Salário', '', x.inss]);
+    extras13().filter(e => e.tipo === 'desc' && x.f[e.k]).forEach(e => desc.push([e.nome, '', x.f[e.k]]));
+  }
+  const proventos = r2(venc.reduce((t, l) => t + l[2], 0)), descontos = r2(desc.reduce((t, l) => t + l[2], 0));
+  const ultimaLinha = Object.keys(E().meses).sort().reverse().map(m => (E().meses[m] || []).find(r => chave(r.nome) === x.k)).find(Boolean);
+  return holeriteLayout({
+    periodo: `${pad2(1)}/${pad2(mo)}/${y} a ${pad2(ultimo)}/${pad2(mo)}/${y}`,
+    nome: x.nome, funcao: ultimaLinha && ultimaLinha.cfg && ultimaLinha.cfg.funcao, venc, desc,
+    obs: n === 1 ? '1ª parcela do 13º: sem INSS e sem IRRF (descontados na 2ª parcela)' : `13º total ${brl2(x.total)} − 1ª parcela ${brl2(x.p1)}`,
+    proventos, descontos, liquido: r2(proventos - descontos),
+    saldoBase, baseInss: n === 1 ? 0 : x.total, efet: n === 1 || !x.total ? 0 : x.inss / x.total * 100,
+    baseFgts, fgts: cent(baseFgts * 0.08),
+  });
+}
+let holHtml = '';
+function mostraHolerite(html, ctrl) {
+  holHtml = html;
+  $('holBody').innerHTML = html;
+  $('holCtrl').innerHTML = ctrl || '';
+  if (!$('dlgHol').open) $('dlgHol').showModal();
+}
+function abrirHolerite(r) { mostraHolerite(holeriteHtml(r)); }
+function abrirHolerite13(k, n) {
+  const mostra = () => {
+    const x = calc13(ano).find(y => y.k === k);
+    if (!x) return;
+    const d = dados13(ano), marc = d.verbasMes !== false;
+    mostraHolerite(holerite13Html(x, n), n === 1 ? `<label class="chk-media"><input type="checkbox" id="holVerbas"${marc ? ' checked' : ''}> Incluir as verbas do mês da folha (HE, ajuda, DSR…)</label>` : '');
+    const cb = $('holVerbas');
+    if (cb) cb.onchange = () => { const dd = structuredClone(dados13(ano)); dd.verbasMes = cb.checked; grava13(ano, dd); mostra(); };
+  };
+  mostra();
+}
+$('holImprimir').onclick = () => imprimirHtmls([holHtml]);
 function imprimirHolerites(lista) {
   if (!lista.length) return alert('Não há funcionários com valores nesta folha.');
-  $('printArea').innerHTML = `<div class="p-holes">${lista.map(r => holeriteHtml(r)).join('')}</div>`;
+  imprimirHtmls(lista.map(r => holeriteHtml(r)));
+}
+function imprimirHtmls(htmls) {
+  $('printArea').innerHTML = `<div class="p-holes">${htmls.join('')}</div>`;
   printFixo = true;
   // o contracheque sai em A4 em pé (o resto do sistema imprime deitado)
   const st = document.createElement('style'); st.id = 'pgDin';

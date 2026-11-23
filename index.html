@@ -1019,7 +1019,7 @@ function render() {
 
 // ---------- 13º salário ----------
 // Regras: 13º = remuneração ÷ 12 × avos (meses com 15 dias ou mais trabalhados).
-// Remuneração = salário + bonificação fixa (do último mês do ano) + média das outras verbas que entram no INSS.
+// Remuneração = salário + bonificação fixa (da folha do mês da 1ª parcela) + média das outras verbas que entram no INSS.
 // 1ª parcela = metade, sem descontos. 2ª parcela = total − INSS do 13º − 1ª parcela.
 function dados13(a) {
   const e = E();
@@ -1034,7 +1034,7 @@ const chave = nome => (nome || '').trim().toLocaleLowerCase('pt-BR');
 const COLS13_BASE = [
   { k: 'admissao', nome: 'Admissão', tipo: 'data', dica: 'Data de admissão — em branco = trabalhou o ano todo' },
   { k: 'avos', nome: 'Avos', tipo: 'avos', dica: 'Meses com 15 dias ou mais trabalhados' },
-  { k: 'salario', nome: 'Salário + bonif. fixa', tipo: 'din', dica: 'Salário + bonificação fixa do último mês do ano' },
+  { k: 'salario', nome: 'Salário + bonif. fixa', tipo: 'din', dica: 'Salário + bonificação fixa da folha do mês da 1ª parcela (novembro)' },
   { k: 'media', nome: 'Média variáveis', tipo: 'din', dica: 'Média mensal das outras verbas que entram no INSS' },
   { k: 'base', nome: 'Base do 13º', tipo: 'din', dica: 'Remuneração usada no cálculo' },
   { k: 'total', nome: '13º total', tipo: 'din', cls: 'c-liq' },
@@ -1106,13 +1106,16 @@ function calc13(a) {
   (d.extras || []).forEach(nome => { const k = chave(nome); if (!pessoas[k]) pessoas[k] = { nome, linhas: [], manual: true }; });
   const varCols = todasColunas().filter(c => c.tipo === 'provento' && c.k !== 'salario' && c.k !== 'bonif');
   const semCols = todasColunas().filter(c => c.tipo === 'proventoSem');
+  const mesRef = (d.datas.p1 || `${a}-11-30`).slice(0, 7);
   const ov = (f, k, auto) => f[k] != null ? f[k] : auto;
   return Object.entries(pessoas).filter(([k]) => !(d.func[k] || {}).excluido).map(([k, p]) => {
     const f = d.func[k] || {};
     // só contam os meses já lançados (com salário) — meses futuros em branco não entram na média nem no salário-base
     const comSal = p.linhas.filter(({ r }) => (r.salario || 0) > 0);
     const L = comSal.length ? comSal : p.linhas, nL = L.length;
-    const ult = nL ? L[nL - 1].r : {};
+    // salário e bonificação fixa vêm da folha do mês da 1ª parcela (novembro); se faltar, do último mês lançado
+    const doMes = L.find(({ m }) => m === mesRef);
+    const ult = doMes ? doMes.r : nL ? L[nL - 1].r : {};
     const salarioAuto = (ult.salario || 0) + (ult.bonif || 0);
     // horas extras: média das horas × valor da hora (sem arredondar mês a mês)
     const mediaDe = col => !nL ? 0 : L.reduce((t, { m, r }) => t + (col.k === 'heSem' || col.k === 'heSdf'
@@ -1248,7 +1251,7 @@ function render13() {
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
       Três tabelas: <b>1ª parcela</b> (metade do 13º, sem descontos), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
-      Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa do último mês de ${ano} na folha${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}. Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês).<br>
+      Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa da folha de ${MESES[Number((d.datas.p1 || `${ano}-11`).slice(5, 7)) - 1] || 'novembro'} de ${ano} (mês da 1ª parcela)${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}. Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês).<br>
       <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja embaixo) e apague para voltar ao automático. IRRF não é calculado.<br>
       Use "Colunas" para escolher em quais tabelas cada coluna aparece, renomear, reordenar (também dá para arrastar o título) ou criar colunas.
     </p>`;

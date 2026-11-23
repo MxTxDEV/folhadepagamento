@@ -170,6 +170,12 @@
   .t13 th small { text-transform: none; }
   .pgl { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; justify-content: flex-end; width: 100%; }
   .pgl input { width: 15px !important; accent-color: var(--mint-d); }
+  .excl { margin-top: 12px; font-size: 13px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pill-ex { background: var(--hl); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 12px; }
+  .pill-ex button { border: none; padding: 2px 8px; border-radius: 999px; background: var(--lav); color: var(--lav-d); }
+  .lixo { font-size: 14px; }
+  .card.c13 { border-color: var(--peach-d); }
+  .card.c13 .mname { text-transform: none; }
   .t13 td.pg { background: var(--ok) !important; color: var(--mint-d); }
   .alca { cursor: grab; color: var(--muted); font-size: 16px; padding: 2px 4px; user-select: none; touch-action: none; }
   .seta { padding: 2px 5px; font-size: 10px; color: var(--muted); }
@@ -883,13 +889,15 @@ function calc13(a) {
     const k = chave(r.nome);
     (pessoas[k] = pessoas[k] || { nome: r.nome.trim(), linhas: [] }).linhas.push({ m, r });
   }));
+  // incluídos à mão (não estão nas folhas do ano)
+  (d.extras || []).forEach(nome => { const k = chave(nome); if (!pessoas[k]) pessoas[k] = { nome, linhas: [], manual: true }; });
   const varCols = todasColunas().filter(c => c.tipo === 'provento' && c.k !== 'salario' && c.k !== 'bonif');
-  return Object.entries(pessoas).map(([k, p]) => {
+  return Object.entries(pessoas).filter(([k]) => !(d.func[k] || {}).excluido).map(([k, p]) => {
     const f = d.func[k] || {};
-    const ult = p.linhas[p.linhas.length - 1].r;
+    const ult = p.linhas.length ? p.linhas[p.linhas.length - 1].r : {};
     const salario = (ult.salario || 0) + (ult.bonif || 0);
     const somaVar = p.linhas.reduce((s, { r }) => { const c = calc(r); return s + varCols.reduce((t, col) => t + valorCol(col, r, c), 0); }, 0);
-    const media = d.media ? r2(somaVar / p.linhas.length) : 0;
+    const media = d.media && p.linhas.length ? r2(somaVar / p.linhas.length) : 0;
     const avosAuto = avosAdmissao(f.admissao, a);
     const avos = f.avos != null ? f.avos : avosAuto;
     const baseAuto = r2(salario + media);
@@ -898,7 +906,7 @@ function calc13(a) {
     const p1 = r2(total / 2);
     const inss = calcInss(total);
     const p2 = r2(total - inss - p1);
-    return { k, nome: p.nome, f, salario, media, avosAuto, avos, baseAuto, base, total, p1, inss, p2, meses: p.linhas.length };
+    return { k, nome: p.nome, manual: !!p.manual, f, salario, media, avosAuto, avos, baseAuto, base, total, p1, inss, p2, meses: p.linhas.length };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -925,6 +933,11 @@ function avisoData(iso) {
   return txt;
 }
 
+// funcionários tirados do 13º (para poder devolver)
+function excluidos13(a) {
+  const d = dados13(a);
+  return Object.entries(d.func).filter(([, f]) => f.excluido).map(([k, f]) => ({ k, nome: f.nomeExcl || k }));
+}
 function render13() {
   const d = dados13(ano);
   const lista = calc13(ano);
@@ -949,6 +962,7 @@ function render13() {
       <button class="icon" onclick="location.hash='#/13/${ano + 1}'">›</button>
       <div class="f-tools">
         <label class="chk-media"><input type="checkbox" id="d13media"${d.media ? ' checked' : ''}> Incluir média de HE e bonificações variáveis</label>
+        <button class="primary" id="d13Add">+ Funcionário</button>
         <button id="d13Print">Imprimir / PDF</button>
       </div>
     </div>
@@ -964,11 +978,11 @@ function render13() {
           <th>Nome</th><th title="Data de admissão — em branco = trabalhou o ano todo">Admissão</th><th title="Meses com 15 dias ou mais trabalhados">Avos</th>
           <th>Salário + bonif. fixa</th><th title="Média mensal das outras verbas que entram no INSS (HE, bonificações variáveis…)">Média variáveis</th>
           <th title="Remuneração usada no cálculo — digite para trocar">Base do 13º</th><th class="c-liq">13º total</th>
-          <th class="c-if">1ª parcela<br><small>${fmtData(d.datas.p1)}</small></th><th>INSS</th><th class="c-conta">2ª parcela<br><small>${fmtData(d.datas.p2)}</small></th>
+          <th class="c-if">1ª parcela<br><small>${fmtData(d.datas.p1)}</small></th><th>INSS</th><th class="c-conta">2ª parcela<br><small>${fmtData(d.datas.p2)}</small></th><th></th>
         </tr></thead>
         <tbody>${lista.map(x => `
           <tr data-k="${esc(x.k)}">
-            <td>${esc(x.nome)}<span class="sub" style="text-align:left">${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha</span></td>
+            <td>${esc(x.nome)}<span class="sub" style="text-align:left">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span></td>
             <td><input type="date" data-f="admissao" value="${x.f.admissao || ''}" style="width:130px"></td>
             <td><input data-f="avos" inputmode="numeric" value="${x.f.avos != null ? x.f.avos : ''}" placeholder="${x.avosAuto}" style="width:48px">/12</td>
             <td class="calc">${brl(x.salario)}</td>
@@ -978,11 +992,14 @@ function render13() {
             <td class="calc c-if ${pago(x, 1) ? 'pg' : ''}"><label class="pgl"><input type="checkbox" data-pago="1"${pago(x, 1) ? ' checked' : ''} title="Marcar 1ª parcela como paga"> ${brl(x.p1)}</label></td>
             <td class="calc">${brl(x.inss)}</td>
             <td class="calc c-conta ${pago(x, 2) ? 'pg' : ''}"><label class="pgl"><input type="checkbox" data-pago="2"${pago(x, 2) ? ' checked' : ''} title="Marcar 2ª parcela como paga"> ${brl(x.p2)}</label></td>
+            <td><button class="del lixo" title="Tirar do 13º">🗑</button></td>
           </tr>`).join('')}</tbody>
         <tfoot><tr><td>Total (${lista.length})</td><td></td><td></td><td></td><td></td><td></td>
-          <td>${brl(tot.total)}</td><td>${brl(tot.p1)}</td><td>${brl(tot.inss)}</td><td>${brl(tot.p2)}</td></tr></tfoot>
+          <td>${brl(tot.total)}</td><td>${brl(tot.p1)}</td><td>${brl(tot.inss)}</td><td>${brl(tot.p2)}</td><td></td></tr></tfoot>
       </table>
-    </div>` : `<div class="empty-f wrap">Nenhum funcionário nas folhas de ${ano} desta empresa.</div>`}
+    </div>` : `<div class="empty-f wrap">Nenhum funcionário no 13º de ${ano} desta empresa. Use "+ Funcionário" para incluir.</div>`}
+    ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
+      `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
       Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa do último mês de ${ano} na folha${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}.<br>
       Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele). Você pode digitar outro número.<br>
@@ -1003,7 +1020,29 @@ function render13() {
     tr.querySelector('[data-f=avos]').onchange = e => { const n = parse(e.target.value); muda('avos', n == null ? null : Math.max(0, Math.min(12, Math.round(n)))); };
     tr.querySelector('[data-f=base]').onchange = e => muda('base', parse(e.target.value));
     tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => muda('pago' + c.dataset.pago, c.checked || null));
+    tr.querySelector('.lixo').onclick = () => {
+      const x = lista.find(y => y.k === k);
+      if (!confirm(`Tirar ${x.nome} do 13º de ${ano}? (dá para devolver depois)`)) return;
+      alterar(dd => {
+        if (x.manual) { dd.extras = (dd.extras || []).filter(n => chave(n) !== k); delete dd.func[k]; }
+        else dd.func[k] = { ...(dd.func[k] || {}), excluido: true, nomeExcl: x.nome };
+      });
+    };
   });
+  app.querySelectorAll('[data-volta]').forEach(b => b.onclick = () => alterar(dd => {
+    const f = { ...(dd.func[b.dataset.volta] || {}) };
+    delete f.excluido; delete f.nomeExcl;
+    dd.func[b.dataset.volta] = f;
+  }));
+  $('d13Add').onclick = () => {
+    const nome = (prompt('Nome do funcionário para incluir no 13º:') || '').trim();
+    if (!nome) return;
+    const k = chave(nome);
+    alterar(dd => {
+      if ((dd.func[k] || {}).excluido) { const f = { ...dd.func[k] }; delete f.excluido; delete f.nomeExcl; dd.func[k] = f; return; }
+      if (!calc13(ano).some(x => x.k === k)) dd.extras = [...(dd.extras || []), nome];
+    });
+  };
 }
 
 function buildPrint13() {
@@ -1033,6 +1072,23 @@ function buildPrint13() {
         <td class="if">${v(t.p1)}</td><td>${v(t.inss)}</td><td class="ct">${v(t.p2)}</td></tr></tfoot>
     </table>
     <div class="p-foot">13º = base ÷ 12 × avos · 1ª parcela = 50% sem descontos · 2ª parcela = 13º − INSS − 1ª parcela · ✓ = pago</div>`;
+}
+
+// cartão do 13º no calendário
+function cartao13() {
+  const lista = calc13(ano), d = dados13(ano);
+  if (!lista.length) return `<div class="card empty c13" data-d13="1"><div class="mname">13º salário</div><div>Sem funcionários no ano</div></div>`;
+  const tot = lista.reduce((t, x) => (t.total += x.total, t.p1 += x.p1, t.p2 += x.p2, t), { total: 0, p1: 0, p2: 0 });
+  const pg = n => lista.filter(x => x.f['pago' + n]).length;
+  const tudo = pg(1) === lista.length && pg(2) === lista.length;
+  const st = tudo ? 'paga' : pg(1) === lista.length ? 'fechada' : 'conferencia';
+  const pill = tudo ? 'Pago' : pg(1) === lista.length ? '1ª paga' : 'Pendente';
+  return `<div class="card c13 st-${st}" data-d13="1">
+    <div class="ch"><span class="mname">13º salário</span><span class="pill">${pill}</span></div>
+    <div class="big"><small>Total do 13º</small><div>${brl(tot.total)}</div></div>
+    <div class="meta"><span>1ª ${fmtData(d.datas.p1).slice(0, 5)}: ${brl(tot.p1)} · ${pg(1)}/${lista.length}</span>
+      <span>2ª ${fmtData(d.datas.p2).slice(0, 5)}: ${brl(tot.p2)} · ${pg(2)}/${lista.length}</span></div>
+  </div>`;
 }
 
 // ---------- calendário ----------
@@ -1069,9 +1125,10 @@ function renderCal() {
         <div class="chip"><small>iFood no ano</small><b>${brl(anoIfood)}</b></div>
       </div>
     </div>
-    <div class="grid">${cards}</div>`;
+    <div class="grid">${cards}${cartao13()}</div>`;
 
   app.querySelectorAll('.card').forEach(c => c.onclick = e => {
+    if (c.dataset.d13) return location.hash = '#/13/' + ano;
     const criar = e.target.dataset.criar;
     if (criar) { e.stopPropagation(); criarFolha(criar); }
     location.hash = '#/' + c.dataset.m;

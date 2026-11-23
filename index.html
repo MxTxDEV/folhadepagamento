@@ -174,11 +174,18 @@
   .parc-av { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .chk-media { font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--muted); }
   .t13 td input[type=date] { text-align: left; }
+  .t13 td input.ov { box-shadow: inset 0 -2px 0 #e8952f; border-radius: 7px 7px 0 0; }
+  .t13 td.c-liq input { font-weight: 600; color: var(--lav-d); }
+  .t13 td.c-conta input { font-weight: 700; color: var(--mint-d); }
+  .t13 td input[data-f] { width: 90px; }
+  .t13 td input[data-f=avos] { width: 48px; }
+  .t13 td input[data-f=admissao] { width: 130px; }
+  .t13 tfoot td { padding-right: 12px; }
   .nm13 { display: flex; align-items: center; gap: 6px; cursor: pointer; }
   .t13 tr.ok td.pg, .t13 tr.ok td { background: var(--ok) !important; }
   .t13 th small { text-transform: none; }
   .pgl { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; justify-content: flex-end; width: 100%; }
-  .pgl input { width: 15px !important; accent-color: var(--mint-d); }
+  .pgl input[type=checkbox] { width: 15px !important; min-width: 15px; accent-color: var(--mint-d); flex: none; }
   .excl { margin-top: 12px; font-size: 13px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .pill-ex { background: var(--hl); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 12px; }
   .pill-ex button { border: none; padding: 2px 8px; border-radius: 999px; background: var(--lav); color: var(--lav-d); }
@@ -434,6 +441,28 @@
   <div class="dlg-actions">
     <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
     <button type="button" class="primary" id="colSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<!-- colunas do 13º -->
+<dialog id="dlgCols13" style="width:min(780px,96vw)">
+  <h2>Colunas do 13º salário</h2>
+  <p class="hint" style="margin-top:0">Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na tela também dá para arrastar o título da coluna. Desmarque para esconder; edite o nome para renomear. <b>Colunas novas</b> guardam um valor por funcionário e podem somar ao 13º, somar ou descontar na 2ª parcela, ou ser só informativas. Valem para todas as empresas e anos.</p>
+  <div class="col-list" id="col13List"></div>
+  <h3>Nova coluna</h3>
+  <form id="col13NovaForm" class="row">
+    <input id="col13NovaNome" class="full" placeholder="Nome da coluna (ex.: Adiantamento de 13º)" required>
+    <select id="col13NovaTipo" style="width:260px">
+      <option value="soma">➕ Soma ao 13º (entra no INSS)</option>
+      <option value="somaP2">➕ Soma na 2ª parcela (fora do INSS)</option>
+      <option value="desc" selected>➖ Desconta da 2ª parcela</option>
+      <option value="info">○ Não soma nem subtrai</option>
+    </select>
+    <button class="primary">Adicionar</button>
+  </form>
+  <div class="dlg-actions">
+    <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+    <button type="button" class="primary" id="col13Salvar">Salvar</button>
   </div>
 </dialog>
 
@@ -891,6 +920,49 @@ function dados13(a) {
 function grava13(a, d) { E().decimo[a] = d; save(); }
 const chave = nome => (nome || '').trim().toLocaleLowerCase('pt-BR');
 
+// ----- colunas do 13º (editáveis como na folha mensal) -----
+// tipo: data | avos | din (valor em R$). Valor digitado vale no lugar do automático; apagar volta ao automático.
+const COLS13_BASE = [
+  { k: 'admissao', nome: 'Admissão', tipo: 'data', dica: 'Data de admissão — em branco = trabalhou o ano todo' },
+  { k: 'avos', nome: 'Avos', tipo: 'avos', dica: 'Meses com 15 dias ou mais trabalhados' },
+  { k: 'salario', nome: 'Salário + bonif. fixa', tipo: 'din', dica: 'Salário + bonificação fixa do último mês do ano' },
+  { k: 'media', nome: 'Média variáveis', tipo: 'din', dica: 'Média mensal das outras verbas que entram no INSS' },
+  { k: 'base', nome: 'Base do 13º', tipo: 'din', dica: 'Remuneração usada no cálculo' },
+  { k: 'total', nome: '13º total', tipo: 'din', cls: 'c-liq', fixa: true },
+  { k: 'p1', nome: '1ª parcela', tipo: 'din', cls: 'c-if', fixa: true, pago: 1 },
+  { k: 'inss', nome: 'INSS', tipo: 'din', dica: 'INSS sobre o 13º inteiro' },
+  { k: 'p2', nome: '2ª parcela', tipo: 'din', cls: 'c-conta', fixa: true, pago: 2 },
+];
+const TIPOS13 = {
+  soma: '➕ Soma ao 13º (entra no INSS)',
+  somaP2: '➕ Soma na 2ª parcela (fora do INSS)',
+  desc: '➖ Desconta da 2ª parcela',
+  info: '○ Não soma nem subtrai',
+};
+const cfg13 = () => (state.config.col13 = state.config.col13 || {});
+const extras13 = () => cfg13().extras || [];
+function todasCols13() {
+  const c = cfg13();
+  const base = COLS13_BASE.map(b => ({ ...b, padrao: b.nome, nome: (c.nomes || {})[b.k] || b.nome, oculta: !!(c.ocultas || {})[b.k] }));
+  const ex = extras13().map(x => ({ k: x.k, nome: x.nome, tipo: 'din', extra: x, papel: x.tipo, oculta: !!x.oculta }));
+  const out = [];
+  base.forEach(b => {
+    out.push(b);
+    if (b.k === 'base') ex.filter(x => x.papel === 'soma').forEach(x => out.push(x));
+    if (b.k === 'inss') ex.filter(x => x.papel !== 'soma').forEach(x => out.push(x));
+  });
+  return ordenar(out, c.ordem);
+}
+const cols13 = () => todasCols13().filter(c => !c.oculta);
+function moverColuna13(k, alvo, depois) {
+  const ordem = todasCols13().map(c => c.k).filter(x => x !== k);
+  const i = ordem.indexOf(alvo);
+  if (i < 0) return;
+  ordem.splice(depois ? i + 1 : i, 0, k);
+  cfg13().ordem = ordem;
+  save(); render();
+}
+
 function calc13(a) {
   const d = dados13(a);
   const meses = Object.keys(E().meses).filter(m => m.startsWith(a + '-') && E().meses[m].length).sort();
@@ -903,21 +975,31 @@ function calc13(a) {
   // incluídos à mão (não estão nas folhas do ano)
   (d.extras || []).forEach(nome => { const k = chave(nome); if (!pessoas[k]) pessoas[k] = { nome, linhas: [], manual: true }; });
   const varCols = todasColunas().filter(c => c.tipo === 'provento' && c.k !== 'salario' && c.k !== 'bonif');
+  const ov = (f, k, auto) => f[k] != null ? f[k] : auto;
   return Object.entries(pessoas).filter(([k]) => !(d.func[k] || {}).excluido).map(([k, p]) => {
     const f = d.func[k] || {};
     const ult = p.linhas.length ? p.linhas[p.linhas.length - 1].r : {};
-    const salario = (ult.salario || 0) + (ult.bonif || 0);
+    const salarioAuto = (ult.salario || 0) + (ult.bonif || 0);
     const somaVar = p.linhas.reduce((s, { r }) => { const c = calc(r); return s + varCols.reduce((t, col) => t + valorCol(col, r, c), 0); }, 0);
-    const media = d.media && p.linhas.length ? r2(somaVar / p.linhas.length) : 0;
+    const mediaAuto = d.media && p.linhas.length ? r2(somaVar / p.linhas.length) : 0;
     const avosAuto = avosAdmissao(f.admissao, a);
-    const avos = f.avos != null ? f.avos : avosAuto;
+    const avos = ov(f, 'avos', avosAuto);
+    const salario = ov(f, 'salario', salarioAuto);
+    const media = ov(f, 'media', mediaAuto);
     const baseAuto = r2(salario + media);
-    const base = f.base != null ? f.base : baseAuto;
-    const total = r2(base / 12 * avos);
-    const p1 = r2(total / 2);
-    const inss = calcInss(total);
-    const p2 = r2(total - inss - p1);
-    return { k, nome: p.nome, manual: !!p.manual, f, salario, media, avosAuto, avos, baseAuto, base, total, p1, inss, p2, meses: p.linhas.length };
+    const base = ov(f, 'base', baseAuto);
+    const soma = (papel) => extras13().filter(x => x.tipo === papel).reduce((t, x) => t + (f[x.k] || 0), 0);
+    const totalAuto = r2(base / 12 * avos + soma('soma'));
+    const total = ov(f, 'total', totalAuto);
+    const p1Auto = r2(total / 2);
+    const p1 = ov(f, 'p1', p1Auto);
+    const inssAuto = calcInss(total);
+    const inss = ov(f, 'inss', inssAuto);
+    const p2Auto = r2(total - inss - p1 + soma('somaP2') - soma('desc'));
+    const p2 = ov(f, 'p2', p2Auto);
+    const v = { salario, media, base, total, p1, inss, p2, avos };
+    extras13().forEach(x => { v[x.k] = f[x.k] || 0; });
+    return { k, nome: p.nome, manual: !!p.manual, f, v, avosAuto, salario, media, avos, base, total, p1, inss, p2, meses: p.linhas.length };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -952,20 +1034,23 @@ function excluidos13(a) {
 function render13() {
   const d = dados13(ano);
   const lista = calc13(ano);
-  const pago = (x, n) => !!(x.f['pago' + n]);
-  const tot = lista.reduce((t, x) => {
-    t.total += x.total; t.p1 += x.p1; t.inss += x.inss; t.p2 += x.p2;
-    if (pago(x, 1)) t.pg1++; if (pago(x, 2)) t.pg2++;
-    return t;
-  }, { total: 0, p1: 0, inss: 0, p2: 0, pg1: 0, pg2: 0 });
-  const parcela = (n, valor, pagos) => `
-    <div class="parc ${pagos === lista.length && lista.length ? 'ok' : ''}">
+  const cs = cols13();
+  const parcela = n => `
+    <div class="parc" data-parc="${n}">
       <div class="parc-t">${n}ª parcela</div>
-      <div class="parc-v">${brl(valor)}</div>
+      <div class="parc-v"></div>
       <label>Pagar até <input type="date" data-data="p${n}" value="${d.datas['p' + n] || ''}"></label>
       <div class="parc-av">${avisoData(d.datas['p' + n])}</div>
-      <div class="parc-av">${pagos} de ${lista.length} pagos</div>
+      <div class="parc-av parc-pg"></div>
     </div>`;
+  const cel = (col, x) => {
+    const f = x.f;
+    if (col.tipo === 'data') return `<td><input type="date" data-f="admissao" value="${f.admissao || ''}" style="width:130px"></td>`;
+    if (col.tipo === 'avos') return `<td><input data-f="avos" inputmode="numeric" style="width:48px" title="Apague para voltar ao automático">/12</td>`;
+    const input = `<input data-f="${col.k}" inputmode="decimal" title="${col.extra ? '' : 'Valor digitado vale no lugar do automático — apague para voltar ao automático'}">`;
+    if (col.pago) return `<td class="${col.cls || ''}" data-pg="${col.pago}"><label class="pgl"><input type="checkbox" data-pago="${col.pago}" title="Marcar ${col.pago}ª parcela como paga">${input}</label></td>`;
+    return `<td class="${col.cls || ''}">${input}</td>`;
+  };
   app.innerHTML = `
     <div class="f-head">
       <button class="icon" onclick="location.hash='#/13/${ano - 1}'">‹</button>
@@ -974,66 +1059,89 @@ function render13() {
       <div class="f-tools">
         <label class="chk-media"><input type="checkbox" id="d13media"${d.media ? ' checked' : ''}> Incluir média de HE e bonificações variáveis</label>
         <button class="primary" id="d13Add">+ Funcionário</button>
+        <button id="d13Cols" title="Editar, adicionar ou remover colunas">Colunas</button>
         <button id="d13Print">Imprimir / PDF</button>
       </div>
     </div>
     <div class="parcs">
-      <div class="parc tot"><div class="parc-t">13º total</div><div class="parc-v">${brl(tot.total)}</div><div class="parc-av">${lista.length} funcionários · INSS ${brl(tot.inss)}</div><div class="parc-av">${lista.filter(x => x.f.ok).length} de ${lista.length} conferidos</div></div>
-      ${parcela(1, tot.p1, tot.pg1)}
-      ${parcela(2, tot.p2, tot.pg2)}
+      <div class="parc tot" data-parc="t"><div class="parc-t">13º total</div><div class="parc-v"></div><div class="parc-av"></div><div class="parc-av parc-ok"></div></div>
+      ${parcela(1)}
+      ${parcela(2)}
     </div>
     ${lista.length ? `
     <div class="wrap" id="wrap">
       <table class="t13">
         <thead><tr>
-          <th>Nome</th><th title="Data de admissão — em branco = trabalhou o ano todo">Admissão</th><th title="Meses com 15 dias ou mais trabalhados">Avos</th>
-          <th>Salário + bonif. fixa</th><th title="Média mensal das outras verbas que entram no INSS (HE, bonificações variáveis…)">Média variáveis</th>
-          <th title="Remuneração usada no cálculo — digite para trocar">Base do 13º</th><th class="c-liq">13º total</th>
-          <th class="c-if">1ª parcela<br><small>${fmtData(d.datas.p1)}</small></th><th>INSS</th><th class="c-conta">2ª parcela<br><small>${fmtData(d.datas.p2)}</small></th><th></th>
+          <th>Nome</th>
+          ${cs.map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}" title="${esc(c.dica || '')}">${esc(c.nome)}${c.pago ? `<br><small>${fmtData(d.datas['p' + c.pago])}</small>` : ''}</th>`).join('')}
+          <th></th>
         </tr></thead>
         <tbody>${lista.map(x => `
-          <tr data-k="${esc(x.k)}"${x.f.ok ? ' class="ok"' : ''}>
-            <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida"${x.f.ok ? ' checked' : ''}><span>${esc(x.nome)}</span></label><span class="sub" style="text-align:left;padding-left:22px">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span></td>
-            <td><input type="date" data-f="admissao" value="${x.f.admissao || ''}" style="width:130px"></td>
-            <td><input data-f="avos" inputmode="numeric" value="${x.f.avos != null ? x.f.avos : ''}" placeholder="${x.avosAuto}" style="width:48px">/12</td>
-            <td class="calc">${brl(x.salario)}</td>
-            <td class="calc">${brl(x.media)}</td>
-            <td><input data-f="base" inputmode="decimal" value="${num(x.f.base)}" placeholder="${num(x.baseAuto)}"></td>
-            <td class="calc c-liq">${brl(x.total)}</td>
-            <td class="calc c-if ${pago(x, 1) ? 'pg' : ''}"><label class="pgl"><input type="checkbox" data-pago="1"${pago(x, 1) ? ' checked' : ''} title="Marcar 1ª parcela como paga"> ${brl(x.p1)}</label></td>
-            <td class="calc">${brl(x.inss)}</td>
-            <td class="calc c-conta ${pago(x, 2) ? 'pg' : ''}"><label class="pgl"><input type="checkbox" data-pago="2"${pago(x, 2) ? ' checked' : ''} title="Marcar 2ª parcela como paga"> ${brl(x.p2)}</label></td>
+          <tr data-k="${esc(x.k)}">
+            <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida"><span>${esc(x.nome)}</span></label><span class="sub" style="text-align:left;padding-left:22px">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span></td>
+            ${cs.map(c => cel(c, x)).join('')}
             <td><button class="del lixo" title="Tirar do 13º">🗑</button></td>
           </tr>`).join('')}</tbody>
-        <tfoot><tr><td>Total (${lista.length})</td><td></td><td></td><td></td><td></td><td></td>
-          <td>${brl(tot.total)}</td><td>${brl(tot.p1)}</td><td>${brl(tot.inss)}</td><td>${brl(tot.p2)}</td><td></td></tr></tfoot>
+        <tfoot><tr><td></td>${cs.map(c => `<td data-tot="${c.k}"></td>`).join('')}<td></td></tr></tfoot>
       </table>
     </div>` : `<div class="empty-f wrap">Nenhum funcionário no 13º de ${ano} desta empresa. Use "+ Funcionário" para incluir.</div>`}
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
       Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa do último mês de ${ano} na folha${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}.<br>
-      Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele). Você pode digitar outro número.<br>
-      1ª parcela = metade do 13º, sem descontos. 2ª parcela = 13º − INSS (calculado sobre o 13º inteiro) − 1ª parcela. IRRF não é calculado.
+      <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (a célula ganha um traço laranja embaixo) e apague para voltar ao automático. Os valores seguintes são recalculados a partir do que você digitou.<br>
+      Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês). 1ª parcela = metade do 13º. 2ª parcela = 13º − INSS − 1ª parcela${extras13().length ? ' (+ / − colunas extras)' : ''}. IRRF não é calculado.<br>
+      Use "Colunas" para esconder, renomear, reordenar (também dá para arrastar o título) ou criar colunas.
     </p>`;
 
+  // ---- valores nas células (atualiza na hora, sem perder o foco) ----
+  const pinta = () => pinta13(calc13(ano), cs);
+  pinta();
+
   const alterar = fn => { const dd = structuredClone(dados13(ano)); fn(dd); grava13(ano, dd); render(); };
+  const mudaF = (k, campo, valor) => {
+    const dd = structuredClone(dados13(ano));
+    const f = dd.func[k] = { ...(dd.func[k] || {}) };
+    if (valor == null || valor === '' || valor === false) delete f[campo]; else f[campo] = valor;
+    grava13(ano, dd);
+  };
   $('d13media').onchange = e => alterar(dd => { dd.media = e.target.checked; });
   $('d13Print').onclick = () => { buildPrint13(); window.print(); };
+  $('d13Cols').onclick = abrirColunas13;
   app.querySelectorAll('[data-data]').forEach(inp => inp.onchange = () => alterar(dd => { dd.datas[inp.dataset.data] = inp.value; }));
+  // arrastar o título da coluna
+  app.querySelectorAll('th[data-col]').forEach(th => {
+    th.ondragstart = e => { e.dataTransfer.setData('text/col13', th.dataset.col); e.dataTransfer.effectAllowed = 'move'; th.classList.add('arrastando'); };
+    th.ondragend = () => th.classList.remove('arrastando');
+    th.ondragover = e => {
+      if (!e.dataTransfer.types.includes('text/col13')) return;
+      e.preventDefault();
+      const depois = e.offsetX > th.offsetWidth / 2;
+      th.classList.toggle('drop-antes', !depois); th.classList.toggle('drop-depois', depois);
+    };
+    th.ondragleave = () => th.classList.remove('drop-antes', 'drop-depois');
+    th.ondrop = e => {
+      e.preventDefault();
+      th.classList.remove('drop-antes', 'drop-depois');
+      const k = e.dataTransfer.getData('text/col13');
+      if (k && k !== th.dataset.col) moverColuna13(k, th.dataset.col, e.offsetX > th.offsetWidth / 2);
+    };
+  });
   app.querySelectorAll('tbody tr').forEach(tr => {
     const k = tr.dataset.k;
-    const muda = (campo, valor) => alterar(dd => {
-      const f = dd.func[k] = { ...(dd.func[k] || {}) };
-      if (valor == null || valor === '') delete f[campo]; else f[campo] = valor;
+    tr.querySelector('[data-ok]').onchange = e => { mudaF(k, 'ok', e.target.checked || null); pinta(); };
+    tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => { mudaF(k, 'pago' + c.dataset.pago, c.checked || null); pinta(); });
+    tr.querySelectorAll('input[data-f]').forEach(inp => inp.onchange = () => {
+      const campo = inp.dataset.f;
+      let val;
+      if (campo === 'admissao') val = inp.value || null;
+      else if (campo === 'avos') { const n = parse(inp.value); val = n == null ? null : Math.max(0, Math.min(12, Math.round(n))); }
+      else val = parse(inp.value);
+      mudaF(k, campo, val);
+      pinta();
     });
-    tr.querySelector('[data-ok]').onchange = e => muda('ok', e.target.checked || null);
-    tr.querySelector('[data-f=admissao]').onchange = e => muda('admissao', e.target.value);
-    tr.querySelector('[data-f=avos]').onchange = e => { const n = parse(e.target.value); muda('avos', n == null ? null : Math.max(0, Math.min(12, Math.round(n)))); };
-    tr.querySelector('[data-f=base]').onchange = e => muda('base', parse(e.target.value));
-    tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => muda('pago' + c.dataset.pago, c.checked || null));
     tr.querySelector('.lixo').onclick = () => {
-      const x = lista.find(y => y.k === k);
+      const x = calc13(ano).find(y => y.k === k);
       if (!confirm(`Tirar ${x.nome} do 13º de ${ano}? (dá para devolver depois)`)) return;
       alterar(dd => {
         if (x.manual) { dd.extras = (dd.extras || []).filter(n => chave(n) !== k); delete dd.func[k]; }
@@ -1057,33 +1165,157 @@ function render13() {
   };
 }
 
+// preenche/atualiza os valores, totais e cartões da tela do 13º
+function pinta13(lista, cs) {
+  const t = {};
+  cs.forEach(c => { t[c.k] = 0; });
+  const porK = Object.fromEntries(lista.map(x => [x.k, x]));
+  app.querySelectorAll('tbody tr[data-k]').forEach(tr => {
+    const x = porK[tr.dataset.k];
+    if (!x) return;
+    tr.classList.toggle('ok', !!x.f.ok);
+    tr.querySelector('[data-ok]').checked = !!x.f.ok;
+    tr.querySelectorAll('input[data-f]').forEach(inp => {
+      const campo = inp.dataset.f;
+      if (campo === 'admissao') return;
+      const sobrescrito = x.f[campo] != null;
+      const ehExtra = extras13().some(e => e.k === campo);
+      inp.value = ehExtra ? (x.f[campo] != null ? num(x.f[campo]) : '') : campo === 'avos' ? String(x.avos) : num(x.v[campo]);
+      inp.classList.toggle('ov', sobrescrito && !ehExtra);
+    });
+    tr.querySelectorAll('[data-pago]').forEach(c => {
+      const pg = !!x.f['pago' + c.dataset.pago];
+      c.checked = pg;
+      c.closest('td').classList.toggle('pg', pg);
+    });
+  });
+  lista.forEach(x => cs.forEach(c => { if (c.tipo === 'din') t[c.k] += x.v[c.k] || 0; }));
+  cs.forEach(c => {
+    const td = app.querySelector(`[data-tot="${c.k}"]`);
+    if (td) td.textContent = c.tipo === 'din' ? brl(t[c.k]) : '';
+  });
+  const first = app.querySelector('tfoot td'); if (first) first.textContent = `Total (${lista.length})`;
+  // cartões
+  const soma = k => lista.reduce((s, x) => s + (x[k] || 0), 0);
+  const pg = n => lista.filter(x => x.f['pago' + n]).length;
+  const set = (sel, txt) => { const el = app.querySelector(sel); if (el) el.textContent = txt; };
+  set('[data-parc=t] .parc-v', brl(soma('total')));
+  set('[data-parc=t] .parc-av', `${lista.length} funcionários · INSS ${brl(soma('inss'))}`);
+  set('[data-parc=t] .parc-ok', `${lista.filter(x => x.f.ok).length} de ${lista.length} conferidos`);
+  [1, 2].forEach(n => {
+    set(`[data-parc="${n}"] .parc-v`, brl(soma('p' + n)));
+    set(`[data-parc="${n}"] .parc-pg`, `${pg(n)} de ${lista.length} pagos`);
+    const card = app.querySelector(`[data-parc="${n}"]`);
+    if (card) card.classList.toggle('ok', lista.length > 0 && pg(n) === lista.length);
+  });
+}
+
+// ----- painel "Colunas" do 13º -----
+function abrirColunas13() {
+  const c = cfg13();
+  $('col13List').innerHTML = todasCols13().map(col => `
+    <div class="row col-row" data-k="${col.k}">
+      <span class="alca" title="Arraste para mudar a posição">⠿</span>
+      <button type="button" class="ghost seta" data-up title="Subir">▲</button>
+      <button type="button" class="ghost seta" data-down title="Descer">▼</button>
+      <input type="checkbox" data-vis title="Mostrar coluna"${col.oculta ? '' : ' checked'}${col.fixa ? ' disabled' : ''}>
+      <input data-nome value="${esc(col.nome)}" placeholder="${esc(col.padrao || '')}">
+      ${col.extra
+        ? `<select data-tipo>${Object.entries(TIPOS13).map(([k, l]) => `<option value="${k}"${col.papel === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+           <button type="button" class="danger" data-rm title="Remover coluna">✕</button>`
+        : `<span class="col-tag">${col.fixa ? 'resultado' : 'padrão'}</span><span class="col-rm-vazio"></span>`}
+    </div>`).join('');
+  const lista = $('col13List');
+  lista.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    const row = b.closest('.col-row');
+    if (!confirm(`Remover a coluna "${row.querySelector('[data-nome]').value}"? Os valores lançados nela deixam de contar no 13º.`)) return;
+    row.remove();
+  });
+  lista.querySelectorAll('.col-row').forEach(row => {
+    const alca = row.querySelector('.alca');
+    alca.onpointerdown = e => {
+      e.preventDefault();
+      alca.setPointerCapture(e.pointerId);
+      row.classList.add('arrastando');
+      alca.onpointermove = ev => {
+        const lb = lista.getBoundingClientRect();
+        if (ev.clientY < lb.top + 30) lista.scrollTop -= 12; else if (ev.clientY > lb.bottom - 30) lista.scrollTop += 12;
+        const alvo = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.col-row');
+        if (!alvo || alvo === row || alvo.parentNode !== row.parentNode) return;
+        const box = alvo.getBoundingClientRect();
+        row.parentNode.insertBefore(row, ev.clientY > box.top + box.height / 2 ? alvo.nextSibling : alvo);
+      };
+      alca.onpointerup = alca.onpointercancel = () => {
+        row.classList.remove('arrastando');
+        alca.onpointermove = alca.onpointerup = alca.onpointercancel = null;
+      };
+    };
+    row.querySelector('[data-up]').onclick = () => { const p = row.previousElementSibling; if (p) row.parentNode.insertBefore(row, p); };
+    row.querySelector('[data-down]').onclick = () => { const n = row.nextElementSibling; if (n) row.parentNode.insertBefore(n, row); };
+  });
+  $('col13NovaNome').value = '';
+  if (!$('dlgCols13').open) $('dlgCols13').showModal();
+}
+function aplicarColunas13() {
+  const c = cfg13(), nomes = {}, ocultas = {}, novos = [];
+  $('col13List').querySelectorAll('.col-row').forEach(row => {
+    const k = row.dataset.k, nome = row.querySelector('[data-nome]').value.trim();
+    const vis = row.querySelector('[data-vis]').checked;
+    const ex = extras13().find(x => x.k === k);
+    if (ex) novos.push({ ...ex, nome: nome || ex.nome, tipo: row.querySelector('[data-tipo]').value, oculta: !vis });
+    else {
+      const base = COLS13_BASE.find(b => b.k === k);
+      if (nome && nome !== base.nome) nomes[k] = nome;
+      if (!vis && !base.fixa) ocultas[k] = true;
+    }
+  });
+  c.nomes = nomes; c.ocultas = ocultas; c.extras = novos;
+  c.ordem = [...$('col13List').querySelectorAll('.col-row')].map(row => row.dataset.k);
+  save();
+}
+$('col13NovaForm').onsubmit = e => {
+  e.preventDefault();
+  const nome = $('col13NovaNome').value.trim();
+  if (!nome) return;
+  aplicarColunas13();
+  const k = 'x_' + uid();
+  cfg13().extras = [...extras13(), { k, nome, tipo: $('col13NovaTipo').value }];
+  save(); render(); abrirColunas13();
+  const row = $('col13List').querySelector(`[data-k="${k}"]`);
+  row.classList.add('nova'); row.scrollIntoView({ block: 'nearest' });
+};
+$('col13Salvar').onclick = () => { aplicarColunas13(); $('dlgCols13').close(); render(); };
+
 function buildPrint13() {
-  const d = dados13(ano), lista = calc13(ano);
+  const d = dados13(ano), lista = calc13(ano), cs = cols13();
   const v = n => n ? brl(n).replace(/^R\$\s?/, '') : '–';
-  const t = lista.reduce((t, x) => (t.total += x.total, t.p1 += x.p1, t.inss += x.inss, t.p2 += x.p2, t), { total: 0, p1: 0, inss: 0, p2: 0 });
+  const CLS = { total: 'liq', p1: 'if', p2: 'ct' };
+  const t = {};
+  cs.forEach(c => { t[c.k] = lista.reduce((s, x) => s + (x.v[c.k] || 0), 0); });
   const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  const soma = k => lista.reduce((s, x) => s + (x[k] || 0), 0);
+  const valor = (c, x) => c.tipo === 'data' ? (fmtData(x.f.admissao) || '–')
+    : c.tipo === 'avos' ? `${x.avos}/12`
+    : v(c.extra ? (x.f[c.k] || 0) : x.v[c.k]) + (c.pago && x.f['pago' + c.pago] ? ' ✓' : '');
   $('printArea').innerHTML = `
     <div class="p-head">
       <div><h1 style="display:inline">${esc(E().nome)} — 13º salário ${ano}</h1></div>
       <small>${lista.length} funcionários · valores em R$ · gerado em ${agora}</small>
     </div>
     <div class="p-sum">
-      <div>13º total<b>${brl(t.total)}</b></div>
-      <div class="pink">1ª parcela · até ${fmtData(d.datas.p1)}<b>${brl(t.p1)}</b></div>
-      <div>INSS<b>${brl(t.inss)}</b></div>
-      <div class="mint">2ª parcela · até ${fmtData(d.datas.p2)}<b>${brl(t.p2)}</b></div>
+      <div>13º total<b>${brl(soma('total'))}</b></div>
+      <div class="pink">1ª parcela · até ${fmtData(d.datas.p1)}<b>${brl(soma('p1'))}</b></div>
+      <div>INSS<b>${brl(soma('inss'))}</b></div>
+      <div class="mint">2ª parcela · até ${fmtData(d.datas.p2)}<b>${brl(soma('p2'))}</b></div>
     </div>
     <table class="p-tab">
-      <colgroup><col style="width:3%"><col style="width:22%"></colgroup>
-      <thead><tr><th>#</th><th class="nome">Nome</th><th>Admissão</th><th>Avos</th><th>Base do 13º</th><th>13º total</th>
-        <th>1ª parcela</th><th>INSS</th><th>2ª parcela</th></tr></thead>
+      <colgroup><col style="width:3%"><col style="width:20%">${'<col>'.repeat(cs.length)}</colgroup>
+      <thead><tr><th>#</th><th class="nome">Nome</th>${cs.map(c => `<th>${esc(c.nome)}</th>`).join('')}</tr></thead>
       <tbody>${lista.map((x, i) => `<tr><td class="n">${i + 1}</td><td class="nome">${esc(x.nome)}</td>
-        <td>${fmtData(x.f.admissao) || '–'}</td><td>${x.avos}/12</td><td>${v(x.base)}</td><td class="liq">${v(x.total)}</td>
-        <td class="if">${v(x.p1)}${x.f.pago1 ? ' ✓' : ''}</td><td>${v(x.inss)}</td><td class="ct">${v(x.p2)}${x.f.pago2 ? ' ✓' : ''}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td></td><td class="nome">Total</td><td></td><td></td><td></td><td class="liq">${v(t.total)}</td>
-        <td class="if">${v(t.p1)}</td><td>${v(t.inss)}</td><td class="ct">${v(t.p2)}</td></tr></tfoot>
+        ${cs.map(c => `<td class="${CLS[c.k] || ''}">${valor(c, x)}</td>`).join('')}</tr>`).join('')}</tbody>
+      <tfoot><tr><td></td><td class="nome">Total</td>${cs.map(c => `<td class="${CLS[c.k] || ''}">${c.tipo === 'din' ? v(t[c.k]) : ''}</td>`).join('')}</tr></tfoot>
     </table>
-    <div class="p-foot">13º = base ÷ 12 × avos · 1ª parcela = 50% sem descontos · 2ª parcela = 13º − INSS − 1ª parcela · ✓ = pago</div>`;
+    <div class="p-foot">13º = base ÷ 12 × avos · 2ª parcela = 13º − INSS − 1ª parcela · ✓ = pago</div>`;
 }
 
 // cartão do 13º no calendário

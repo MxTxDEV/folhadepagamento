@@ -237,7 +237,7 @@
     padding: 5px 7px; border-radius: 7px; text-align: right; }
   td input:hover { border-color: var(--line); background: var(--card); }
   td input:focus { outline: none; border-color: var(--lav-d); background: var(--card); }
-  td:first-child input:not(.okchk) { text-align: left; width: 160px; font-weight: 500; }
+  td:first-child input:not(.okchk) { text-align: left; width: 140px; font-weight: 500; }
   .namecell { display: flex; align-items: center; gap: 4px; }
   .cfg { border: none; background: transparent; color: var(--muted); padding: 3px 7px; border-radius: 7px; font-size: 14px; line-height: 1; }
   .cfg:hover { background: var(--lav); color: var(--lav-d); }
@@ -281,6 +281,23 @@
   }
   /* ---------- impressão / PDF ---------- */
   #printArea { display: none; }
+  .hol { background: #fff; color: #000; font: 11px/1.3 Arial, Helvetica, sans-serif; border: 1px solid #000; padding: 0; margin: 0 auto 10px; max-width: 740px; }
+  .hol-prev { max-height: 62vh; overflow: auto; }
+  .hol-top { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 8px; border-bottom: 1px solid #000; }
+  .hol-tit { font-weight: 700; font-size: 13px; text-align: right; }
+  .hol-func { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid #000; font-size: 12px; }
+  .hol-tab { width: 100%; border-collapse: collapse; }
+  .hol-tab th { font-weight: 400; font-size: 9px; text-align: center; border-bottom: 1px solid #000; border-right: 1px solid #000; padding: 2px; }
+  .hol-tab td { padding: 1px 6px; border-right: 1px solid #000; height: 16px; }
+  .hol-tab th:last-child, .hol-tab td:last-child { border-right: none; }
+  .hol-tab .cod { width: 38px; text-align: center; } .hol-tab .ref { width: 80px; text-align: right; } .hol-tab .vl { width: 105px; text-align: right; }
+  .hol-tab tfoot td { border-top: 1px solid #000; }
+  .hol-tab .obs { font-size: 9px; vertical-align: top; }
+  .hol-tab .liqt { text-align: right; font-weight: 700; } .hol-tab .liq { font-weight: 700; }
+  .hol-base { display: flex; flex-wrap: wrap; justify-content: space-around; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 4px; text-align: center; }
+  .hol-base small { display: block; font-size: 8px; } .hol-base i { font-size: 10px; margin-left: 6px; font-style: normal; }
+  .hol-ass { padding: 4px 8px 8px; font-size: 9px; } .hol-ass .linha { display: inline-block; width: 55%; border-bottom: 1px solid #000; margin-left: 24px; }
+  .hol-ass .peq { display: inline-block; font-size: 8px; margin: 0 40px 0 12px; }
   @media print {
     @page { size: A4 landscape; margin: 7mm; }
     body { padding-top: 0 !important; background: #fff !important; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -322,6 +339,10 @@
     .p-sec { break-inside: avoid; margin-bottom: 10px; }
     .p-sec h2 { font-size: 10px; margin: 0 0 3px; color: #2d2a32; }
     .p-sec h2 small { font-weight: 400; color: #777; font-size: 8px; margin-left: 6px; }
+    @page hol { size: A4 portrait; margin: 8mm; }
+    .p-holes { page: hol; font: 11px/1.3 Arial, Helvetica, sans-serif; }
+    .p-holes .hol { break-inside: avoid; margin: 0 0 8mm; max-width: none; }
+    .p-holes .hol:nth-child(2n) { break-after: page; margin-bottom: 0; }
     .p-quebra { break-after: page; page-break-after: always; height: 0; }
     .p-foot { margin-top: 5px; color: #888; font-size: 7px; }
     .p-tab .gi { background: #f3f1ee; }
@@ -404,6 +425,8 @@
     </div>
     <p class="hint" style="margin-top:0" id="fPadrao"></p>
     <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
+    <div class="row"><label><input type="checkbox" id="fSemDsr"> Sem repouso remunerado (DSR) sobre as horas extras</label></div>
+    <div class="row"><label>Função (aparece no contracheque)</label><input id="fFuncao" style="width:170px;text-align:left" placeholder="ex.: Motorista"></div>
     <h3>Valor por dia deste funcionário (em branco = padrão geral)</h3>
     <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="fDiaTrab" inputmode="decimal" style="width:100px"></div>
     <div class="row"><label>361/380 — R$ por dia</label><input id="fDia361" inputmode="decimal" style="width:100px"></div>
@@ -492,6 +515,17 @@
   </div>
 </dialog>
 
+<!-- contracheque -->
+<dialog id="dlgHol" style="width:min(780px,96vw)">
+  <h2>Contracheque</h2>
+  <div id="holBody" class="hol-prev"></div>
+  <p class="hint">Montado com os valores da folha, no mesmo formato do contracheque da contabilidade. Para mudar o que aparece, ajuste a folha ou as colunas.</p>
+  <div class="dlg-actions">
+    <button onclick="this.closest('dialog').close()">Fechar</button>
+    <button class="primary" id="holImprimir">Imprimir / PDF</button>
+  </div>
+</dialog>
+
 <!-- comentário de um valor -->
 <dialog id="dlgNota">
   <form id="notaForm">
@@ -526,6 +560,9 @@
     <input id="cHeSdfValor" inputmode="decimal" style="width:80px">
   </div>
   <p class="hint" style="margin-top:0">Em "%", valor da hora = salário base ÷ divisor × (1 + %). Ex.: 50% semana, 100% SDF.</p>
+
+  <div class="row"><label><input type="checkbox" id="cDsr"> Calcular repouso remunerado (DSR) sobre as horas extras</label></div>
+  <p class="hint" style="margin-top:0">DSR = horas extras ÷ dias úteis do mês × (domingos + feriados). É o "Repouso Remunerado" do contracheque. Os feriados nacionais entram sozinhos e dá para ajustar em cada mês.</p>
 
   <h3>Bonificação por dia</h3>
   <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="cDiaTrab" inputmode="decimal"></div>
@@ -562,12 +599,14 @@ const DEFAULT_CONFIG = {
   heSdf: { modo: 'pct', valor: 100 },
   // faixas: até (R$) / alíquota (%)
   inss: [
-    { ate: 1518.00, aliq: 7.5 },
-    { ate: 2793.88, aliq: 9 },
-    { ate: 4190.83, aliq: 12 },
-    { ate: 8157.41, aliq: 14 },
+    { ate: 1621.00, aliq: 7.5 },
+    { ate: 2902.84, aliq: 9 },
+    { ate: 4354.27, aliq: 12 },
+    { ate: 8475.55, aliq: 14 },
   ],
+  dsr: true, // repouso remunerado sobre as horas extras
 };
+const INSS_ANTIGA = [1518.00, 2793.88, 4190.83, 8157.41];
 const STATUS = [
   ['aberta', 'Em aberto'],
   ['conferencia', 'Em conferência'],
@@ -604,12 +643,15 @@ function normalize(s) {
   if (!s) return null;
   let empresas;
   if (Array.isArray(s.empresas) && s.empresas.length) {
-    empresas = s.empresas.map(e => ({ id: e.id || uid(), nome: e.nome || 'Empresa', meses: e.meses || {}, status: e.status || {}, decimo: e.decimo || {} }));
+    empresas = s.empresas.map(e => ({ id: e.id || uid(), nome: e.nome || 'Empresa', meses: e.meses || {}, status: e.status || {}, decimo: e.decimo || {}, mesInfo: e.mesInfo || {}, info: e.info || '' }));
   } else if (s.meses) {
     // formato antigo: uma única empresa
     empresas = [{ id: 'principal', nome: 'Empresa principal', meses: s.meses, status: s.status || {} }];
   } else return null;
-  return { config: { ...structuredClone(DEFAULT_CONFIG), ...s.config }, empresas, seed: s.seed || 0 };
+  const config = { ...structuredClone(DEFAULT_CONFIG), ...s.config };
+  // quem nunca mexeu na tabela do INSS passa para a de 2026 (a do contracheque)
+  if (config.inss.length === 4 && config.inss.every((f, i) => Math.abs(f.ate - INSS_ANTIGA[i]) < 0.01)) config.inss = structuredClone(DEFAULT_CONFIG.inss);
+  return { config, empresas, seed: s.seed || 0 };
 }
 function load() {
   try {
@@ -783,14 +825,40 @@ function valorHora(salario, cfg) {
   const div = state.config.divisor || 220;
   return (salario || 0) / div * (1 + (cfg.valor || 0) / 100);
 }
+const cent = n => Math.floor(n * 100 + 1e-7) / 100; // trunca em centavos (como a folha da contabilidade)
 function calcInss(base) {
   let total = 0, prev = 0;
   for (const f of state.config.inss) {
     if (base <= prev) break;
-    total += (Math.min(base, f.ate) - prev) * f.aliq / 100;
+    total += cent((Math.min(base, f.ate) - prev) * f.aliq / 100);
     prev = f.ate;
   }
   return r2(total);
+}
+
+// ---------- calendário do mês (DSR) ----------
+function pascoa(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+    g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+    l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mes - 1, dia);
+}
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function feriadosNacionais(y) {
+  const fixos = ['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '11-20', '12-25'].map(x => `${y}-${x}`);
+  const sexta = pascoa(y); sexta.setDate(sexta.getDate() - 2);
+  return [...fixos, iso(sexta)];
+}
+// dias úteis (segunda a sábado, sem feriado) e dias de descanso (domingos + feriados) do mês
+function infoMes(m, emp = E()) {
+  const [y, mo] = m.split('-').map(Number), dias = new Date(y, mo, 0).getDate();
+  let dom = 0;
+  for (let d = 1; d <= dias; d++) if (new Date(y, mo - 1, d).getDay() === 0) dom++;
+  const auto = feriadosNacionais(y).filter(f => f.startsWith(m) && new Date(f + 'T12:00:00').getDay() !== 0).length;
+  const ov = emp.mesInfo && emp.mesInfo[m] && emp.mesInfo[m].feriados;
+  const fer = ov != null ? ov : auto;
+  return { dias, dom, fer, auto, manual: ov != null, uteis: dias - dom - fer, dsrDias: dom + fer };
 }
 // ---------- colunas ----------
 // g: grupo (p = provento, d = desconto, r = resultado) · un: unidade digitada · v: valor em R$ calculado
@@ -804,9 +872,12 @@ const COLS_BASE = [
   { k: 'ajuda', tipo: 'proventoSem', nome: 'Ajuda combinada', g: 'p' },
   { k: 'heSem', tipo: 'provento', nome: 'HE semana', g: 'p', un: 'h', v: 'heSemV' },
   { k: 'heSdf', tipo: 'provento', nome: 'HE SDF', g: 'p', un: 'h', v: 'heSdfV' },
+  { k: 'dsr', tipo: 'provento', nome: 'Repouso remunerado (DSR)', g: 'p', v: 'dsrV', sub: true, semFiltro: true, dica: 'Calculado sobre as horas extras: HE ÷ dias úteis × (domingos + feriados). Digite um valor para trocar.' },
   { k: 'adiant', tipo: 'desconto', nome: 'Adiantamento', g: 'd' },
   { k: 'inss', nome: 'INSS', g: 'd', v: 'inss', semFiltro: true },
   { k: 'desc', tipo: 'desconto', nome: 'Descontos', g: 'd' },
+  { k: 'baseInss', nome: 'Base INSS', g: 'i', calc: true, ocultaPadrao: true },
+  { k: 'fgts', nome: 'FGTS do mês (8%)', g: 'i', calc: true, ocultaPadrao: true },
   { k: 'liquido', nome: 'Valor líquido', g: 'r', calc: true, cls: 'c-liq', fixa: true },
   { k: 'ifood', tipo: 'conta', nome: 'iFood Benefícios', g: 'r', cls: 'c-if' },
   { k: 'conta', nome: 'Na conta', g: 'r', calc: true, cls: 'c-conta', fixa: true },
@@ -827,7 +898,8 @@ function todasColunas() {
   COLS_BASE.forEach(c => {
     const tipo = c.tipo && ((state.config.colTipos || {})[c.k] || c.tipo);
     out.push({ ...c, tipo, tipoPadrao: c.tipo, g: tipo ? grupoDoTipo(tipo) : c.g,
-      nome: (state.config.colNomes || {})[c.k] || c.nome, padrao: c.nome, oculta: !!(state.config.colOcultas || {})[c.k] });
+      nome: (state.config.colNomes || {})[c.k] || c.nome, padrao: c.nome,
+      oculta: (state.config.colOcultas || {})[c.k] !== undefined ? !!state.config.colOcultas[c.k] : !!c.ocultaPadrao });
     if (c.k === 'heSdf') ex.filter(x => x.g === 'p').forEach(x => out.push(x));
     if (c.k === 'desc') ex.filter(x => x.g !== 'p').forEach(x => out.push(x));
   });
@@ -868,7 +940,7 @@ const filtravel = k => { const c = colDe(k); return !!c && !c.calc && !c.semFilt
 // valor em R$ de uma coluna para um funcionário
 const valorCol = (col, r, c) => col.calc ? c[col.k] : col.v ? c[col.v] : (r[col.k] || 0);
 
-function calc(r) {
+function calc(r, m = mes) {
   const cfg = r.cfg || {};
   const c = {};
   c.heSemV = r2((r.heSem || 0) * valorHora(r.salario, cfg.heSem || state.config.heSem));
@@ -877,6 +949,11 @@ function calc(r) {
   c.valDia361 = cfg.dia361 != null ? cfg.dia361 : state.config.dia361 || 0;
   c.diaTrabV = r2((r.diasTrab || 0) * c.valDiaTrab);
   c.dia361V = r2((r.dias361 || 0) * c.valDia361);
+  // repouso remunerado (DSR) sobre as horas extras do mês
+  const im = infoMes(m);
+  c.dsrAuto = state.config.dsr !== false && !cfg.semDsr && !cfg.foraInss && im.uteis > 0
+    ? r2((c.heSemV + c.heSdfV) / im.uteis * im.dsrDias) : 0;
+  c.dsrV = r.dsr != null ? r.dsr : c.dsrAuto;
   // soma cada coluna conforme o tipo definido no painel "Colunas"
   let base = 0, sem = 0, desc = 0, daConta = 0, heNaBase = 0;
   todasColunas().forEach(col => {
@@ -888,19 +965,21 @@ function calc(r) {
     else if (col.tipo === 'conta') daConta += n;
   });
   c.bruto = base;
-  c.inssAuto = calcInss(cfg.foraInss ? base - heNaBase : base);
+  c.baseInss = cfg.foraInss ? base - heNaBase : base;
+  c.fgts = cent(c.baseInss * 0.08);
+  c.inssAuto = calcInss(c.baseInss);
   c.inss = r.inss != null ? r.inss : c.inssAuto;
   c.proventos = base + sem;
   c.liquido = r2(c.proventos - c.inss - desc);
   c.conta = r2(c.liquido - daConta);
   return c;
 }
-function totals(list) {
+function totals(list, m = mes) {
   const all = todasColunas();
   const t = { bruto: 0 };
   all.forEach(col => { t[col.k] = 0; });
   list.forEach(r => {
-    const c = calc(r);
+    const c = calc(r, m);
     all.forEach(col => { t[col.k] += valorCol(col, r, c); });
     t.bruto += c.proventos;
   });
@@ -1024,7 +1103,7 @@ function calc13(a) {
     const f = d.func[k] || {};
     const ult = p.linhas.length ? p.linhas[p.linhas.length - 1].r : {};
     const salarioAuto = (ult.salario || 0) + (ult.bonif || 0);
-    const somaVar = p.linhas.reduce((s, { r }) => { const c = calc(r); return s + varCols.reduce((t, col) => t + valorCol(col, r, c), 0); }, 0);
+    const somaVar = p.linhas.reduce((s, { m, r }) => { const c = calc(r, m); return s + varCols.reduce((t, col) => t + valorCol(col, r, c), 0); }, 0);
     const mediaAuto = d.media && p.linhas.length ? r2(somaVar / p.linhas.length) : 0;
     const avosAuto = avosAdmissao(f.admissao, a);
     const avos = ov(f, 'avos', avosAuto);
@@ -1161,7 +1240,7 @@ function render13() {
     grava13(ano, dd);
   };
   $('d13media').onchange = e => alterar(dd => { dd.media = e.target.checked; });
-  $('d13Print').onclick = () => { buildPrint13(); window.print(); };
+  $('d13Print').onclick = () => { printFixo = false; buildPrint13(); window.print(); };
   $('d13Cols').onclick = abrirColunas13;
   app.querySelectorAll('[data-data]').forEach(inp => inp.onchange = () => alterar(dd => { dd.datas[inp.dataset.data] = inp.value; }));
   app.querySelectorAll('th[data-col]').forEach(th => {
@@ -1447,7 +1526,7 @@ function renderCal() {
         <div class="mname">${nm}</div><div>Sem folha</div>
         <button class="primary" data-criar="${m}">Criar folha</button></div>`;
     }
-    const t = totals(list), st = statusOf(m);
+    const t = totals(list, m), st = statusOf(m);
     anoConta += t.conta; anoIfood += t.ifood; if (st === 'paga') pagas++;
     return `<div class="card st-${st}${now}" data-m="${m}">
       <div class="ch"><span class="mname">${nm}</span><span class="pill">${STATUS_LABEL[st]}</span></div>
@@ -1531,6 +1610,7 @@ function renderFolha() {
         <button class="primary" id="btnAdd">+ Funcionário</button>
         <button id="btnCopiarVal" title="Preenche os campos vazios com os valores do mês anterior">Copiar valores do mês anterior</button>
         <button id="btnCols" title="Editar, adicionar ou remover colunas">Colunas</button>
+        <button id="btnHolTodos" title="Contracheque de todos os funcionários, 2 por página">Contracheques</button>
         <button id="btnCsv">Exportar CSV</button>
         <label class="chk-media" title="Acrescenta uma página com o 13º salário deste ano ao PDF"><input type="checkbox" id="pdf13"> Incluir 13º no PDF</label>
         <button id="btnPrint">Imprimir / PDF</button>
@@ -1544,7 +1624,7 @@ function renderFolha() {
         <thead>
           <tr>
             <th>Nome</th>
-            ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.k === 'inss' ? ' title="Em branco = automático"' : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
+            ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.dica || c.k === 'inss' ? ` title="${esc(c.dica || 'Em branco = automático')}"` : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
             <th></th>
           </tr>
         </thead>
@@ -1619,10 +1699,11 @@ function renderFolha() {
   };
   $('pdf13').checked = incluir13();
   $('pdf13').onchange = e => { try { localStorage.setItem('folha-pdf13', e.target.checked ? '1' : '0'); } catch (err) {} };
-  document.getElementById('btnPrint').onclick = () => { buildPrint(); window.print(); };
+  document.getElementById('btnPrint').onclick = () => { printFixo = false; buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
   $('btnCopiarVal').onclick = copiarValores;
   $('btnCols').onclick = abrirColunas;
+  $('btnHolTodos').onclick = () => imprimirHolerites(rows().slice().sort(byName).filter(r => r.nome && calc(r).proventos > 0));
   renderTotals();
   syncScroll();
 }
@@ -1688,7 +1769,7 @@ function buildPrint() {
     <div class="p-foot">${esc(formulaTxt())} · “–” = sem valor</div>`;
   if (incluir13()) buildPrint13(true);
 }
-window.addEventListener('beforeprint', () => { if (view === 'folha') buildPrint(); else if (view === '13') buildPrint13(); });
+window.addEventListener('beforeprint', () => { if (printFixo) return; if (view === 'folha') buildPrint(); else if (view === '13') buildPrint13(); });
 
 // barra de rolagem horizontal também em cima da tabela
 function syncScroll() {
@@ -1718,11 +1799,11 @@ function rowEl(r, n) {
   const celulas = cols().map(col => {
     if (col.calc) return `<td class="calc ${col.cls || ''}" data-c="${col.k}"></td>`;
     const sub = col.dia ? `<span class="sub dia" data-c="${col.v}" title="Valor por dia deste funcionário — clique para alterar"></span>`
-      : col.un ? `<span class="sub" data-c="${col.v}"></span>` : '';
+      : (col.un || col.sub) ? `<span class="sub" data-c="${col.v}"></span>` : '';
     return `<td class="vcell ${col.cls || ''}">${input(r, col.k)}${sub}${notaBtn(r, col.k)}</td>`;
   }).join('');
   tr.innerHTML = `
-    <td class="vcell"><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}${notaBtn(r, 'nome')}</td>
+    <td class="vcell"><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button><button class="cfg holer" title="Ver o contracheque deste funcionário">🧾</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}${notaBtn(r, 'nome')}</td>
     ${celulas}
     <td><button class="del" title="Remover">✕</button></td>`;
   tr.addEventListener('input', e => {
@@ -1741,7 +1822,8 @@ function rowEl(r, n) {
     save(); renderTotals();
   };
   tr.querySelector('.del').onclick = () => abrirRemover(r);
-  tr.querySelector('.cfg').onclick = () => abrirFunc(r);
+  tr.querySelector('.cfg:not(.holer)').onclick = () => abrirFunc(r);
+  tr.querySelector('.holer').onclick = () => abrirHolerite(r);
   tr.querySelectorAll('.sub.dia').forEach(el => el.onclick = () => abrirFunc(r));
   tr.querySelectorAll('.nota').forEach(b => b.onclick = () => abrirNota(r, b.dataset.nota));
   updateRow(tr, r);
@@ -1760,10 +1842,14 @@ function updateRow(tr, r) {
   };
   dia('[data-c=diaTrabV]', r.diasTrab, c.valDiaTrab, c.diaTrabV);
   dia('[data-c=dia361V]', r.dias361, c.valDia361, c.dia361V);
+  set('[data-c=dsrV]', c.dsrV ? brl(c.dsrV) + (r.dsr != null ? '' : ' auto') : '');
   set('[data-c=heSemV]', r.heSem ? brl(c.heSemV) : '');
   set('[data-c=heSdfV]', r.heSdf ? brl(c.heSdfV) : '');
   const inss = tr.querySelector('[data-f=inss]');
   if (inss) inss.placeholder = num(c.inssAuto);
+  ['baseInss', 'fgts'].forEach(k => { const el = tr.querySelector(`td[data-c=${k}]`); if (el) el.textContent = brl(c[k]); });
+  const dsrIn = tr.querySelector('[data-f=dsr]');
+  if (dsrIn) dsrIn.placeholder = c.dsrAuto ? num(c.dsrAuto) : '';
   ['liquido', 'conta'].forEach(k => {
     const el = tr.querySelector(`[data-c=${k}]`);
     if (el) { el.textContent = brl(c[k]); el.classList.toggle('neg', c[k] < 0); }
@@ -1774,14 +1860,25 @@ function renderTotals() {
   const list = rows();
   const tfoot = document.getElementById('tfoot');
   const t = totals(list);
+  const im = infoMes(mes);
   document.getElementById('fsum').innerHTML = `
     <div class="chip"><small>Funcionários</small><b>${list.length}</b></div>
     <div class="chip mint"><small>Conferidos</small><b>${list.filter(r => r.ok).length} / ${list.length}</b></div>
+    <div class="chip" title="Base do repouso remunerado (DSR) sobre as horas extras. Clique no lápis para ajustar os feriados do mês."><small>Dias úteis · descanso</small><b>${im.uteis} úteis · ${im.dom} dom. + ${im.fer} fer.</b> <button class="ghost" id="btnFer" style="padding:0 6px">✎</button></div>
     <div class="chip"><small>Total proventos</small><b>${brl(t.bruto)}</b></div>
     <div class="chip"><small>INSS</small><b>${brl(t.inss)}</b></div>
     <div class="chip lav"><small>Líquido</small><b>${brl(t.liquido)}</b></div>
     <div class="chip pink"><small>iFood</small><b>${brl(t.ifood)}</b></div>
     <div class="chip mint"><small>Na conta</small><b>${brl(t.conta)}</b></div>`;
+  $('btnFer').onclick = () => {
+    const im2 = infoMes(mes);
+    const v = prompt(`Feriados em dia de semana (seg–sáb) em ${nomeMes(mes)}:\n\nAutomático: ${im2.auto} (feriados nacionais). Digite o número que vale para sua cidade, ou deixe vazio para voltar ao automático.`, im2.manual ? im2.fer : '');
+    if (v === null) return;
+    E().mesInfo = E().mesInfo || {};
+    const n = parse(v);
+    if (n == null) delete E().mesInfo[mes]; else E().mesInfo[mes] = { feriados: Math.max(0, Math.round(n)) };
+    save(); render();
+  };
   if (!list.length) { tfoot.innerHTML = ''; return; }
   tfoot.innerHTML = `<tr>
     <td>Total da folha (${list.length})</td>
@@ -1832,7 +1929,7 @@ function abrirColunas() {
       <input data-nome value="${esc(c.nome)}" placeholder="${esc(c.padrao || '')}">
       ${c.tipo
         ? `<select data-tipo title="O que esta coluna faz no cálculo">${Object.entries(TIPOS).map(([k, l]) => `<option value="${k}"${c.tipo === k ? ' selected' : ''}>${l}${k === c.tipoPadrao ? ' ★' : ''}</option>`).join('')}</select>`
-        : `<span class="col-tag">${c.k === 'inss' ? '➖ automático' : '= resultado'}</span>`}
+        : `<span class="col-tag">${c.k === 'inss' ? '➖ automático' : c.g === 'i' ? '○ informativo' : '= resultado'}</span>`}
       ${c.extra ? `<button type="button" class="danger" data-rm title="Remover coluna">✕</button>` : '<span class="col-rm-vazio"></span>'}
     </div>`).join('');
   $('colList').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
@@ -1891,7 +1988,7 @@ function aplicarColunas() {
     else {
       const base = COLS_BASE.find(c => c.k === k);
       if (nome && nome !== base.nome) nomes[k] = nome;
-      if (!vis && !base.fixa) ocultas[k] = true;
+      if (!base.fixa) ocultas[k] = !vis;
       const t = row.querySelector('[data-tipo]');
       if (t && t.value !== base.tipo) tipos[k] = t.value;
     }
@@ -1929,13 +2026,18 @@ $('empSel').onchange = e => setEmpresa(e.target.value);
 function renderEmpList() {
   $('empList').innerHTML = state.empresas.map(e => `
     <div class="row">
-      <input data-id="${e.id}" value="${esc(e.nome)}">
+      <input data-id="${e.id}" value="${esc(e.nome)}" title="Nome da empresa">
+      <input data-info="${e.id}" value="${esc(e.info || '')}" placeholder="CNPJ / endereço (aparece no contracheque)" style="flex:1.3">
       <button type="button" class="danger" data-del="${e.id}" title="Apagar empresa"${state.empresas.length < 2 ? ' disabled' : ''}>Apagar</button>
     </div>`).join('');
-  $('empList').querySelectorAll('input').forEach(inp => inp.onchange = () => {
+  $('empList').querySelectorAll('input[data-id]').forEach(inp => inp.onchange = () => {
     const emp = state.empresas.find(x => x.id === inp.dataset.id);
     emp.nome = inp.value.trim() || emp.nome;
     save(); render();
+  });
+  $('empList').querySelectorAll('input[data-info]').forEach(inp => inp.onchange = () => {
+    state.empresas.find(x => x.id === inp.dataset.info).info = inp.value.trim();
+    save();
   });
   $('empList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
     const emp = state.empresas.find(x => x.id === b.dataset.del);
@@ -1993,6 +2095,7 @@ function cfgResumo(c) {
   if (c.heSem) p.push('HE sem. ' + heTxt(c.heSem));
   if (c.heSdf) p.push('SDF ' + heTxt(c.heSdf));
   if (c.foraInss) p.push('HE por fora');
+  if (c.semDsr) p.push('sem DSR');
   if (c.diaTrab != null) p.push('Dia trab. ' + brl(c.diaTrab) + '/dia');
   if (c.dia361 != null) p.push('361/380 ' + brl(c.dia361) + '/dia');
   return p.join(' · ');
@@ -2005,6 +2108,7 @@ function abrirFunc(r) {
   $('fHeSemModo').value = c.heSem ? c.heSem.modo : ''; $('fHeSemValor').value = c.heSem ? num(c.heSem.valor) : '';
   $('fHeSdfModo').value = c.heSdf ? c.heSdf.modo : ''; $('fHeSdfValor').value = c.heSdf ? num(c.heSdf.valor) : '';
   $('fFora').checked = !!c.foraInss;
+  $('fSemDsr').checked = !!c.semDsr; $('fFuncao').value = c.funcao || '';
   $('fDiaTrab').value = num(c.diaTrab); $('fDia361').value = num(c.dia361);
   $('fDiaTrab').placeholder = num(g.diaTrab || 0); $('fDia361').placeholder = num(g.dia361 || 0);
   $('fPadrao').textContent = `Padrão geral: HE semana ${heTxt(g.heSem)}, HE SDF ${heTxt(g.heSdf)}.`;
@@ -2030,9 +2134,10 @@ $('funcForm').onsubmit = e => {
     const modo = $('fHe' + k + 'Modo').value;
     return modo ? { modo, valor: parse($('fHe' + k + 'Valor').value) || 0 } : null;
   };
-  const c = { heSem: he('Sem'), heSdf: he('Sdf'), foraInss: $('fFora').checked,
+  const c = { heSem: he('Sem'), heSdf: he('Sdf'), foraInss: $('fFora').checked, semDsr: $('fSemDsr').checked,
+    funcao: $('fFuncao').value.trim() || null,
     diaTrab: parse($('fDiaTrab').value), dia361: parse($('fDia361').value) };
-  const cfg = c.heSem || c.heSdf || c.foraInss || c.diaTrab != null || c.dia361 != null ? c : null;
+  const cfg = c.heSem || c.heSdf || c.foraInss || c.semDsr || c.funcao || c.diaTrab != null || c.dia361 != null ? c : null;
   r.cfg = cfg;
   const todos = $('fSeguintes').checked && r.nome;
   if (todos) {
@@ -2073,6 +2178,72 @@ function remover(modo) {
 document.getElementById('delMes').onclick = () => remover('mes');
 document.getElementById('delSeg').onclick = () => remover('seguintes');
 document.getElementById('delTodos').onclick = () => remover('todos');
+
+// ---------- contracheque (demonstrativo de pagamento) ----------
+let printFixo = false; // impressão especial: não recriar o conteúdo ao imprimir
+const fmtHM = h => { const t = Math.round((h || 0) * 60); return String(Math.floor(t / 60)).padStart(3, '0') + ':' + String(t % 60).padStart(2, '0'); };
+const brl2 = n => (n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function holeriteHtml(r, m = mes) {
+  const c = calc(r, m), [y, mo] = m.split('-').map(Number);
+  const ultimo = new Date(y, mo, 0).getDate(), p2 = n => String(n).padStart(2, '0');
+  const venc = [], desc = [];
+  const ref = col => col.k === 'salario' ? fmtHM(state.config.divisor || 220)
+    : col.k === 'heSem' || col.k === 'heSdf' ? fmtHM(r[col.k])
+    : col.k === 'diasTrab' || col.k === 'dias361' ? num(r[col.k]) : '';
+  if (c.inss) desc.push(['INSS Folha', '', c.inss]);
+  todasColunas().forEach(col => {
+    if (!col.tipo || col.tipo === 'info' || col.tipo === 'conta') return;
+    const val = valorCol(col, r, c);
+    if (!val) return;
+    (col.tipo === 'desconto' ? desc : venc).push([col.nome, ref(col), val]);
+  });
+  const totDesc = r2(c.proventos - c.liquido);
+  const n = Math.max(venc.length + desc.length, 8);
+  const todas = [...venc.map(l => ({ l, v: true })), ...desc.map(l => ({ l, v: false }))];
+  const corpo = todas.map(({ l, v }, i) => `<tr><td class="cod">${String(i + 1).padStart(3, '0')}</td><td>${esc(l[0])}</td><td class="ref">${l[1]}</td>
+    <td class="vl">${v ? brl2(l[2]) : ''}</td><td class="vl">${v ? '' : brl2(l[2])}</td></tr>`).join('')
+    + '<tr class="folga"><td></td><td></td><td></td><td></td><td></td></tr>'.repeat(Math.max(0, n - todas.length));
+  const efet = c.baseInss ? (c.inss / c.baseInss * 100) : 0;
+  const emp = E();
+  return `<div class="hol">
+    <div class="hol-top"><div><b>${esc(emp.nome)}</b><br>${esc(emp.info || '')}<br>${p2(1)}/${p2(mo)}/${y} a ${p2(ultimo)}/${p2(mo)}/${y}</div>
+      <div class="hol-tit">Demonstrativo de Pagamento de Salário</div></div>
+    <div class="hol-func"><span>${esc(r.nome)}</span><span>${esc((r.cfg && r.cfg.funcao) || '')}</span></div>
+    <table class="hol-tab"><thead><tr><th>Cód.</th><th>Descrição</th><th>Referência</th><th>Vencimentos</th><th>Descontos</th></tr></thead>
+      <tbody>${corpo}</tbody>
+      <tfoot>
+        <tr><td colspan="3" rowspan="2" class="obs">${c.dsrV ? `DSR: ${infoMes(m).dsrDias} dias de descanso ÷ ${infoMes(m).uteis} dias úteis` : ''}</td><td class="vl">${brl2(c.proventos)}</td><td class="vl">${brl2(totDesc)}</td></tr>
+        <tr><td class="liqt">Valor Líquido</td><td class="vl liq">${brl2(c.liquido)}</td></tr>
+      </tfoot></table>
+    <div class="hol-base">
+      <div><small>Saldo Base</small>${brl2(r.salario)}</div>
+      <div><small>Sal. Contr. INSS</small>${brl2(c.baseInss)} <i>${brl2(efet)}</i></div>
+      <div><small>Base Cál. FGTS</small>${brl2(c.baseInss)}</div>
+      <div><small>F.G.T.S do mês</small>${brl2(c.fgts)}</div>
+      ${r.ifood ? `<div><small>iFood Benefícios</small>${brl2(r.ifood)}</div><div><small>Valor na conta</small>${brl2(c.conta)}</div>` : ''}
+    </div>
+    <div class="hol-ass">DECLARO TER RECEBIDO A IMPORTÂNCIA LÍQUIDA DISCRIMINADA NESTE RECIBO<br><br>
+      <span>____/____/______</span><span class="linha"></span><br><span class="peq">DATA</span><span class="peq">ASSINATURA DO FUNCIONÁRIO</span></div>
+  </div>`;
+}
+let holAtual = null;
+function abrirHolerite(r) {
+  holAtual = r;
+  $('holBody').innerHTML = holeriteHtml(r);
+  $('dlgHol').showModal();
+}
+$('holImprimir').onclick = () => imprimirHolerites([holAtual]);
+function imprimirHolerites(lista) {
+  if (!lista.length) return alert('Não há funcionários com valores nesta folha.');
+  $('printArea').innerHTML = `<div class="p-holes">${lista.map(r => holeriteHtml(r)).join('')}</div>`;
+  printFixo = true;
+  // o contracheque sai em A4 em pé (o resto do sistema imprime deitado)
+  const st = document.createElement('style'); st.id = 'pgDin';
+  st.textContent = '@page { size: A4 portrait; margin: 8mm; }';
+  document.head.appendChild(st);
+  setTimeout(() => window.print(), 50);
+}
+window.addEventListener('afterprint', () => { printFixo = false; const st = document.getElementById('pgDin'); if (st) st.remove(); });
 
 // ---------- exportação / backup ----------
 function exportCsv() {
@@ -2123,6 +2294,7 @@ $('btnConfig').onclick = () => {
   const c = state.config;
   $('cDivisor').value = num(c.divisor);
   $('cDiaTrab').value = num(c.diaTrab); $('cDia361').value = num(c.dia361);
+  $('cDsr').checked = c.dsr !== false;
   $('cHeSemModo').value = c.heSem.modo; $('cHeSemValor').value = num(c.heSem.valor);
   $('cHeSdfModo').value = c.heSdf.modo; $('cHeSdfValor').value = num(c.heSdf.valor);
   $('cInss').innerHTML = c.inss.map((f, i) => `
@@ -2137,6 +2309,7 @@ $('cCancel').onclick = () => dlg.close();
 $('cSave').onclick = () => {
   const c = state.config;
   c.divisor = parse($('cDivisor').value) || 220;
+  c.dsr = $('cDsr').checked;
   c.diaTrab = parse($('cDiaTrab').value) || 0;
   c.dia361 = parse($('cDia361').value) || 0;
   c.heSem = { modo: $('cHeSemModo').value, valor: parse($('cHeSemValor').value) || 0 };

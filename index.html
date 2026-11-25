@@ -399,6 +399,9 @@
   .fc-tab th:first-child, .fc-tab td:first-child { position: static; text-align: left; background: transparent; }
   .fc-tab td { padding: 4px 6px; } .fc-tab td input { width: 96px; border: 1px solid var(--line); background: var(--bg); }
   .fc-tab input.ov { box-shadow: inset 0 -2px 0 #e8952f; }
+  .fc-chk { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-bottom: 8px; cursor: pointer; }
+  .fc-chk small { color: var(--muted); }
+  .fc-tab tr.off td { opacity: .55; }
   .st { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
   .st b { font-variant-numeric: tabular-nums; }
   .st.sub { font-weight: 700; } .st.mut { color: var(--muted); }
@@ -1527,8 +1530,12 @@ function calc13(a) {
       const auto = mediaDe(col), o = mc[col.k];
       return { col, auto, ov: o != null, media: o != null ? o : auto, horas: o != null ? null : horasDe(col) };
     };
-    const cats = rg.media ? varCols.map(cat).filter(c => c.media || c.auto) : [];
-    const catsSem = rg.ajuda ? semCols.map(cat).filter(c => c.media || c.auto) : [];
+    // acordo com o funcionário: sem média variável (HE, DSR, bonificações) e/ou sem a média da ajuda alimentação
+    const semMedia = !!f.semMedia, semAjuda = !!f.semAjuda;
+    const catsFull = varCols.map(cat).filter(c => c.media || c.auto);
+    const catsSemFull = semCols.map(cat).filter(c => c.media || c.auto);
+    const cats = rg.media && !semMedia ? catsFull : [];
+    const catsSem = rg.ajuda && !semAjuda ? catsSemFull : [];
     const mediaAuto = r2(cats.reduce((t, c) => t + c.media, 0));
     const avosAuto = avosAdmissao(f.admissao, a);
     const avos = ov(f, 'avos', avosAuto);
@@ -1557,7 +1564,7 @@ function calc13(a) {
     const funcao = (ult.cfg && ult.cfg.funcao) || (p.linhas.map(({ r }) => r.cfg && r.cfg.funcao).filter(Boolean).pop()) || '';
     const manuais = ['salario', 'avos', 'media', 'base', 'total', 'p1', 'inss', 'p2'].some(c => f[c] != null) || Object.keys(mc).length > 0;
     return { k, nome: p.nome, manual: !!p.manual, f, v, funcao, avosAuto, salarioAuto, inssAuto, salario, media, avos, base, total, p1, liq1, inss, p2, fgts,
-      ajudaP1, extraP1, meses: p.linhas.length, itemizado, cats, catsSem, metade, manuais, mesRef: rg.mesRef, pct1: rg.pct1 };
+      ajudaP1, extraP1, meses: p.linhas.length, itemizado, cats, catsSem, catsTodas: [...catsFull, ...catsSemFull], semMedia, semAjuda, acordo: f.acordo || '', metade, manuais, mesRef: rg.mesRef, pct1: rg.pct1 };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -1758,7 +1765,7 @@ function render13() {
           </tr></thead>
           <tbody>${lista.map(x => `
             <tr data-k="${esc(x.k)}" data-t="${t}">
-              <td><div class="nm13">${avatar13(x.nome)}<span class="t"><b>${esc(x.nome)}</b><small>${esc([x.funcao, x.avos < 12 ? `${x.avos}/12 avos` : '', x.manual ? 'incluído à mão' : ''].filter(Boolean).join(' · '))}</small></span></div></td>
+              <td><div class="nm13"${x.acordo ? ` title="Acordo: ${esc(x.acordo)}"` : ''}>${avatar13(x.nome)}<span class="t"><b>${esc(x.nome)}</b><small>${esc([x.funcao, x.avos < 12 ? `${x.avos}/12 avos` : '', x.semMedia ? 'sem média (acordo)' : '', x.semAjuda ? 'sem média da ajuda' : '', x.manual ? 'incluído à mão' : ''].filter(Boolean).join(' · '))}</small></span></div></td>
               <td class="mkcol">${marcHtml(k => mk13(x, t, k), { ok: ' data-ok' })}</td>
               ${cs.map(c => cel(c, x, t)).join('')}
               <td class="acoes13"><button class="del det13" title="Detalhes, cálculo passo a passo e pagamento">Detalhes</button>${t === 't1' || t === 't2' ? `<button class="del holer13" title="Contracheque da ${t === 't1' ? 1 : 2}ª parcela">🧾</button>` : ''}<button class="del lixo" title="Tirar do 13º">🗑</button></td>
@@ -2021,7 +2028,7 @@ function abrirFicha13(k) {
   fichaK = k;
   const f = x.f, d = dados13(ano), rg = regra13(d, ano);
   const mesNome = MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef;
-  const linhasCat = [...x.cats, ...x.catsSem];
+  const linhasCat = x.catsTodas;
   $('fichaBody').innerHTML = `
     <div class="fc-top" id="fichaTop"></div>
     <div class="fc-grid">
@@ -2032,12 +2039,16 @@ function abrirFicha13(k) {
         <label class="fc-f">Salário + bonif. fixa <small>automático (folha de ${mesNome}): ${brl(x.salarioAuto)}</small><input data-ff="salario" inputmode="decimal" value="${f.salario != null ? num(f.salario) : ''}" placeholder="${num(x.salarioAuto)}"></label>
         <label class="fc-f">PIX / conta para pagamento<input data-ff="pix" value="${esc(f.pix || '')}" placeholder="chave PIX, banco/agência/conta…"></label>
         <label class="fc-f">Observação<textarea data-ff="obs" rows="3" placeholder="Anotações sobre este funcionário…">${esc(f.obs || '')}</textarea></label>
+        <h3>Acordo com o funcionário${infoIcon('Para quem não entra na média variável: marque aqui. Por exemplo, quem tem horas extras compensadas ou pagas por fora. Sem a média, o 13º dele é só o salário (mais o que você lançar à mão). Anote o combinado para não esquecer.')}</h3>
+        <label class="fc-chk"><input type="checkbox" data-ff="semMedia"${f.semMedia ? ' checked' : ''}> Sem média variável no 13º <small>(HE, DSR, bonificações)</small></label>
+        <label class="fc-chk"><input type="checkbox" data-ff="semAjuda"${f.semAjuda ? ' checked' : ''}> Sem a média da ajuda alimentação</label>
+        <label class="fc-f">Anotação do acordo<input data-ff="acordo" value="${esc(f.acordo || '')}" placeholder="ex.: HE compensada em folga, combinado em 10/2026"></label>
         <h3>Pagamentos</h3>
         <div id="fichaPag"></div>
       </div>
       <div class="fc-col">
         <h3>Médias do ano <small>por verba</small>${infoIcon(INFO13.media)}</h3>
-        ${linhasCat.length ? `<table class="fc-tab"><thead><tr><th>Verba</th><th>Média auto</th><th>Usar</th></tr></thead><tbody>${linhasCat.map(c => `<tr><td>${esc(c.col.nome)}</td><td>${brl(c.auto)}</td><td><input data-fm="${c.col.k}" inputmode="decimal" value="${c.ov ? num(c.media) : ''}" placeholder="${num(r2(c.auto))}" class="${c.ov ? 'ov' : ''}"></td></tr>`).join('')}</tbody></table>
+        ${linhasCat.length ? `<table class="fc-tab"><thead><tr><th>Verba</th><th>Média auto</th><th>Usar</th></tr></thead><tbody>${linhasCat.map(c => { const off = !(x.cats.includes(c) || x.catsSem.includes(c)); return `<tr${off ? ' class="off"' : ''}><td>${esc(c.col.nome)}</td><td>${brl(c.auto)}</td><td>${off ? '<small class="muted">desligada</small>' : `<input data-fm="${c.col.k}" inputmode="decimal" value="${c.ov ? num(c.media) : ''}" placeholder="${num(r2(c.auto))}" class="${c.ov ? 'ov' : ''}">`}</td></tr>`; }).join('')}</tbody></table>
         <p class="hint" style="margin-top:6px">"Média auto" = soma dos meses lançados ÷ nº de meses. Digite em <b>Usar</b> o valor da contabilidade para trocar; apague para voltar ao automático.</p>` : `<p class="hint">Nenhuma verba variável (HE, DSR, ajuda…) lançada nas folhas do ano.</p>`}
         <h3>Cálculo passo a passo${infoIcon('Mostra, linha por linha, como o sistema chegou no valor de cada parcela.')}</h3>
         <div id="fichaCalc"></div>
@@ -2081,7 +2092,8 @@ $('fichaBody').onchange = e => {
   if (t.dataset.ff) {
     const c = t.dataset.ff;
     let v;
-    if (c === 'admissao' || c === 'pix' || c === 'obs') v = t.value.trim() || null;
+    if (t.type === 'checkbox') v = t.checked || null;
+    else if (c === 'admissao' || c === 'pix' || c === 'obs' || c === 'acordo') v = t.value.trim() || null;
     else if (c === 'avos') { const n = parse(t.value); v = n == null ? null : Math.max(0, Math.min(12, Math.round(n))); }
     else v = parse(t.value);
     mudaFunc13(k, c, v);
@@ -2095,6 +2107,8 @@ $('fichaBody').onchange = e => {
     mudaFunc13(k, c, c.startsWith('pagoEm') ? (t.value || null) : (t.checked || null));
   } else return;
   atualiza13();
+  if (t.dataset.ff === 'acordo' || t.type === 'checkbox') render13(); // atualiza a etiqueta do acordo na tabela
+  if (t.type === 'checkbox') abrirFicha13(k); // refaz a tabela de médias (linhas ligadas/desligadas)
 };
 $('fichaBody').onclick = e => {
   const b = e.target.closest('[data-act="limpar"]');

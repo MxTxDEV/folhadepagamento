@@ -110,10 +110,10 @@
   .muted { color: var(--muted); }
 
   /* ---------- status ---------- */
-  .st-aberta { --s: var(--sky); --sd: var(--sky-d); }
-  .st-conferencia { --s: var(--peach); --sd: var(--peach-d); }
-  .st-fechada { --s: var(--lav); --sd: var(--lav-d); }
-  .st-paga { --s: var(--mint); --sd: var(--mint-d); }
+  .st-aberta { --s: var(--sky); --sd: var(--sky-d); --sc: #2b8fd6; }
+  .st-conferencia { --s: var(--peach); --sd: var(--peach-d); --sc: #c97a00; }
+  .st-fechada { --s: var(--lav); --sd: var(--lav-d); --sc: #7a5af8; }
+  .st-paga { --s: var(--mint); --sd: var(--mint-d); --sc: #0f9f78; }
   .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
     font-size: 12px; font-weight: 600; background: var(--s); color: var(--sd); white-space: nowrap; }
   .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -121,6 +121,7 @@
   .seg button { border: none; background: transparent; border-radius: 9px; padding: 6px 12px; color: var(--muted); font-size: 13px; }
   .seg button:hover { background: var(--card); }
   .seg button.on { background: var(--s); color: var(--sd); font-weight: 600; }
+  .seg[class*="st-"] button.on { background: var(--sc); color: #fff; font-weight: 700; }
 
   /* ---------- calendário ---------- */
   .cal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -134,7 +135,9 @@
     box-shadow: var(--shadow); cursor: pointer; position: relative; overflow: hidden;
     transition: transform .15s, box-shadow .15s; min-height: 170px; display: flex; flex-direction: column; }
   .card:hover { transform: translateY(-2px); }
-  .card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--s, var(--line)); }
+  .card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 7px; background: var(--sc, var(--line)); }
+  .card .pill { background: var(--sc); color: #fff; }
+  .card .big div { font-size: 24px; }
   .card.now { outline: 2px solid var(--lav-d); outline-offset: -1px; }
   .card .ch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
   .card .mname { font-size: 17px; font-weight: 700; text-transform: capitalize; }
@@ -203,11 +206,43 @@
   .pill-ex button { border: none; padding: 2px 8px; border-radius: 999px; background: var(--lav); color: var(--lav-d); }
   .lixo { font-size: 14px; }
   .acoes13 { white-space: nowrap; }
-  .card.c13 { border-color: var(--peach-d); }
+  .card.c13 { background: var(--ct); color: #fff; border-color: transparent; }
+  .card.c13 .big small, .card.c13 .meta { color: rgba(255,255,255,.78); border-color: rgba(255,255,255,.25); }
+  .card.c13 .pill { background: rgba(255,255,255,.22); }
+  .card.c13::before { background: var(--c1); }
+  .card.c13.empty { background: transparent; color: var(--fg); border: 1px dashed var(--line); }
   .card.c13 .mname { text-transform: none; }
   .t13 td.pg { background: var(--ok) !important; color: var(--mint-d); }
 
 
+
+  /* ---------- calendário e folha: indicadores e gráficos ---------- */
+  .cols12 { display: flex; gap: 8px; align-items: flex-end; height: 190px; padding-top: 6px; }
+  .cb { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; cursor: pointer; min-width: 0; height: 100%; }
+  .cb i { display: block; width: 100%; max-width: 54px; border-radius: 9px 9px 3px 3px; background: var(--sc, var(--trk)); min-height: 5px; transition: filter .15s; }
+  .cb:hover i { filter: brightness(1.12); }
+  .cb .cv { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; min-height: 13px; }
+  .cb small { font-size: 11.5px; color: var(--muted); text-transform: capitalize; }
+  .cb.now small { color: var(--fg); font-weight: 800; }
+  .cb.now i { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .cb.vazio { cursor: default; }
+  .lg-st { display: flex; gap: 6px 16px; flex-wrap: wrap; font-size: 12px; margin-top: 12px; color: var(--muted); }
+  .lg-st span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--sc); margin-right: 6px; }
+  .cal-top { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  .mbar { height: 7px; background: var(--trk); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .mbar i { display: block; height: 100%; background: var(--sc); border-radius: 99px; }
+  .card.c13 .mbar { background: rgba(255,255,255,.22); } .card.c13 .mbar i { background: #fff; }
+  .fgraf { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 1000px) { .fgraf { grid-template-columns: 1fr; } }
+  .comp { display: flex; height: 20px; border-radius: 99px; overflow: hidden; background: var(--trk); margin-bottom: 10px; }
+  .comp i { display: block; height: 100%; }
+  .complist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 12.5px; }
+  .complist div { display: flex; justify-content: space-between; gap: 8px; }
+  .complist div::before { content: ''; width: 10px; height: 10px; border-radius: 3px; background: var(--lc); flex: none; margin-top: 4px; }
+  .complist span { flex: 1; } .complist b { font-variant-numeric: tabular-nums; }
+  .kpi em button { padding: 0 6px; background: rgba(255,255,255,.2); border: none; color: #fff; border-radius: 6px; font-size: 12px; }
+  .kpi.k7 { background: #6d4aff; } .kpi.k8 { background: #0e7490; }
+  .f-tools .i-info { margin-left: -2px; margin-right: 4px; }
   /* ---------- ⓘ explicações ---------- */
   .i-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border: 1.5px solid currentColor;
     border-radius: 50%; font: italic 700 10px/1 Georgia, serif; text-transform: none; letter-spacing: 0; opacity: .55; cursor: help; vertical-align: middle; flex: none; }
@@ -218,10 +253,10 @@
   #infoPop[hidden] { display: none; }
   @media print { .i-info, #infoPop { display: none !important; } }
   /* ---------- 13º: tela nova (cores sólidas, indicadores e gráficos) ---------- */
-  .d13 { --c1: #5b50e6; --c2: #0f9f78; --ct: #262248; --ci: #e2557b; --cf: #c97a00; --cs: #2b8fd6;
+  :root { --c1: #5b50e6; --c2: #0f9f78; --ct: #262248; --ci: #e2557b; --cf: #c97a00; --cs: #2b8fd6;
     --trk: color-mix(in srgb, var(--fg) 12%, transparent); }
-  :root[data-theme="dark"] .d13 { --ct: #3b3470; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .d13 { --ct: #3b3470; } }
+  :root[data-theme="dark"] { --ct: #3b3470; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ct: #3b3470; } }
   .d-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
   .d-tit { display: flex; align-items: center; gap: 12px; }
   .d-tit h2 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
@@ -536,7 +571,7 @@
   <form id="novoForm">
     <h2>Novo funcionário</h2>
     <div class="row"><input id="novoNome" class="full" placeholder="Nome" required></div>
-    <div class="row"><label><input type="checkbox" id="novoSeguintes" checked> Incluir também nos meses seguintes já criados</label></div>
+    <div class="row"><label><input type="checkbox" id="novoSeguintes" checked> Incluir também nos meses seguintes já criados<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Marcado = o funcionário já aparece nas folhas dos próximos meses que existem. Desmarcado = só neste mês.">i</span></label></div>
     <div class="dlg-actions">
       <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
       <button class="primary">Adicionar</button>
@@ -560,30 +595,30 @@
 <dialog id="dlgFunc">
   <form id="funcForm">
     <h2 id="funcTitulo">Configuração do funcionário</h2>
-    <h3>Hora extra</h3>
+    <h3>Hora extra<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Define quanto vale a hora extra DESTE funcionário. Em branco = usa o padrão geral das Configurações.">i</span></h3>
     <div class="row">
-      <label>HE semana</label>
+      <label>HE semana<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Horas extras de segunda a sábado. '% sobre hora' = adicional em cima do valor da hora (50% = hora × 1,5). 'R$ por hora' = valor fixo para cada hora.">i</span></label>
       <select id="fHeSemModo"><option value="">Padrão geral</option><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
       <input id="fHeSemValor" inputmode="decimal" style="width:80px">
     </div>
     <div class="row">
-      <label>HE SDF</label>
+      <label>HE SDF<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Horas extras de sábado, domingo e feriado. Normalmente têm adicional maior (100%).">i</span></label>
       <select id="fHeSdfModo"><option value="">Padrão geral</option><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
       <input id="fHeSdfValor" inputmode="decimal" style="width:80px">
     </div>
     <p class="hint" style="margin-top:0" id="fPadrao"></p>
-    <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)</label></div>
-    <div class="row"><label><input type="checkbox" id="fSemDsr"> Sem repouso remunerado (DSR) sobre as horas extras</label></div>
-    <div class="row"><label>Função (aparece no contracheque)</label><input id="fFuncao" style="width:170px;text-align:left" placeholder="ex.: Motorista"></div>
-    <h3>Valor por dia deste funcionário (em branco = padrão geral)</h3>
+    <div class="row"><label><input type="checkbox" id="fFora"> HE paga por fora (não entra na base do INSS)<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Marque se as horas extras deste funcionário são combinadas 'por fora': elas não entram na base do INSS e não geram DSR.">i</span></label></div>
+    <div class="row"><label><input type="checkbox" id="fSemDsr"> Sem repouso remunerado (DSR) sobre as horas extras<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="DSR é o pagamento do descanso de domingos e feriados sobre as horas extras. Marque para NÃO calcular para este funcionário.">i</span></label></div>
+    <div class="row"><label>Função (aparece no contracheque)<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Cargo do funcionário (ex.: Motorista). Aparece no contracheque e nas listas do 13º.">i</span></label><input id="fFuncao" style="width:170px;text-align:left" placeholder="ex.: Motorista"></div>
+    <h3>Valor por dia deste funcionário (em branco = padrão geral)<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Valor em R$ de cada dia nas bonificações 'Dias trabalhados' e '361/380'. Em branco usa o valor geral das Configurações.">i</span></h3>
     <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="fDiaTrab" inputmode="decimal" style="width:100px"></div>
     <div class="row"><label>361/380 — R$ por dia</label><input id="fDia361" inputmode="decimal" style="width:100px"></div>
-    <h3>Itens que recebe (usado no filtro das colunas)</h3>
+    <h3>Itens que recebe (usado no filtro das colunas)<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Serve só para o filtro: ao clicar no título de uma coluna (ex.: Adiantamento), a folha mostra apenas quem recebe aquele item.">i</span></h3>
     <div class="chk-grid" id="fRecebe"></div>
-    <h3>Empresa</h3>
+    <h3>Empresa<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Trocar a empresa move o funcionário, com todos os valores, em todos os meses.">i</span></h3>
     <div class="row"><label>Empresa deste funcionário</label><select id="fEmpresa" style="width:200px"></select></div>
     <p class="hint" style="margin-top:0">Trocar a empresa move o funcionário (com os valores) em todos os meses.</p>
-    <h3>Aplicar em</h3>
+    <h3>Aplicar em<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Marcado = a mudança vale para todos os meses. Desmarcado = só neste mês.">i</span></h3>
     <div class="row"><label><input type="checkbox" id="fSeguintes" checked> Todos os meses (desmarque para alterar só este mês)</label></div>
     <div class="dlg-actions">
       <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
@@ -594,7 +629,7 @@
 
 <!-- empresas -->
 <dialog id="dlgEmp">
-  <h2>Empresas</h2>
+  <h2>Empresas<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Cada empresa tem suas próprias folhas, funcionários e status. O texto de cada empresa (CNPJ/endereço) aparece no cabeçalho do contracheque. As Configurações gerais valem para todas.">i</span></h2>
   <div class="emp-list" id="empList"></div>
   <form id="empNovaForm" class="row" style="margin-top:12px">
     <input id="empNovaNome" class="full" placeholder="Nome da nova empresa" required>
@@ -607,7 +642,7 @@
 <!-- quem recebe (filtro de coluna) -->
 <dialog id="dlgRecebe">
   <form id="recebeForm">
-    <h2 id="recebeTitulo">Quem recebe</h2>
+    <h2 id="recebeTitulo">Quem recebe<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Filtro da coluna: marque quem recebe este item e a folha passa a mostrar só essas pessoas. Para tirar o filtro, clique de novo no título da coluna.">i</span></h2>
     <p class="hint" style="margin-top:0">Marque quem recebe este item. Vale para todos os meses desta empresa.</p>
     <div class="row" style="gap:12px"><button type="button" class="ghost" id="recebeTodos">Marcar todos</button><button type="button" class="ghost" id="recebeNenhum">Desmarcar todos</button></div>
     <div class="chk-list" id="recebeList"></div>
@@ -620,10 +655,10 @@
 
 <!-- colunas -->
 <dialog id="dlgCols" style="width:min(780px,96vw)">
-  <h2>Colunas da folha</h2>
+  <h2>Colunas da folha<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Aqui você escolhe quais colunas aparecem na folha, o nome de cada uma, a ordem e o que ela faz no cálculo (soma, subtrai ou só informa). Vale para todos os meses e empresas.">i</span></h2>
   <p class="hint" style="margin-top:0"><b>O que cada coluna faz:</b> escolha na caixa ao lado do nome se ela soma, subtrai ou é só informativa. Líquido = tudo que soma − INSS − o que subtrai do líquido. Na conta = líquido − o que subtrai só do "Na conta".<br>★ = comportamento original da coluna. Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na folha também dá para arrastar o título da coluna. Desmarque para esconder, edite o nome para renomear (em branco volta ao nome original). As colunas fixas de cálculo não podem ser escondidas. Vale para todas as empresas.</p>
   <div class="col-list" id="colList"></div>
-  <h3>Nova coluna</h3>
+  <h3>Nova coluna<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Crie uma coluna própria (ex.: Vale transporte) e escolha o que ela faz: soma ao pagamento, subtrai do líquido ou só informa. Depois digite o valor de cada funcionário na folha.">i</span></h3>
   <form id="colNovaForm" class="row">
     <input id="colNovaNome" class="full" placeholder="Nome da coluna (ex.: Vale transporte)" required>
     <select id="colNovaTipo" style="width:200px">
@@ -643,10 +678,10 @@
 
 <!-- colunas do 13º -->
 <dialog id="dlgCols13" style="width:min(780px,96vw)">
-  <h2>Colunas do 13º salário</h2>
+  <h2>Colunas do 13º salário<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Escolha quais colunas aparecem em cada tabela do 13º (1ª parcela, 2ª parcela, Total), o nome, a ordem e crie colunas novas. Valem para todos os anos e empresas.">i</span></h2>
   <p class="hint" style="margin-top:0">Marque <b>1ª / 2ª / Total</b> para escolher em quais tabelas a coluna aparece (desmarque tudo para esconder). Arraste pela alça ⠿ (ou use ▲▼) para mudar a posição — na tela também dá para arrastar o título. Edite o nome para renomear. <b>Colunas novas</b> guardam um valor por funcionário e podem somar ao 13º, somar ou descontar na 2ª parcela, ou ser só informativas. Valem para todas as empresas e anos.</p>
   <div class="col-list" id="col13List"></div>
-  <h3>Nova coluna</h3>
+  <h3>Nova coluna<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Crie uma coluna própria para o 13º (ex.: Adiantamento de 13º) e escolha se ela soma ao 13º, soma na 1ª ou na 2ª parcela, desconta da 2ª parcela ou só informa.">i</span></h3>
   <form id="col13NovaForm" class="row">
     <input id="col13NovaNome" class="full" placeholder="Nome da coluna (ex.: Adiantamento de 13º)" required>
     <select id="col13NovaTipo" style="width:260px">
@@ -666,7 +701,7 @@
 
 <!-- contracheque -->
 <dialog id="dlgHol" style="width:min(780px,96vw)">
-  <h2>Contracheque</h2>
+  <h2>Contracheque<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Demonstrativo de pagamento (holerite) do funcionário, no formato da contabilidade: vencimentos, descontos, valor líquido e bases de INSS e FGTS. Use Imprimir / PDF para salvar.">i</span></h2>
   <div id="holCtrl"></div>
   <div id="holBody" class="hol-prev"></div>
   <p class="hint">Montado com os valores da folha, no mesmo formato do contracheque da contabilidade. Para mudar o que aparece, ajuste a folha ou as colunas.</p>
@@ -723,38 +758,38 @@
 
 <!-- configurações -->
 <dialog id="dlg">
-  <h2>Configurações</h2>
+  <h2>Configurações<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Padrões gerais que valem para todas as empresas e funcionários. Cada funcionário pode ter valores próprios no ⚙︎ dele.">i</span></h2>
 
-  <h3>Hora extra</h3>
+  <h3>Hora extra<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Como o sistema calcula o valor da hora extra: valor da hora = salário ÷ divisor × (1 + adicional).">i</span></h3>
   <div class="row">
-    <label>Divisor de horas/mês</label>
+    <label>Divisor de horas/mês<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Número de horas do mês usado para achar o valor da hora (salário ÷ divisor). 220 é o padrão para jornada de 44 horas semanais.">i</span></label>
     <input id="cDivisor" inputmode="decimal">
   </div>
   <div class="row">
-    <label>HE semana</label>
+    <label>HE semana<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Horas extras de segunda a sábado. Padrão: 50% de adicional.">i</span></label>
     <select id="cHeSemModo"><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
     <input id="cHeSemValor" inputmode="decimal" style="width:80px">
   </div>
   <div class="row">
-    <label>HE SDF</label>
+    <label>HE SDF<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Horas extras de sábado, domingo e feriado. Padrão: 100% de adicional.">i</span></label>
     <select id="cHeSdfModo"><option value="pct">% sobre hora</option><option value="fixo">R$ por hora</option></select>
     <input id="cHeSdfValor" inputmode="decimal" style="width:80px">
   </div>
   <p class="hint" style="margin-top:0">Em "%", valor da hora = salário base ÷ divisor × (1 + %). Ex.: 50% semana, 100% SDF.</p>
 
-  <div class="row"><label><input type="checkbox" id="cDsr"> Calcular repouso remunerado (DSR) sobre as horas extras</label></div>
+  <div class="row"><label><input type="checkbox" id="cDsr"> Calcular repouso remunerado (DSR) sobre as horas extras<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="O descanso de domingos e feriados também é pago sobre as horas extras (é a linha 'Repouso Remunerado' do contracheque). Desmarque para não calcular.">i</span></label></div>
   <p class="hint" style="margin-top:0">DSR = horas extras ÷ dias úteis do mês × (domingos + feriados). É o "Repouso Remunerado" do contracheque. Os feriados nacionais entram sozinhos e dá para ajustar em cada mês.</p>
 
-  <h3>Bonificação por dia</h3>
+  <h3>Bonificação por dia<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Para as colunas 'Bonif. dias trab.' e 'Bonif. 361/380': na folha você digita a quantidade de dias e o sistema multiplica por este valor.">i</span></h3>
   <div class="row"><label>Dias trabalhados — R$ por dia</label><input id="cDiaTrab" inputmode="decimal"></div>
   <div class="row"><label>361/380 — R$ por dia</label><input id="cDia361" inputmode="decimal"></div>
   <p class="hint" style="margin-top:0">Na folha você digita a quantidade de dias; o valor é dias × R$ por dia. Dá para ter valor próprio por funcionário no ⚙︎ dele.</p>
 
-  <h3>Tabela INSS (progressiva)</h3>
+  <h3>Tabela INSS (progressiva)<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="O INSS é cobrado por faixas: cada parte do salário paga uma alíquota diferente. A tabela de 2026 já vem carregada — só altere se a lei mudar.">i</span></h3>
   <div id="cInss"></div>
   <p class="hint" style="margin-top:0">Base do INSS: salário + bonificações + gratificação + HE (a ajuda combinada não entra). Acima do último teto, o desconto é fixo.</p>
 
-  <h3>Dados</h3>
+  <h3>Dados<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="Backup: baixa todos os seus dados num arquivo para guardar. Restaurar: troca os dados atuais pelos do arquivo escolhido.">i</span></h3>
   <div class="row" style="flex-wrap:wrap">
     <button type="button" id="btnBackup">Baixar backup (JSON)</button>
     <button type="button" id="btnRestore">Restaurar backup</button>
@@ -2168,9 +2203,11 @@ function cartao13() {
   const tudo = pg(1) === lista.length && pg(2) === lista.length;
   const st = tudo ? 'paga' : pg(1) === lista.length ? 'fechada' : 'conferencia';
   const pill = tudo ? 'Pago' : pg(1) === lista.length ? '1ª paga' : 'Pendente';
+  const pgTot = (pg(1) + pg(2)) / (2 * lista.length) * 100;
   return `<div class="card c13 st-${st}" data-d13="1">
-    <div class="ch"><span class="mname">13º salário</span><span class="pill">${pill}</span></div>
+    <div class="ch"><span class="mname">13º salário${infoIcon('13º salário: pago em duas parcelas (1ª até 30/11 e 2ª até 20/12). Clique para ver os valores, pagamentos e contracheques.')}</span><span class="pill">${pill}</span></div>
     <div class="big"><small>Total do 13º</small><div>${brl(tot.total)}</div></div>
+    <div class="mbar" title="Pagamentos feitos"><i style="width:${pgTot}%"></i></div>
     <div class="meta"><span>1ª ${fmtData(d.datas.p1).slice(0, 5)}: ${brl(tot.p1)} · ${pg(1)}/${lista.length}</span>
       <span>2ª ${fmtData(d.datas.p2).slice(0, 5)}: ${brl(tot.p2)} · ${pg(2)}/${lista.length}</span></div>
   </div>`;
@@ -2226,42 +2263,66 @@ function ajustaTopo() {
 }
 window.addEventListener('resize', ajustaTopo);
 
+const kpiHtml = (cls, rot, val, em, inf) => `<div class="kpi ${cls}"><small>${rot}${infoIcon(inf)}</small><b>${val}</b><em>${em}</em></div>`;
+const kAbrev = n => Math.abs(n) >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(Math.round(n));
+
 // ---------- calendário ----------
 function renderCal() {
   const hoje = currentMonth();
-  let anoConta = 0, anoIfood = 0, pagas = 0;
-  const cards = MESES.map((nm, i) => {
-    const m = ano + '-' + String(i + 1).padStart(2, '0');
-    const list = rowsOf(m);
-    const now = m === hoje ? ' now' : '';
-    if (!list.length) {
-      return `<div class="card empty${now}" data-m="${m}">
-        <div class="mname">${nm}</div><div>Sem folha</div>
-        <button class="primary" data-criar="${m}">Criar folha</button></div>`;
+  const dados = MESES.map((nm, i) => {
+    const m = ano + '-' + String(i + 1).padStart(2, '0'), list = rowsOf(m);
+    return { nm, m, list, t: list.length ? totals(list, m) : null, st: list.length ? statusOf(m) : null };
+  });
+  const sum = k => dados.reduce((t, x) => t + (x.t ? x.t[k] : 0), 0);
+  const pagas = dados.filter(x => x.st === 'paga').length, criadas = dados.filter(x => x.list.length).length;
+  const anoConta = sum('conta'), anoIfood = sum('ifood'), anoLiq = sum('liquido'), anoInss = sum('inss');
+  const maxConta = Math.max(1, ...dados.map(x => x.t ? x.t.conta : 0));
+  const l13 = calc13(ano), tot13 = l13.reduce((t, x) => t + x.total, 0);
+  const cards = dados.map(x => {
+    const now = x.m === hoje ? ' now' : '';
+    if (!x.list.length) {
+      return `<div class="card empty${now}" data-m="${x.m}">
+        <div class="mname">${x.nm}</div><div>Sem folha</div>
+        <button class="primary" data-criar="${x.m}">Criar folha</button></div>`;
     }
-    const t = totals(list, m), st = statusOf(m);
-    anoConta += t.conta; anoIfood += t.ifood; if (st === 'paga') pagas++;
-    return `<div class="card st-${st}${now}" data-m="${m}">
-      <div class="ch"><span class="mname">${nm}</span><span class="pill">${STATUS_LABEL[st]}</span></div>
-      <div class="big"><small>Na conta</small><div>${brl(t.conta)}</div></div>
-      <div class="meta"><span>${list.length} funcionário${list.length > 1 ? 's' : ''}</span>
-        <span>Líq. ${brl(t.liquido)}</span><span>iFood ${brl(t.ifood)}</span></div>
+    return `<div class="card st-${x.st}${now}" data-m="${x.m}">
+      <div class="ch"><span class="mname">${x.nm}</span><span class="pill">${STATUS_LABEL[x.st]}</span></div>
+      <div class="big"><small>Na conta</small><div>${brl(x.t.conta)}</div></div>
+      <div class="mbar" title="Comparado ao maior mês do ano"><i style="width:${x.t.conta / maxConta * 100}%"></i></div>
+      <div class="meta"><span>${x.list.length} funcionário${x.list.length > 1 ? 's' : ''}</span>
+        <span>Líq. ${brl(x.t.liquido)}</span><span>iFood ${brl(x.t.ifood)}</span></div>
     </div>`;
   }).join('');
+  const kpis = [
+    kpiHtml('k6', 'Folhas pagas', `${pagas} / 12`, `${criadas} criada${criadas === 1 ? '' : 's'} no ano`, 'Quantas folhas do ano já estão com o status "Paga". O status é só um controle seu: Em aberto → Em conferência → Fechada → Paga.'),
+    kpiHtml('k1', 'Na conta no ano', brl(anoConta), 'o que cai na conta dos funcionários', 'Soma, nas folhas do ano, do valor que cai na conta bancária dos funcionários (líquido − iFood).'),
+    kpiHtml('k4', 'iFood no ano', brl(anoIfood), 'cartão de benefícios', 'Soma do que foi pago em iFood Benefícios nas folhas do ano.'),
+    kpiHtml('k2', 'Líquido no ano', brl(anoLiq), 'proventos − INSS − descontos', 'Soma do valor líquido das folhas do ano: proventos menos INSS, adiantamentos e descontos.'),
+    kpiHtml('k7', 'INSS no ano', brl(anoInss), 'descontado dos funcionários', 'Soma do INSS descontado dos funcionários nas folhas do ano.'),
+    kpiHtml('k8', '13º previsto', brl(tot13), `${l13.length} funcionário${l13.length === 1 ? '' : 's'}`, 'Valor bruto do 13º salário do ano, somando todos os funcionários. Clique no cartão "13º salário" para ver as parcelas.'),
+  ].join('');
+  const colunas = dados.map(x => {
+    const h = x.t ? Math.max(5, x.t.conta / maxConta * 130) : 4;
+    return `<div class="cb ${x.t ? 'st-' + x.st : 'vazio'}${x.m === hoje ? ' now' : ''}" ${x.t ? `data-m="${x.m}"` : ''} title="${x.nm}${x.t ? ' — na conta ' + brl(x.t.conta) + ' · ' + STATUS_LABEL[x.st] : ' — sem folha'}">
+      <span class="cv">${x.t ? kAbrev(x.t.conta) : ''}</span><i style="height:${h}px"></i><small>${x.nm.slice(0, 3)}</small></div>`;
+  }).join('');
+  const legenda = STATUS.map(([k, l]) => `<span class="st-${k}">${l}</span>`).join('');
 
   app.innerHTML = `
     <div class="cal-head">
       <button class="icon" onclick="location.hash='#/ano/${ano - 1}'">‹</button>
       <div style="text-align:center"><div class="emp-nome">${esc(E().nome)}</div><h2>${ano}</h2></div>
       <button class="icon" onclick="location.hash='#/ano/${ano + 1}'">›</button>
-      <div class="cal-sum">
-        <div class="chip"><small>Folhas pagas</small><b>${pagas} / 12</b></div>
-        <div class="chip"><small>Na conta no ano</small><b>${brl(anoConta)}</b></div>
-        <div class="chip"><small>iFood no ano</small><b>${brl(anoIfood)}</b></div>
-      </div>
+    </div>
+    <div class="kpis">${kpis}</div>
+    <div class="panel" style="margin-bottom:18px">
+      <h3><span>Na conta por mês${infoIcon('Cada coluna é o valor que cai na conta dos funcionários naquele mês. A cor mostra o status da folha. Clique numa coluna para abrir a folha.')}</span><span class="muted">cor = status da folha</span></h3>
+      <div class="cols12">${colunas}</div>
+      <div class="lg-st">${legenda}</div>
     </div>
     <div class="grid">${cards}${cartao13()}</div>`;
 
+  app.querySelectorAll('.cb[data-m]').forEach(c => c.onclick = () => { location.hash = '#/' + c.dataset.m; });
   app.querySelectorAll('.card').forEach(c => c.onclick = e => {
     if (c.dataset.d13) return location.hash = '#/13/' + ano;
     const criar = e.target.dataset.criar;
@@ -2318,18 +2379,20 @@ function renderFolha() {
       <button class="icon" onclick="location.hash='#/${addMonth(mes, 1)}'" title="Próximo mês">›</button>
       <div class="seg st-${st}" id="seg">
         ${STATUS.map(([k, l]) => `<button data-st="${k}" class="${k === st ? 'on' : ''}">${l}</button>`).join('')}
-      </div>
+      </div>${infoIcon('Status da folha: Em aberto (você está lançando) → Em conferência (revisando) → Fechada (valores definidos) → Paga. É só um controle para você acompanhar; não muda nenhum cálculo.')}
       <div class="f-tools">
         <button class="primary" id="btnAdd">+ Funcionário</button>
-        <button id="btnCopiarVal" title="Preenche os campos vazios com os valores do mês anterior">Copiar valores do mês anterior</button>
-        <button id="btnCols" title="Editar, adicionar ou remover colunas">Colunas</button>
-        <button id="btnHolTodos" title="Contracheque de todos os funcionários, 2 por página">Contracheques</button>
+        <button id="btnCopiarVal">Copiar valores do mês anterior</button>${infoIcon('Preenche os campos vazios deste mês com os valores do mês anterior. O que você já digitou não muda, e funcionários que faltarem são incluídos.')}
+        <button id="btnCols">Colunas</button>${infoIcon('Escolha quais colunas aparecem, renomeie, mude a ordem, crie novas e defina se cada uma soma ou subtrai. Vale para todos os meses.')}
+        <button id="btnHolTodos">Contracheques</button>${infoIcon('Gera o demonstrativo de pagamento (holerite) de todos os funcionários, 2 por página, para imprimir ou salvar em PDF.')}
+        <button id="btnGraf">📊 Gráficos</button>${infoIcon('Mostra ou esconde os gráficos acima da tabela.')}
         <button id="btnCsv">Exportar CSV</button>
-        <label class="chk-media" title="Acrescenta uma página com o 13º salário deste ano ao PDF"><input type="checkbox" id="pdf13"> Incluir 13º no PDF</label>
+        <label class="chk-media"><input type="checkbox" id="pdf13"> Incluir 13º no PDF</label>${infoIcon('Acrescenta ao PDF desta folha uma página com o 13º salário do ano.')}
         <button id="btnPrint">Imprimir / PDF</button>
       </div>
     </div>
-    <div class="f-sum" id="fsum"></div>
+    <div class="kpis" id="fsum"></div>
+    <div class="fgraf" id="fchart"></div>
     <div id="fbar"></div>
     <div class="topscroll" id="topscroll"><div></div></div>
     <div class="wrap" id="wrap">
@@ -2415,6 +2478,7 @@ function renderFolha() {
   document.getElementById('btnPrint').onclick = () => { printFixo = false; buildPrint(); window.print(); };
   document.getElementById('btnCsv').onclick = exportCsv;
   $('btnCopiarVal').onclick = copiarValores;
+  $('btnGraf').onclick = () => { mostraGraf = !mostraGraf; try { localStorage.setItem('folha-graf', mostraGraf ? '1' : '0'); } catch (e) {} renderTotals(); };
   $('btnCols').onclick = abrirColunas;
   $('btnHolTodos').onclick = () => imprimirHolerites(rows().slice().sort(byName).filter(r => r.nome && calc(r).proventos > 0));
   renderTotals();
@@ -2569,20 +2633,51 @@ function updateRow(tr, r) {
   });
 }
 
+
+// gráficos da folha do mês
+let mostraGraf = (() => { try { return localStorage.getItem('folha-graf') !== '0'; } catch (e) { return true; } })();
+function pintaGraficosFolha(list, t) {
+  const box = document.getElementById('fchart');
+  if (!box) return;
+  box.hidden = !mostraGraf;
+  if (!mostraGraf || !list.length) { box.innerHTML = ''; return; }
+  const calcs = list.map(r => ({ r, c: calc(r) })).filter(x => x.r.nome);
+  const bruto = t.bruto || 1;
+  const outros = Math.max(0, t.bruto - t.inss - t.liquido), viaBenef = Math.max(0, t.liquido - t.conta);
+  const partes = [
+    ['Na conta', t.conta, 'var(--c2)'], ['iFood / benefícios', viaBenef, 'var(--ci)'],
+    ['INSS', t.inss, 'var(--cs)'], ['Adiantamento e descontos', outros, 'var(--cf)'],
+  ];
+  const fgts = calcs.reduce((s, x) => s + x.c.fgts, 0);
+  const ord = [...calcs].sort((a, b) => b.c.liquido - a.c.liquido);
+  const max = Math.max(1, ...ord.map(x => x.c.liquido));
+  box.innerHTML = `
+    <div class="panel"><h3><span>Para onde vai o dinheiro${infoIcon('Divide o total de proventos do mês em: o que cai na conta, o que vai para o iFood, o INSS e os adiantamentos/descontos.')}</span><span class="muted">total ${brl(t.bruto)}</span></h3>
+      <div class="comp">${partes.map(([, v, c]) => `<i style="width:${v / bruto * 100}%;background:${c}"></i>`).join('')}</div>
+      <div class="complist">${partes.map(([n, v, c]) => `<div style="--lc:${c}"><span>${n}</span><b>${brl(v)}</b></div>`).join('')}</div>
+      <p class="hint" style="margin:10px 0 0">FGTS do mês (8%, encargo da empresa — não sai do funcionário): <b>${brl(fgts)}</b></p></div>
+    <div class="panel"><h3><span>Líquido por funcionário${infoIcon('Cada barra é o valor líquido de um funcionário: a parte verde cai na conta e a rosa vai para o iFood.')}</span><span class="muted">na conta · iFood</span></h3>
+      <div class="bars" style="max-height:210px">${ord.map(({ r, c }) => `<div class="br" title="${esc(r.nome)}"><span class="nm">${esc(nomeCurto(r.nome))}</span>
+        <span class="tr"><i style="width:${Math.max(0, c.conta) / max * 100}%;background:var(--c2)"></i><i style="width:${Math.max(0, c.liquido - c.conta) / max * 100}%;background:var(--ci)"></i></span>
+        <span class="v">${brl(c.liquido)}</span></div>`).join('')}</div></div>`;
+}
+
 function renderTotals() {
   const list = rows();
   const tfoot = document.getElementById('tfoot');
   const t = totals(list);
   const im = infoMes(mes);
-  document.getElementById('fsum').innerHTML = `
-    <div class="chip"><small>Funcionários</small><b>${list.length}</b></div>
-    <div class="chip mint"><small>Conferidos</small><b>${list.filter(r => r.ok).length} / ${list.length}</b></div>
-    <div class="chip" title="Base do repouso remunerado (DSR) sobre as horas extras. Clique no lápis para ajustar os feriados do mês."><small>Dias úteis · descanso</small><b>${im.uteis} úteis · ${im.dom} dom. + ${im.fer} fer.</b> <button class="ghost" id="btnFer" style="padding:0 6px">✎</button></div>
-    <div class="chip"><small>Total proventos</small><b>${brl(t.bruto)}</b></div>
-    <div class="chip"><small>INSS</small><b>${brl(t.inss)}</b></div>
-    <div class="chip lav"><small>Líquido</small><b>${brl(t.liquido)}</b></div>
-    <div class="chip pink"><small>iFood</small><b>${brl(t.ifood)}</b></div>
-    <div class="chip mint"><small>Na conta</small><b>${brl(t.conta)}</b></div>`;
+  const nOk = list.filter(r => r.ok).length;
+  document.getElementById('fsum').innerHTML = [
+    kpiHtml('k1', 'Funcionários', list.length, `${nOk} conferido${nOk === 1 ? '' : 's'} de ${list.length}`, 'Quantos funcionários têm linha nesta folha. "Conferidos" = linhas em que você marcou a caixinha ao lado do nome (ficam verdes).'),
+    kpiHtml('k7', 'Dias úteis', im.uteis, `${im.dom} dom. + ${im.fer} fer. <button id="btnFer" title="Ajustar os feriados do mês">✎</button>`, 'Base do repouso remunerado (DSR) sobre as horas extras: dias úteis, domingos e feriados do mês. Clique no lápis (✎) para ajustar quantos feriados em dia de semana existem na sua cidade.'),
+    kpiHtml('k2', 'Total proventos', brl(t.bruto), 'antes dos descontos', 'Tudo o que os funcionários têm a receber antes dos descontos: salário, bonificações, horas extras, DSR, ajuda…'),
+    kpiHtml('k4', 'INSS', brl(t.inss), 'descontado', 'Soma do INSS descontado de todos os funcionários neste mês.'),
+    kpiHtml('k3', 'Líquido', brl(t.liquido), 'proventos − descontos', 'Proventos − INSS − adiantamentos − descontos. É o que a empresa realmente paga.'),
+    kpiHtml('k5', 'iFood', brl(t.ifood), 'cartão de benefícios', 'Parte do pagamento que vai no cartão de benefícios (iFood). Sai só do "Na conta".'),
+    kpiHtml('k6', 'Na conta', brl(t.conta), 'líquido − iFood', 'O que cai na conta bancária dos funcionários: líquido − iFood Benefícios.'),
+  ].join('');
+  pintaGraficosFolha(list, t);
   $('btnFer').onclick = () => {
     const im2 = infoMes(mes);
     const v = prompt(`Feriados em dia de semana (seg–sáb) em ${nomeMes(mes)}:\n\nAutomático: ${im2.auto} (feriados nacionais). Digite o número que vale para sua cidade, ou deixe vazio para voltar ao automático.`, im2.manual ? im2.fer : '');

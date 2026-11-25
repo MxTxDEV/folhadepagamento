@@ -184,15 +184,6 @@
   .col-row input[data-nome] { flex: 1; width: auto !important; text-align: left !important; }
   .col-row select { width: 210px !important; }
   .col-rm-vazio { width: 34px; }
-  .parcs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .parc { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
-  .parc.tot { background: var(--lav); border-color: transparent; }
-  .parc.ok { background: var(--mint); border-color: transparent; }
-  .parc-t { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
-  .parc-v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0 6px; }
-  .parc label { font-size: 13px; display: flex; gap: 8px; align-items: center; }
-  .parc input[type=date] { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
-  .parc-av { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .chk-media { font-size: 13px; display: flex; gap: 6px; align-items: center; color: var(--muted); }
   .t13 td input[type=date] { text-align: left; }
   .t13 td input.ov { box-shadow: inset 0 -2px 0 #e8952f; border-radius: 7px 7px 0 0; }
@@ -215,6 +206,149 @@
   .card.c13 { border-color: var(--peach-d); }
   .card.c13 .mname { text-transform: none; }
   .t13 td.pg { background: var(--ok) !important; color: var(--mint-d); }
+
+  /* ---------- 13º: tela nova (cores sólidas, indicadores e gráficos) ---------- */
+  .d13 { --c1: #5b50e6; --c2: #0f9f78; --ct: #262248; --ci: #e2557b; --cf: #c97a00; --cs: #2b8fd6;
+    --trk: color-mix(in srgb, var(--fg) 12%, transparent); }
+  :root[data-theme="dark"] .d13 { --ct: #3b3470; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .d13 { --ct: #3b3470; } }
+  .d-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .d-tit { display: flex; align-items: center; gap: 12px; }
+  .d-tit h2 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
+  .heros { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .hero { border-radius: 20px; padding: 20px 22px; color: #fff; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 6px 20px rgba(30,20,70,.15); }
+  .hero.h1 { background: var(--c1); } .hero.h2 { background: var(--c2); } .hero.ht { background: var(--ct); }
+  .h-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .h-t { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
+  .h-chip { font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: rgba(255,255,255,.22); color: #fff; white-space: nowrap; }
+  .h-chip.warn { background: #ffd166; color: #4a3500; } .h-chip.bad { background: #ff5d78; color: #fff; }
+  .h-chip.good { background: #fff; color: var(--c2); }
+  .h-val { font-size: 36px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .h-sub { font-size: 13px; opacity: .88; }
+  .h-prog { height: 11px; border-radius: 99px; background: rgba(255,255,255,.25); overflow: hidden; }
+  .h-prog i { display: block; height: 100%; background: #fff; border-radius: 99px; transition: width .35s; }
+  .h-date { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+  .h-date label { display: flex; align-items: center; gap: 8px; }
+  .h-date input[type=date] { background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 10px; padding: 5px 9px; color-scheme: dark; }
+  .h-aviso { font-size: 12.5px; background: rgba(0,0,0,.22); border-radius: 10px; padding: 7px 11px; }
+  .h-aviso a { color: #fff; font-weight: 700; }
+  .h-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+  .h-btns button { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; font-size: 13px; padding: 6px 12px; }
+  .h-btns button:hover { background: rgba(255,255,255,.3); }
+  .h-btns button.solid { background: #fff; color: #1d1a30; border-color: #fff; font-weight: 700; }
+  .stack { display: flex; height: 16px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,.2); }
+  .stack i { display: block; height: 100%; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12px; }
+  .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--lc, #fff); margin-right: 6px; outline: 1.5px solid rgba(255,255,255,.7); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .kpi { border-radius: 16px; padding: 14px 16px; color: #fff; }
+  .kpi small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; opacity: .9; font-weight: 700; }
+  .kpi b { display: block; font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin: 2px 0 1px; }
+  .kpi em { font-style: normal; font-size: 12px; opacity: .88; }
+  .kpi.k1 { background: #2b8fd6; } .kpi.k2 { background: #7a5af8; } .kpi.k3 { background: #0d9488; }
+  .kpi.k4 { background: #e2557b; } .kpi.k5 { background: #c97a00; } .kpi.k6 { background: #0f9f78; }
+  .charts { display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 1150px) { .charts { grid-template-columns: 1fr; } }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; box-shadow: var(--shadow); min-width: 0; }
+  .panel h3 { margin: 0 0 12px; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--fg); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .panel h3 .muted { font-size: 11px; font-weight: 400; }
+  .bars { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow: auto; padding-right: 4px; }
+  .br { display: grid; grid-template-columns: 120px 1fr 96px; align-items: center; gap: 10px; font-size: 12.5px; }
+  .br.br2 { grid-template-columns: 50px 1fr 70px; }
+  .br .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .br .tr { height: 15px; background: var(--trk); border-radius: 99px; overflow: hidden; display: flex; }
+  .br .tr i { height: 100%; }
+  .br .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .donuts { display: flex; gap: 14px; justify-content: space-around; flex-wrap: wrap; margin-bottom: 14px; }
+  .dn { text-align: center; font-size: 12px; color: var(--muted); }
+  .dn b { display: block; color: var(--fg); font-size: 13px; margin-top: 8px; }
+  .donut { --p: 0; --c: var(--c1); width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; position: relative; margin: 0 auto;
+    background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--trk) 0); }
+  .donut::before { content: ''; position: absolute; inset: 15px; border-radius: 50%; background: var(--card); }
+  .donut span { position: relative; font-weight: 800; font-size: 21px; color: var(--fg); }
+  .h-prog-d { height: 10px; border-radius: 99px; background: var(--trk); overflow: hidden; }
+  .h-prog-d i { display: block; height: 100%; background: var(--c2); border-radius: 99px; }
+  .avisos { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .aviso { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; font-size: 13px; background: var(--peach); color: var(--peach-d); }
+  .aviso > span { flex: 1; }
+  .aviso.bad { background: var(--pink); color: var(--pink-d); } .aviso.info { background: var(--sky); color: var(--sky-d); }
+  .aviso button { padding: 4px 11px; font-size: 12px; background: var(--card); color: var(--fg); white-space: nowrap; }
+  .d-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 4px 0 14px; }
+  .d-bar input[type=search] { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-width: 200px; }
+  .d-bar .ord { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  .d-bar select { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 9px; }
+  .d-tabs button.on { background: var(--c1); color: #fff; font-weight: 700; }
+  .d-tabs button small { opacity: .75; margin-left: 4px; }
+  #d13Filtro button.on { background: var(--ct); color: #fff; font-weight: 700; }
+  .d13 .sec13 { margin-bottom: 26px; }
+  .d13 .sec-h { position: static; max-width: none; }
+  .d13 .wrap { box-shadow: var(--shadow); }
+  .d13 table.t13 { width: 100%; }
+  .d13 .t13 thead th { background: var(--hl); }
+  .d13 .t13 th.c-if { background: var(--c1); color: #fff; } .d13 .t13 td.c-if { background: color-mix(in srgb, var(--c1) 11%, var(--card)); }
+  .d13 .t13 th.c-conta { background: var(--c2); color: #fff; } .d13 .t13 td.c-conta { background: color-mix(in srgb, var(--c2) 12%, var(--card)); color: var(--c2); }
+  .d13 .t13 th.c-liq { background: var(--ct); color: #fff; } .d13 .t13 td.c-liq { background: color-mix(in srgb, var(--ct) 10%, var(--card)); }
+  .d13 .t13 td.c-if input { color: var(--c1); font-weight: 700; }
+  .d13 .t13 td.c-conta input, .d13 .t13 td.c-conta { font-weight: 700; }
+  .d13 .t13 td.c-liq input { color: var(--fg); font-weight: 700; }
+  .d13 .t13 th small { color: inherit; opacity: .85; }
+  .d13 .t13 tbody tr:hover td { background-image: linear-gradient(rgba(91,80,230,.06), rgba(91,80,230,.06)); }
+  .d13 .t13 tbody td { padding-top: 7px; padding-bottom: 7px; }
+  .d13 .t13 tfoot td { background: var(--ct); color: #fff; border-top: none; }
+  .d13 .t13 tfoot td:first-child { background: var(--ct); }
+  .nm13 { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+  .nm13 .t { display: flex; flex-direction: column; line-height: 1.2; }
+  .nm13 .t b { font-weight: 600; font-size: 13.5px; }
+  .nm13 .t small { color: var(--muted); font-size: 11px; font-weight: 400; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .av { width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800; flex: none; }
+  .det13 { font-size: 12px; background: var(--lav) !important; color: var(--lav-d) !important; border-radius: 8px; padding: 3px 10px !important; }
+  .det13:hover { filter: brightness(.96); }
+  .t13 tr[hidden] { display: none; }
+  @media (max-width: 1000px) { .d13 .wrap { overflow-x: auto; } .d13 .t13 thead th, .d13 .t13 tfoot td { position: static; } }
+  /* ficha do funcionário */
+  .fc-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .fc-top .av { width: 46px; height: 46px; font-size: 16px; }
+  .fc-top b { font-size: 18px; display: block; } .fc-top small { color: var(--muted); }
+  .fc-top .chips { margin-left: auto; display: flex; gap: 6px; }
+  .cp { font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; color: #fff; }
+  .cp.c1 { background: #5b50e6; } .cp.c2 { background: #0f9f78; }
+  .fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; }
+  @media (max-width: 820px) { .fc-grid { grid-template-columns: 1fr; } }
+  .fc-f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .fc-f small { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .fc-f input, .fc-f textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; font-weight: 400; width: 100%; }
+  .fc-tab { width: 100%; font-size: 13px; }
+  .fc-tab th { position: static !important; box-shadow: none !important; background: transparent; text-align: right; padding: 4px 6px; }
+  .fc-tab th:first-child, .fc-tab td:first-child { position: static; text-align: left; background: transparent; }
+  .fc-tab td { padding: 4px 6px; } .fc-tab td input { width: 96px; border: 1px solid var(--line); background: var(--bg); }
+  .fc-tab input.ov { box-shadow: inset 0 -2px 0 #e8952f; }
+  .st { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+  .st b { font-variant-numeric: tabular-nums; }
+  .st.sub { font-weight: 700; } .st.mut { color: var(--muted); }
+  .st.tot, .st.k1, .st.k2 { color: #fff; border-radius: 10px; padding: 8px 12px; margin: 5px 0; border-bottom: none; font-weight: 700; }
+  .st.tot { background: var(--ct); } .st.k1 { background: #5b50e6; } .st.k2 { background: #0f9f78; }
+  .pgrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; }
+  .pgrow.p1 { background: color-mix(in srgb, #5b50e6 12%, var(--card)); } .pgrow.p2 { background: color-mix(in srgb, #0f9f78 13%, var(--card)); }
+  .pgrow label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-wrap: wrap; }
+  .pgrow input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--c2); }
+  .pgrow input[type=date] { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+  /* lista de pagamento */
+  .ls-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ls-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .ls-sum > div { border-radius: 14px; padding: 11px 15px; color: #fff; }
+  .ls-sum small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; opacity: .9; font-weight: 700; }
+  .ls-sum b { font-size: 21px; font-variant-numeric: tabular-nums; }
+  .ls1 { background: #5b50e6; } .ls2 { background: #0f9f78; } .ls3 { background: #c97a00; }
+  .ls-wrap { max-height: 52vh; overflow: auto; }
+  .ls-tab { width: 100%; }
+  .ls-tab thead th { position: sticky; top: 0 !important; z-index: 3; }
+  .ls-tab td small { display: block; color: var(--muted); font-size: 11px; }
+  .ls-tab td.n { color: var(--muted); width: 36px; } .ls-tab td.vl { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ls-tab td.ck label { display: inline-flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .ls-tab td.ck input { width: 18px; height: 18px; accent-color: var(--c2); }
+  .ls-tab td input:not([type=checkbox]) { width: 100%; text-align: left; min-width: 160px; }
+  .ls-tab tr.ok td { background: var(--ok); }
+  .ls-tab th:first-child, .ls-tab td:first-child { position: static; }
   .alca { cursor: grab; color: var(--muted); font-size: 16px; padding: 2px 4px; user-select: none; touch-action: none; }
   .seta { padding: 2px 5px; font-size: 10px; color: var(--muted); }
   .col-row.arrastando, th.arrastando { opacity: .4; }
@@ -344,6 +478,9 @@
     .p-holes { page: hol; font: 11px/1.3 Arial, Helvetica, sans-serif; }
     .p-holes .hol { break-inside: avoid; margin: 0 0 8mm; max-width: none; }
     .p-holes .hol:nth-child(2n) { break-after: page; margin-bottom: 0; }
+    .p-lista { font: 11px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .p-lista .p-tab th, .p-lista .p-tab td { font-size: 11px; padding: 6px 7px; }
+    .p-lista .p-head h1 { font-size: 16px; }
     .p-quebra { break-after: page; page-break-after: always; height: 0; }
     .p-foot { margin-top: 5px; color: #888; font-size: 7px; }
     .p-tab .gi { background: #f3f1ee; }
@@ -527,6 +664,37 @@
     <button onclick="this.closest('dialog').close()">Fechar</button>
     <button class="primary" id="holImprimir">Imprimir / PDF</button>
   </div>
+</dialog>
+
+<!-- 13º: ficha do funcionário -->
+<dialog id="dlgFicha13" style="width:min(960px,96vw)">
+  <div id="fichaBody"></div>
+  <div class="dlg-actions">
+    <button id="fichaH1">🧾 Contracheque 1ª</button><button id="fichaH2">🧾 Contracheque 2ª</button>
+    <button class="danger" id="fichaTirar">Tirar do 13º</button>
+    <span style="flex:1"></span>
+    <button class="primary" onclick="this.closest('dialog').close()">Pronto</button>
+  </div>
+</dialog>
+
+<!-- 13º: lista de pagamento -->
+<dialog id="dlgLista13" style="width:min(880px,96vw)">
+  <div id="listaBody"></div>
+</dialog>
+
+<!-- 13º: regras do cálculo -->
+<dialog id="dlgRegras13" style="width:min(520px,96vw)">
+  <h2>Regras do 13º</h2>
+  <h3>Pagamentos</h3>
+  <div class="row"><label>1ª parcela — pagar até</label><input type="date" id="rgP1"></div>
+  <div class="row"><label>2ª parcela — pagar até</label><input type="date" id="rgP2"></div>
+  <h3>Cálculo</h3>
+  <div class="row"><label>Salário-base vem da folha de</label><select id="rgMes"></select></div>
+  <div class="row"><label>1ª parcela = % do 13º</label><input id="rgPct" inputmode="decimal" style="width:80px"></div>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgMedia"> Incluir a média de HE, DSR e bonificações variáveis no 13º</label>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgAjuda"> Pagar a média da ajuda alimentação junto com a 1ª parcela</label>
+  <p class="hint">As regras valem para o 13º deste ano. Valores digitados à mão na tabela ou em Detalhes continuam valendo no lugar do automático.</p>
+  <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" id="rgSalvar">Salvar</button></div>
 </dialog>
 
 <!-- comentário de um valor -->
@@ -1012,7 +1180,7 @@ function render() {
   nf.textContent = 'Folha · ' + nomeMes(mes);
   $('nav13').classList.toggle('on', view === '13');
   $('nav13').href = '#/13/' + ano;
-  app.classList.toggle('largo', view !== 'cal');
+  app.classList.toggle('largo', view === 'folha');
   if (view === 'cal') renderCal(); else if (view === '13') render13(); else renderFolha();
   ajustaTopo();
 }
@@ -1039,7 +1207,7 @@ const COLS13_BASE = [
   { k: 'base', nome: 'Base do 13º', tipo: 'din', dica: 'Remuneração usada no cálculo' },
   { k: 'total', nome: '13º total', tipo: 'din', cls: 'c-liq' },
   { k: 'p1', nome: '1ª parcela', tipo: 'din', cls: 'c-if', pago: 1 },
-  { k: 'liq1', nome: 'A pagar na 1ª parcela', tipo: 'din', cls: 'c-conta', calc: true, dica: '1ª parcela + ajuda alimentação (média) + extras da 1ª parcela — é o valor do contracheque' },
+  { k: 'liq1', nome: 'A pagar na 1ª parcela', tipo: 'din', cls: 'c-liq', calc: true, dica: '1ª parcela + ajuda alimentação (média) + extras da 1ª parcela — é o valor do contracheque' },
   { k: 'inss', nome: 'INSS', tipo: 'din', dica: 'INSS sobre o 13º inteiro' },
   { k: 'p2', nome: '2ª parcela', tipo: 'din', cls: 'c-conta', pago: 2 },
   { k: 'recebido', nome: 'Total recebido (1ª + 2ª)', tipo: 'din', cls: 'c-liq', calc: true, dica: 'Soma das duas parcelas' },
@@ -1093,8 +1261,21 @@ function moverColuna13(k, alvo, depois) {
 // conferido por tabela (o antigo "ok" único vale para a 1ª parcela)
 const okDe = (f, t) => !!(f['ok_' + t] || (t === 't1' && f.ok));
 
+// ---------- regras e estado da tela do 13º ----------
+const regra13 = (d, a) => ({
+  media: d.media !== false,
+  ajuda: d.ajuda !== false,
+  pct1: d.pct1 != null && !isNaN(Number(d.pct1)) ? Number(d.pct1) : 50,
+  mesRef: d.mesRef || (d.datas && d.datas.p1 ? d.datas.p1.slice(0, 7) : `${a}-11`),
+});
+let ui13 = { tab: null, busca: '', filtro: 'todos', ord: 'nome' };
+let atualiza13 = () => {};
+const hojeIso = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+const diasAte = iso => { const h = new Date(); h.setHours(12, 0, 0, 0); return Math.round((new Date(iso + 'T12:00:00') - h) / 864e5); };
+const nomeCurto = n => { const p = (n || '').trim().split(/\s+/); return p.length > 1 ? p[0] + ' ' + p[p.length - 1] : p[0] || ''; };
+
 function calc13(a) {
-  const d = dados13(a);
+  const d = dados13(a), rg = regra13(d, a);
   const meses = Object.keys(E().meses).filter(m => m.startsWith(a + '-') && E().meses[m].length).sort();
   const pessoas = {};
   meses.forEach(m => E().meses[m].forEach(r => {
@@ -1106,24 +1287,28 @@ function calc13(a) {
   (d.extras || []).forEach(nome => { const k = chave(nome); if (!pessoas[k]) pessoas[k] = { nome, linhas: [], manual: true }; });
   const varCols = todasColunas().filter(c => c.tipo === 'provento' && c.k !== 'salario' && c.k !== 'bonif');
   const semCols = todasColunas().filter(c => c.tipo === 'proventoSem');
-  const mesRef = (d.datas.p1 || `${a}-11-30`).slice(0, 7);
   const ov = (f, k, auto) => f[k] != null ? f[k] : auto;
+  const pct = rg.pct1 / 100;
   return Object.entries(pessoas).filter(([k]) => !(d.func[k] || {}).excluido).map(([k, p]) => {
     const f = d.func[k] || {};
     // só contam os meses já lançados (com salário) — meses futuros em branco não entram na média nem no salário-base
     const comSal = p.linhas.filter(({ r }) => (r.salario || 0) > 0);
     const L = comSal.length ? comSal : p.linhas, nL = L.length;
-    // salário e bonificação fixa vêm da folha do mês da 1ª parcela (novembro); se faltar, do último mês lançado
-    const doMes = L.find(({ m }) => m === mesRef);
+    // salário e bonificação fixa vêm da folha do mês de referência (novembro); se faltar, do último mês lançado
+    const doMes = L.find(({ m }) => m === rg.mesRef);
     const ult = doMes ? doMes.r : nL ? L[nL - 1].r : {};
     const salarioAuto = (ult.salario || 0) + (ult.bonif || 0);
     // horas extras: média das horas × valor da hora (sem arredondar mês a mês)
     const mediaDe = col => !nL ? 0 : L.reduce((t, { m, r }) => t + (col.k === 'heSem' || col.k === 'heSdf'
       ? (r[col.k] || 0) * valorHora(r.salario, (r.cfg || {})[col.k] || state.config[col.k]) : valorCol(col, r, calc(r, m))), 0) / nL;
     const horasDe = col => col.un === 'h' && nL ? L.reduce((t, { r }) => t + (r[col.k] || 0), 0) / nL : null;
-    const cat = col => ({ col, media: mediaDe(col), horas: horasDe(col) });
-    const cats = d.media ? varCols.map(cat).filter(c => c.media) : [];
-    const catsSem = d.media ? semCols.map(cat).filter(c => c.media) : [];
+    const mc = f.mc || {};
+    const cat = col => {
+      const auto = mediaDe(col), o = mc[col.k];
+      return { col, auto, ov: o != null, media: o != null ? o : auto, horas: o != null ? null : horasDe(col) };
+    };
+    const cats = rg.media ? varCols.map(cat).filter(c => c.media || c.auto) : [];
+    const catsSem = rg.ajuda ? semCols.map(cat).filter(c => c.media || c.auto) : [];
     const mediaAuto = r2(cats.reduce((t, c) => t + c.media, 0));
     const avosAuto = avosAdmissao(f.admissao, a);
     const avos = ov(f, 'avos', avosAuto);
@@ -1134,20 +1319,25 @@ function calc13(a) {
     const soma = (papel) => extras13().filter(x => x.tipo === papel).reduce((t, x) => t + (f[x.k] || 0), 0);
     const totalAuto = r2(base / 12 * avos + soma('soma'));
     const total = ov(f, 'total', totalAuto);
-    // 1ª parcela = metade do 13º, item a item (salário, cada média de HE/DSR…), como no contracheque da contabilidade
-    const metade = v => r2e(v / 12 * avos / 2);
+    // 1ª parcela = parte do 13º (50%), item a item (salário, cada média de HE/DSR…), como no contracheque da contabilidade
+    const metade = v => r2e(v / 12 * avos * pct);
     const itemizado = f.media == null && f.base == null && f.total == null && f.p1 == null;
-    const p1Auto = itemizado ? r2e(metade(salario) + cats.reduce((t, c) => t + metade(c.media), 0) + soma('soma') / 2) : r2(total / 2);
+    const p1Auto = itemizado ? r2e(metade(salario) + cats.reduce((t, c) => t + metade(c.media), 0) + soma('soma') * pct) : r2(total * pct);
     const p1 = ov(f, 'p1', p1Auto);
     const ajudaP1 = catsSem.reduce((t, c) => t + metade(c.media), 0);
-    const liq1 = r2(p1 + ajudaP1 + soma('somaP1'));
+    const extraP1 = soma('somaP1');
+    const liq1 = r2(p1 + ajudaP1 + extraP1);
     const inssAuto = calcInss(total);
     const inss = ov(f, 'inss', inssAuto);
     const p2Auto = r2(total - inss - p1 + soma('somaP2') - soma('desc'));
     const p2 = ov(f, 'p2', p2Auto);
-    const v = { salario, media, base, total, p1, liq1, inss, p2, avos, recebido: r2(p1 + p2) };
+    const fgts = cent(total * 0.08);
+    const v = { salario, media, base, total, p1, liq1, inss, p2, avos, recebido: r2(p1 + p2), fgts };
     extras13().forEach(x => { v[x.k] = f[x.k] || 0; });
-    return { k, nome: p.nome, manual: !!p.manual, f, v, avosAuto, salario, media, avos, base, total, p1, liq1, inss, p2, meses: p.linhas.length, itemizado, cats, catsSem, metade };
+    const funcao = (ult.cfg && ult.cfg.funcao) || (p.linhas.map(({ r }) => r.cfg && r.cfg.funcao).filter(Boolean).pop()) || '';
+    const manuais = ['salario', 'avos', 'media', 'base', 'total', 'p1', 'inss', 'p2'].some(c => f[c] != null) || Object.keys(mc).length > 0;
+    return { k, nome: p.nome, manual: !!p.manual, f, v, funcao, avosAuto, salarioAuto, inssAuto, salario, media, avos, base, total, p1, liq1, inss, p2, fgts,
+      ajudaP1, extraP1, meses: p.linhas.length, itemizado, cats, catsSem, metade, manuais, mesRef: rg.mesRef, pct1: rg.pct1 };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -1161,35 +1351,164 @@ function avosAdmissao(adm, a) {
   return Math.max(0, 13 - inicio);
 }
 const fmtData = iso => iso ? iso.split('-').reverse().join('/') : '';
-function avisoData(iso) {
-  if (!iso) return '';
+// se a data cair em sábado/domingo, devolve a sexta anterior
+function sextaAntes(iso) {
+  if (!iso) return null;
   const dt = new Date(iso + 'T12:00:00'), dow = dt.getDay();
-  const hoje = new Date(); hoje.setHours(12, 0, 0, 0);
-  const dias = Math.round((dt - hoje) / 864e5);
-  let txt = dias > 0 ? `faltam ${dias} dia${dias > 1 ? 's' : ''}` : dias === 0 ? 'é hoje' : `venceu há ${-dias} dia${dias < -1 ? 's' : ''}`;
-  if (dow === 0 || dow === 6) {
-    const sexta = new Date(dt); sexta.setDate(dt.getDate() - (dow === 0 ? 2 : 1));
-    txt += ` · cai num ${dow === 0 ? 'domingo' : 'sábado'}: pague até sexta ${sexta.toLocaleDateString('pt-BR')}`;
-  }
-  return txt;
+  if (dow !== 0 && dow !== 6) return null;
+  dt.setDate(dt.getDate() - (dow === 0 ? 2 : 1));
+  return { dow, iso: `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` };
 }
-
+function prazo13(iso, quitada) {
+  if (quitada) return { txt: '✓ Quitada', cls: 'good' };
+  if (!iso) return { txt: 'Sem data', cls: '' };
+  const dd = diasAte(iso);
+  if (dd < 0) return { txt: `Venceu há ${-dd} dia${-dd > 1 ? 's' : ''}`, cls: 'bad' };
+  if (dd === 0) return { txt: 'Vence hoje', cls: 'warn' };
+  return { txt: `Faltam ${dd} dia${dd > 1 ? 's' : ''}`, cls: dd <= 3 ? 'warn' : '' };
+}
 // funcionários tirados do 13º (para poder devolver)
 function excluidos13(a) {
   const d = dados13(a);
   return Object.entries(d.func).filter(([, f]) => f.excluido).map(([k, f]) => ({ k, nome: f.nomeExcl || k }));
 }
-function render13() {
-  const d = dados13(ano);
-  const lista = calc13(ano);
-  const parcela = n => `
-    <div class="parc" data-parc="${n}">
-      <div class="parc-t">${n}ª parcela</div>
-      <div class="parc-v"></div>
-      <label>Pagar até <input type="date" data-data="p${n}" value="${d.datas['p' + n] || ''}"></label>
-      <div class="parc-av">${avisoData(d.datas['p' + n])}</div>
-      <div class="parc-av parc-pg"></div>
+// alterações em dados do 13º (usadas pela tela, pela ficha e pela lista de pagamento)
+function mudaFunc13(k, campo, valor) {
+  const dd = structuredClone(dados13(ano));
+  const f = dd.func[k] = { ...(dd.func[k] || {}) };
+  const vazio = valor == null || valor === '' || valor === false;
+  if (vazio) delete f[campo]; else f[campo] = valor;
+  const m = /^pago([12])$/.exec(campo);
+  if (m) { if (vazio) delete f['pagoEm' + m[1]]; else if (!f['pagoEm' + m[1]]) f['pagoEm' + m[1]] = hojeIso(); }
+  grava13(ano, dd);
+}
+function mudaDados13(fn) { const dd = structuredClone(dados13(ano)); fn(dd); grava13(ano, dd); }
+// valor a pagar de cada parcela
+const valorParc13 = (x, n) => n === 1 ? x.liq1 : x.p2;
+function marcarTodos13(n, lista) {
+  const todos = lista.length > 0 && lista.every(x => x.f['pago' + n]);
+  const hoje = hojeIso();
+  mudaDados13(dd => lista.forEach(x => {
+    const f = dd.func[x.k] = { ...(dd.func[x.k] || {}) };
+    if (todos) { delete f['pago' + n]; delete f['pagoEm' + n]; } else { f['pago' + n] = true; f['pagoEm' + n] = f['pagoEm' + n] || hoje; }
+  }));
+}
+
+// ---------- painel do topo: cartões, indicadores e gráficos ----------
+function avisos13(lista, d, rg) {
+  const out = [];
+  const sem = lista.filter(x => !x.salario).map(x => nomeCurto(x.nome));
+  if (sem.length) out.push({ cls: 'bad', txt: `Sem salário em ${MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef}: <b>${esc(sem.join(', '))}</b>. Lance na folha do mês ou digite o salário em Detalhes.` });
+  [1, 2].forEach(n => {
+    const iso = d.datas['p' + n], pend = lista.filter(x => !x.f['pago' + n]).length;
+    if (!iso) return;
+    const sx = sextaAntes(iso);
+    if (sx && pend) out.push({ cls: 'warn', txt: `A ${n}ª parcela (${fmtData(iso)}) cai num <b>${sx.dow === 0 ? 'domingo' : 'sábado'}</b> — o prazo prático é a sexta, ${fmtData(sx.iso)}.`, acao: `sexta${n}`, rot: `Usar ${fmtData(sx.iso).slice(0, 5)}` });
+    const dd = diasAte(iso);
+    if (pend && dd < 0) out.push({ cls: 'bad', txt: `A ${n}ª parcela venceu há ${-dd} dia${-dd > 1 ? 's' : ''} e ${pend} funcionário${pend > 1 ? 's' : ''} ainda não consta${pend > 1 ? 'm' : ''} como pago.` });
+    else if (pend && dd <= 3) out.push({ cls: 'warn', txt: `${dd === 0 ? 'Hoje vence' : `Faltam ${dd} dia${dd > 1 ? 's' : ''} para vencer`} a ${n}ª parcela — ${pend} pendente${pend > 1 ? 's' : ''}.` });
+  });
+  if (d.datas.p1 && d.datas.p2 && d.datas.p2 < d.datas.p1) out.push({ cls: 'bad', txt: 'A data da 2ª parcela está antes da 1ª.' });
+  const neg = lista.filter(x => x.p2 < 0).map(x => nomeCurto(x.nome));
+  if (neg.length) out.push({ cls: 'bad', txt: `2ª parcela negativa para <b>${esc(neg.join(', '))}</b>: a 1ª parcela + descontos passou do 13º. Confira os valores.` });
+  const man = lista.filter(x => x.manuais).length;
+  if (man) out.push({ cls: 'info', txt: `${man} funcionário${man > 1 ? 's têm' : ' tem'} valores digitados à mão (traço laranja na tabela). Em Detalhes dá para limpar os ajustes e voltar ao cálculo automático.` });
+  return out;
+}
+function htmlPainel(lista) {
+  const d = dados13(ano), rg = regra13(d, ano), n = lista.length;
+  const soma = k => lista.reduce((s, x) => s + (x[k] || 0), 0);
+  const tot = soma('total'), liq1 = soma('liq1'), p1 = soma('p1'), p2 = soma('p2'), inss = soma('inss'), fgts = soma('fgts');
+  const pg = k => lista.filter(x => x.f['pago' + k]).length;
+  const pago = k => lista.reduce((s, x) => s + (x.f['pago' + k] ? valorParc13(x, k) : 0), 0);
+  const pago1 = pago(1), pago2 = pago(2), aPagar = liq1 + p2, jaPago = pago1 + pago2;
+  const pc = (a, b) => b > 0 ? Math.min(100, Math.round(a / b * 100)) : 0;
+  const integrais = lista.filter(x => x.avos >= 12).length;
+  const maior = lista.reduce((m, x) => !m || x.total > m.total ? x : m, null);
+
+  const hero = k => {
+    const quit = n > 0 && pg(k) === n, iso = d.datas['p' + k], pz = prazo13(iso, quit), sx = sextaAntes(iso);
+    const valor = k === 1 ? liq1 : p2, pagoK = k === 1 ? pago1 : pago2;
+    const sub = k === 1
+      ? `${rg.pct1}% do 13º${soma('ajudaP1') + soma('extraP1') ? ' + ajuda e extras' : ''}`
+      : '13º − INSS − 1ª parcela';
+    return `<div class="hero h${k}">
+      <div class="h-top"><span class="h-t">${k}ª parcela</span><span class="h-chip ${pz.cls}">${pz.txt}</span></div>
+      <div class="h-val">${brl(valor)}</div>
+      <div class="h-sub">${n} funcionário${n === 1 ? '' : 's'} · ${sub}</div>
+      <div class="h-prog" title="${pc(pagoK, valor)}% pago"><i style="width:${pc(pagoK, valor)}%"></i></div>
+      <div class="h-sub"><b>${pg(k)} de ${n}</b> pagos · pago ${brl(pagoK)} · falta ${brl(Math.max(0, valor - pagoK))}</div>
+      <div class="h-date"><label>Pagar até <input type="date" data-data="p${k}" value="${iso || ''}"></label>${iso ? `<span>${['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'][new Date(iso + 'T12:00:00').getDay()]}</span>` : ''}</div>
+      ${sx && !quit ? `<div class="h-aviso">Cai num ${sx.dow === 0 ? 'domingo' : 'sábado'} — pague até a sexta, <b>${fmtData(sx.iso)}</b> · <a href="#" data-act="sexta${k}">usar essa data</a></div>` : ''}
+      <div class="h-btns">
+        <button class="solid" data-act="pagar${k}">${quit ? '↺ Desmarcar todos' : '✓ Marcar todos como pagos'}</button>
+        <button data-act="lista${k}">Lista de pagamento</button>
+        <button data-act="hol${k}">🧾 Contracheques</button>
+      </div>
     </div>`;
+  };
+  const seg = (v, c) => `<i style="width:${tot > 0 ? v / tot * 100 : 0}%;background:${c}"></i>`;
+  const heroTot = `<div class="hero ht">
+      <div class="h-top"><span class="h-t">13º total ${ano}</span><span class="h-chip">${n} funcionário${n === 1 ? '' : 's'}</span></div>
+      <div class="h-val">${brl(tot)}</div>
+      <div class="h-sub">Valor bruto do 13º, antes do INSS</div>
+      <div class="stack" title="1ª parcela · 2ª parcela · INSS">${seg(p1, 'var(--c1)')}${seg(p2, 'var(--c2)')}${seg(inss, 'var(--ci)')}</div>
+      <div class="legend"><span style="--lc:var(--c1)">1ª parcela ${brl(p1)}</span><span style="--lc:var(--c2)">2ª parcela ${brl(p2)}</span><span style="--lc:var(--ci)">INSS ${brl(inss)}</span></div>
+      <div class="h-sub">Custo estimado com FGTS (8%): <b>${brl(tot + fgts)}</b></div>
+      <div class="h-btns"><button data-act="regras">⚙ Regras do cálculo</button></div>
+    </div>`;
+
+  const kpi = (cls, rot, val, em) => `<div class="kpi ${cls}"><small>${rot}</small><b>${val}</b><em>${em}</em></div>`;
+  const kpis = [
+    kpi('k1', 'Funcionários', n, `${integrais} integrais · ${n - integrais} proporcionais`),
+    kpi('k2', 'Média por funcionário', brl(n ? tot / n : 0), '13º bruto'),
+    kpi('k3', 'Maior 13º', brl(maior ? maior.total : 0), maior ? esc(nomeCurto(maior.nome)) : '–'),
+    kpi('k4', 'INSS retido', brl(inss), tot ? `${(inss / tot * 100).toFixed(1).replace('.', ',')}% do 13º` : '–'),
+    kpi('k5', 'FGTS estimado', brl(fgts), '8% do 13º (encargo)'),
+    kpi('k6', 'Já pago', brl(jaPago), `${pc(jaPago, aPagar)}% de ${brl(aPagar)}`),
+  ].join('');
+
+  const ord = [...lista].sort((a, b) => b.total - a.total);
+  const maxT = ord.length ? Math.max(1, ...ord.map(x => x.p1 + x.p2 + x.inss)) : 1;
+  const barras = ord.map(x => `<div class="br" title="${esc(x.nome)} — 13º ${brl(x.total)}">
+      <span class="nm">${esc(nomeCurto(x.nome))}</span>
+      <span class="tr">${[[x.p1, 'var(--c1)'], [x.p2, 'var(--c2)'], [x.inss, 'var(--ci)']].map(([v, c]) => `<i style="width:${Math.max(0, v) / maxT * 100}%;background:${c}"></i>`).join('')}</span>
+      <span class="v">${brl(x.total)}</span></div>`).join('');
+  const porAvos = {};
+  lista.forEach(x => { porAvos[x.avos] = (porAvos[x.avos] || 0) + 1; });
+  const avosOrd = Object.entries(porAvos).sort((a, b) => b[0] - a[0]);
+  const maxAv = Math.max(1, ...avosOrd.map(([, c]) => c));
+  const donut = (p, cor, rot, sub) => `<div class="dn"><div class="donut" style="--p:${p};--c:${cor}"><span>${p}%</span></div><b>${rot}</b>${sub}</div>`;
+
+  const aviso = avisos13(lista, d, rg).map(a => `<div class="aviso ${a.cls}"><span>${a.txt}</span>${a.acao ? `<button data-act="${a.acao}">${a.rot}</button>` : ''}</div>`).join('');
+  return `
+    ${aviso ? `<div class="avisos">${aviso}</div>` : ''}
+    <div class="heros">${hero(1)}${hero(2)}${heroTot}</div>
+    <div class="kpis">${kpis}</div>
+    <div class="charts">
+      <div class="panel"><h3>13º por funcionário <span class="muted">1ª parcela · 2ª parcela · INSS</span></h3>
+        <div class="bars">${barras || '<span class="muted">Sem funcionários</span>'}</div></div>
+      <div class="panel"><h3>Andamento dos pagamentos</h3>
+        <div class="donuts">${donut(pc(pago1, liq1), 'var(--c1)', '1ª parcela', `${pg(1)}/${n} pagos`)}${donut(pc(pago2, p2), 'var(--c2)', '2ª parcela', `${pg(2)}/${n} pagos`)}</div>
+        <div class="h-prog-d"><i style="width:${pc(jaPago, aPagar)}%"></i></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">Geral: ${brl(jaPago)} de ${brl(aPagar)} (${pc(jaPago, aPagar)}%)</div></div>
+      <div class="panel"><h3>Meses trabalhados <span class="muted">avos</span></h3>
+        <div class="bars">${avosOrd.map(([av, c]) => `<div class="br br2"><span class="nm">${av}/12</span><span class="tr"><i style="width:${c / maxAv * 100}%;background:var(--cs)"></i></span><span class="v">${c} func.</span></div>`).join('') || '<span class="muted">–</span>'}</div></div>
+    </div>`;
+}
+
+// ---------- tela do 13º ----------
+function render13() {
+  const d = dados13(ano), rg = regra13(d, ano);
+  const lista = calc13(ano);
+  const pend = x => !(x.f.pago1 && x.f.pago2);
+  const nome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+  if (ui13.ord === 'valor') lista.sort((a, b) => b.total - a.total || nome(a, b));
+  else if (ui13.ord === 'pendentes') lista.sort((a, b) => pend(b) - pend(a) || nome(a, b));
+  const pg = n => lista.filter(x => x.f['pago' + n]).length;
+  if (!ui13.tab) ui13.tab = !lista.length ? 't1' : pg(1) < lista.length ? 't1' : pg(2) < lista.length ? 't2' : 'tot';
+  const tabs = ui13.tab === 'todas' ? ['t1', 't2', 'tot'] : [ui13.tab];
+
   const cel = (col, x, t) => {
     const f = x.f;
     if (col.calc) return `<td class="calc ${col.cls || ''}"><span data-calc="${col.k}"></span></td>`;
@@ -1201,10 +1520,10 @@ function render13() {
       return `<td class="${col.cls || ''}" data-pg="${col.pago}"><label class="pgl"><input type="checkbox" data-pago="${col.pago}" title="Marcar ${col.pago}ª parcela como paga">${input}</label></td>`;
     return `<td class="${col.cls || ''}">${input}</td>`;
   };
-  const subtitulo = t => t === 't1' ? `Metade do 13º, sem descontos · pagar até <b>${fmtData(d.datas.p1)}</b>`
+  const subtitulo = t => t === 't1' ? `${rg.pct1}% do 13º, sem descontos (mais ajuda e extras) · pagar até <b>${fmtData(d.datas.p1)}</b>`
     : t === 't2' ? `13º − INSS − 1ª parcela · pagar até <b>${fmtData(d.datas.p2)}</b>` : 'Resumo final das duas parcelas';
-  const tabela = ([t, titulo]) => {
-    const cs = cols13(t);
+  const tabela = t => {
+    const titulo = TABELAS13.find(([k]) => k === t)[1], cs = cols13(t);
     if (!cs.length) return '';
     return `
     <section class="sec13" data-sec="${t}">
@@ -1212,65 +1531,96 @@ function render13() {
       <div class="wrap">
         <table class="t13" data-t="${t}">
           <thead><tr>
-            <th>Nome</th>
+            <th>Funcionário</th>
             ${cs.map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}" title="${esc(c.dica || '')}">${esc(c.nome)}${c.pago ? `<br><small>${fmtData(d.datas['p' + c.pago])}</small>` : ''}</th>`).join('')}
             <th></th>
           </tr></thead>
           <tbody>${lista.map(x => `
             <tr data-k="${esc(x.k)}" data-t="${t}">
-              <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida"><span>${esc(x.nome)}</span></label>${t === 't1' ? `<span class="sub" style="text-align:left;padding-left:22px">${x.manual ? 'incluído à mão — digite a base' : `${x.meses} ${x.meses > 1 ? 'meses' : 'mês'} na folha`}</span>` : ''}</td>
+              <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida">${avatar13(x.nome)}<span class="t"><b>${esc(x.nome)}</b><small>${esc([x.funcao, x.avos < 12 ? `${x.avos}/12 avos` : '', x.manual ? 'incluído à mão' : ''].filter(Boolean).join(' · '))}</small></span></label></td>
               ${cs.map(c => cel(c, x, t)).join('')}
-              <td class="acoes13">${t === 't1' || t === 't2' ? `<button class="del holer13" title="Contracheque da ${t === 't1' ? 1 : 2}ª parcela">🧾</button>` : ''}<button class="del lixo" title="Tirar do 13º">🗑</button></td>
+              <td class="acoes13"><button class="del det13" title="Detalhes, cálculo passo a passo e pagamento">Detalhes</button>${t === 't1' || t === 't2' ? `<button class="del holer13" title="Contracheque da ${t === 't1' ? 1 : 2}ª parcela">🧾</button>` : ''}<button class="del lixo" title="Tirar do 13º">🗑</button></td>
             </tr>`).join('')}</tbody>
           <tfoot><tr><td></td>${cs.map(c => `<td data-tot="${c.k}"></td>`).join('')}<td></td></tr></tfoot>
         </table>
       </div>
     </section>`;
   };
+  const dataTab = (t, rot) => `<button data-tab="${t}" class="${ui13.tab === t ? 'on' : ''}">${rot}</button>`;
   app.innerHTML = `
-    <div class="f-head">
-      <button class="icon" onclick="location.hash='#/13/${ano - 1}'">‹</button>
-      <div><div class="emp-nome">${esc(E().nome)}</div><h2>13º salário ${ano}</h2></div>
-      <button class="icon" onclick="location.hash='#/13/${ano + 1}'">›</button>
+  <div class="d13">
+    <div class="d-head">
+      <div class="d-tit">
+        <button class="icon" onclick="location.hash='#/13/${ano - 1}'" title="Ano anterior">‹</button>
+        <div><div class="emp-nome">${esc(E().nome)}</div><h2>13º salário ${ano}</h2></div>
+        <button class="icon" onclick="location.hash='#/13/${ano + 1}'" title="Próximo ano">›</button>
+      </div>
       <div class="f-tools">
-        <label class="chk-media"><input type="checkbox" id="d13media"${d.media ? ' checked' : ''}> Incluir média de HE e bonificações variáveis</label>
         <button class="primary" id="d13Add">+ Funcionário</button>
+        <button id="d13Regras" title="Regras do cálculo e datas">⚙ Regras</button>
         <button id="d13Cols" title="Editar, adicionar ou remover colunas">Colunas</button>
-        <button id="d13Hol1" title="Contracheque da 1ª parcela de todos, 2 por página">Contracheques 1ª</button>
-        <button id="d13Hol2" title="Contracheque da 2ª parcela de todos, 2 por página">Contracheques 2ª</button>
+        <button id="d13Csv" title="Baixar planilha (CSV)">Exportar CSV</button>
         <button id="d13Print">Imprimir / PDF</button>
       </div>
     </div>
-    <div class="parcs">
-      <div class="parc tot" data-parc="t"><div class="parc-t">13º total</div><div class="parc-v"></div><div class="parc-av"></div></div>
-      ${parcela(1)}
-      ${parcela(2)}
+    <div id="d13Painel"></div>
+    <div class="d-bar">
+      <div class="seg d-tabs">${dataTab('t1', `1ª parcela <small>${fmtData(d.datas.p1).slice(0, 5)}</small>`)}${dataTab('t2', `2ª parcela <small>${fmtData(d.datas.p2).slice(0, 5)}</small>`)}${dataTab('tot', 'Total do 13º')}${dataTab('todas', 'Todas')}</div>
+      <input type="search" id="d13Busca" placeholder="Buscar funcionário…" value="${esc(ui13.busca)}">
+      <div class="seg" id="d13Filtro">${[['todos', 'Todos'], ['pendentes', 'Pendentes'], ['pagos', 'Pagos'], ['conferir', 'A conferir']].map(([k, r]) => `<button data-fil="${k}" class="${ui13.filtro === k ? 'on' : ''}">${r}</button>`).join('')}</div>
+      <label class="ord">Ordenar <select id="d13Ord">${[['nome', 'Nome'], ['valor', 'Maior 13º'], ['pendentes', 'Pendentes primeiro']].map(([k, r]) => `<option value="${k}"${ui13.ord === k ? ' selected' : ''}>${r}</option>`).join('')}</select></label>
+      <span class="muted" id="d13Cont"></span>
     </div>
-    ${lista.length ? TABELAS13.map(tabela).join('') : `<div class="empty-f wrap">Nenhum funcionário no 13º de ${ano} desta empresa. Use "+ Funcionário" para incluir.</div>`}
+    ${lista.length ? tabs.map(tabela).join('') : `<div class="empty-f wrap">Nenhum funcionário no 13º de ${ano} desta empresa. Use "+ Funcionário" para incluir.</div>`}
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
-      Três tabelas: <b>1ª parcela</b> (metade do 13º, sem descontos), <b>2ª parcela</b> (13º − INSS − 1ª parcela) e o <b>Total do 13º</b> com o resumo final. Cada uma tem a própria caixinha de conferência.<br>
-      Cálculo automático: 13º = base ÷ 12 × avos. Base = salário + bonificação fixa da folha de ${MESES[Number((d.datas.p1 || `${ano}-11`).slice(5, 7)) - 1] || 'novembro'} de ${ano} (mês da 1ª parcela)${d.media ? ' + média mensal das outras verbas que entram no INSS (HE, bonificações variáveis, dias…)' : ''}. Avos: 12 para quem já trabalhava antes de ${ano}; para admitidos no ano, conta a partir do mês de admissão (15 dias ou mais no mês).<br>
-      <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja embaixo) e apague para voltar ao automático. IRRF não é calculado.<br>
-      Use "Colunas" para escolher em quais tabelas cada coluna aparece, renomear, reordenar (também dá para arrastar o título) ou criar colunas.
-    </p>`;
+      <b>Como calcula:</b> 13º = base ÷ 12 × avos. Base = salário + bonificação fixa da folha de ${MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef}${rg.media ? ' + média mensal das outras verbas que entram no INSS (HE, DSR, bonificações…)' : ''}.
+      1ª parcela = ${rg.pct1}% do 13º, item a item, sem INSS; 2ª parcela = 13º − INSS − 1ª parcela. A ajuda alimentação (média) é paga com a 1ª parcela e não entra no INSS.<br>
+      <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja) e apague para voltar. Use <b>Detalhes</b> para ver o cálculo passo a passo, a média de cada verba, o PIX e a data do pagamento. IRRF não é calculado.
+    </p>
+  </div>`;
 
-  const pinta = () => pinta13(calc13(ano));
+  const painel = $('d13Painel');
+  const pinta = () => { atualiza13(); };
+  atualiza13 = () => {
+    const l = calc13(ano);
+    pinta13(l);
+    if ($('dlgFicha13').open) pintaFicha13();
+  };
   pinta();
 
-  const alterar = fn => { const dd = structuredClone(dados13(ano)); fn(dd); grava13(ano, dd); render(); };
-  const mudaF = (k, campo, valor) => {
-    const dd = structuredClone(dados13(ano));
-    const f = dd.func[k] = { ...(dd.func[k] || {}) };
-    if (valor == null || valor === '' || valor === false) delete f[campo]; else f[campo] = valor;
-    grava13(ano, dd);
+  // painel (cartões): botões e datas
+  painel.onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    e.preventDefault();
+    const act = b.dataset.act, n = Number(act.slice(-1));
+    if (act === 'regras') return abrirRegras13();
+    if (act.startsWith('pagar')) { marcarTodos13(n, calc13(ano)); return render13(); }
+    if (act.startsWith('lista')) return abrirLista13(n);
+    if (act.startsWith('hol')) return imprimirHtmls(calc13(ano).map(x => holerite13Html(x, n)));
+    if (act.startsWith('sexta')) { const sx = sextaAntes(dados13(ano).datas['p' + n]); if (sx) { mudaDados13(dd => { dd.datas['p' + n] = sx.iso; }); render13(); } }
   };
-  $('d13media').onchange = e => alterar(dd => { dd.media = e.target.checked; });
+  painel.onchange = e => {
+    const i = e.target.closest('input[data-data]');
+    if (i) { mudaDados13(dd => { dd.datas[i.dataset.data] = i.value; }); render13(); }
+  };
+
   $('d13Print').onclick = () => { printFixo = false; buildPrint13(); window.print(); };
   $('d13Cols').onclick = abrirColunas13;
-  [1, 2].forEach(n => $('d13Hol' + n).onclick = () => imprimirHtmls(calc13(ano).map(x => holerite13Html(x, n))));
-  app.querySelectorAll('[data-data]').forEach(inp => inp.onchange = () => alterar(dd => { dd.datas[inp.dataset.data] = inp.value; }));
+  $('d13Regras').onclick = abrirRegras13;
+  $('d13Csv').onclick = () => exportCsv13();
+  app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { ui13.tab = b.dataset.tab; render13(); });
+  $('d13Busca').oninput = e => { ui13.busca = e.target.value; aplicaFiltro13(calc13(ano)); };
+  app.querySelectorAll('[data-fil]').forEach(b => b.onclick = () => {
+    ui13.filtro = b.dataset.fil;
+    app.querySelectorAll('[data-fil]').forEach(o => o.classList.toggle('on', o === b));
+    aplicaFiltro13(calc13(ano));
+  });
+  $('d13Ord').onchange = e => { ui13.ord = e.target.value; render13(); };
+
+  const alterar = fn => { mudaDados13(fn); render13(); };
   app.querySelectorAll('th[data-col]').forEach(th => {
     th.ondragstart = e => { e.dataTransfer.setData('text/col13', th.dataset.col); e.dataTransfer.effectAllowed = 'move'; th.classList.add('arrastando'); };
     th.ondragend = () => th.classList.remove('arrastando');
@@ -1288,7 +1638,7 @@ function render13() {
       if (k && k !== th.dataset.col) moverColuna13(k, th.dataset.col, e.offsetX > th.offsetWidth / 2);
     };
   });
-  app.querySelectorAll('tbody tr').forEach(tr => {
+  app.querySelectorAll('tbody tr[data-k]').forEach(tr => {
     const k = tr.dataset.k, t = tr.dataset.t;
     tr.querySelector('[data-ok]').onchange = e => {
       const dd = structuredClone(dados13(ano));
@@ -1297,16 +1647,17 @@ function render13() {
       if (e.target.checked) f['ok_' + t] = true; else delete f['ok_' + t];
       grava13(ano, dd); pinta();
     };
-    tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => { mudaF(k, 'pago' + c.dataset.pago, c.checked || null); pinta(); });
+    tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => { mudaFunc13(k, 'pago' + c.dataset.pago, c.checked || null); pinta(); });
     tr.querySelectorAll('input[data-f]').forEach(inp => inp.onchange = () => {
       const campo = inp.dataset.f;
       let val;
       if (campo === 'admissao') val = inp.value || null;
       else if (campo === 'avos') { const n = parse(inp.value); val = n == null ? null : Math.max(0, Math.min(12, Math.round(n))); }
       else val = parse(inp.value);
-      mudaF(k, campo, val);
+      mudaFunc13(k, campo, val);
       pinta();
     });
+    tr.querySelector('.det13').onclick = () => abrirFicha13(k);
     const hb = tr.querySelector('.holer13');
     if (hb) hb.onclick = () => abrirHolerite13(k, t === 't1' ? 1 : 2);
     tr.querySelector('.lixo').onclick = () => {
@@ -1333,8 +1684,38 @@ function render13() {
     });
   };
 }
+const AV_CORES = ['#5b50e6', '#12a37f', '#e2557b', '#2b8fd6', '#c97a00', '#8a5cf6', '#0d9488', '#d9480f'];
+function avatar13(nome) {
+  const p = (nome || '?').trim().split(/\s+/);
+  const ini = (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+  let h = 0; for (const ch of nome) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<span class="av" style="background:${AV_CORES[h % AV_CORES.length]}">${esc(ini)}</span>`;
+}
+// busca e filtro das linhas (sem recriar a tabela, para não perder o foco)
+function visivel13(x, t) {
+  const b = (ui13.busca || '').trim().toLocaleLowerCase('pt-BR');
+  if (b && !x.nome.toLocaleLowerCase('pt-BR').includes(b)) return false;
+  const quit = t === 't1' ? !!x.f.pago1 : t === 't2' ? !!x.f.pago2 : !!(x.f.pago1 && x.f.pago2);
+  if (ui13.filtro === 'pendentes') return !quit;
+  if (ui13.filtro === 'pagos') return quit;
+  if (ui13.filtro === 'conferir') return !okDe(x.f, t);
+  return true;
+}
+function aplicaFiltro13(lista) {
+  const porK = Object.fromEntries(lista.map(x => [x.k, x]));
+  let vis = 0, tot = 0;
+  app.querySelectorAll('table.t13').forEach(tb => {
+    let n = 0;
+    tb.querySelectorAll('tbody tr[data-k]').forEach(tr => {
+      const x = porK[tr.dataset.k], ok = !x || visivel13(x, tb.dataset.t);
+      tr.hidden = !ok; if (ok) n++;
+    });
+    vis = n; tot = lista.length;
+  });
+  const c = $('d13Cont'); if (c) c.textContent = vis === tot ? '' : `mostrando ${vis} de ${tot}`;
+}
 
-// preenche/atualiza valores, totais, contadores e cartões das três tabelas
+// preenche/atualiza valores, totais, contadores e o painel
 function pinta13(lista) {
   const porK = Object.fromEntries(lista.map(x => [x.k, x]));
   app.querySelectorAll('table.t13').forEach(tb => {
@@ -1355,8 +1736,9 @@ function pinta13(lista) {
       });
       tr.querySelectorAll('[data-calc]').forEach(sp => { sp.textContent = brl(x.v[sp.dataset.calc]); });
       tr.querySelectorAll('[data-pago]').forEach(c => {
-        const pg = !!x.f['pago' + c.dataset.pago];
+        const n = c.dataset.pago, pg = !!x.f['pago' + n];
         c.checked = pg;
+        c.title = pg ? `Pago${x.f['pagoEm' + n] ? ' em ' + fmtData(x.f['pagoEm' + n]) : ''} — desmarque para desfazer` : `Marcar ${n}ª parcela como paga`;
         c.closest('td').classList.toggle('pg', pg);
       });
     });
@@ -1372,18 +1754,227 @@ function pinta13(lista) {
     const ct = app.querySelector(`[data-sec="${t}"] .sec-ct`);
     if (ct) ct.textContent = (nPg != null ? `${nPg} de ${lista.length} pagos · ` : '') + `${nOk} de ${lista.length} conferidos`;
   });
-  // cartões do topo
-  const soma = k => lista.reduce((s, x) => s + (x[k] || 0), 0);
-  const pg = n => lista.filter(x => x.f['pago' + n]).length;
-  const set = (sel, txt) => { const el = app.querySelector(sel); if (el) el.textContent = txt; };
-  set('[data-parc=t] .parc-v', brl(soma('total')));
-  set('[data-parc=t] .parc-av', `${lista.length} funcionários · INSS ${brl(soma('inss'))}`);
-  [1, 2].forEach(n => {
-    set(`[data-parc="${n}"] .parc-v`, brl(soma(n === 1 ? 'liq1' : 'p2')));
-    set(`[data-parc="${n}"] .parc-pg`, `${pg(n)} de ${lista.length} pagos`);
-    const card = app.querySelector(`[data-parc="${n}"]`);
-    if (card) card.classList.toggle('ok', lista.length > 0 && pg(n) === lista.length);
+  const p = $('d13Painel'); if (p) p.innerHTML = htmlPainel(lista);
+  aplicaFiltro13(lista);
+}
+
+// ---------- ficha (detalhes) do funcionário no 13º ----------
+let fichaK = null;
+function abrirFicha13(k) {
+  const x = calc13(ano).find(y => y.k === k);
+  if (!x) return;
+  fichaK = k;
+  const f = x.f, d = dados13(ano), rg = regra13(d, ano);
+  const mesNome = MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef;
+  const linhasCat = [...x.cats, ...x.catsSem];
+  $('fichaBody').innerHTML = `
+    <div class="fc-top" id="fichaTop"></div>
+    <div class="fc-grid">
+      <div class="fc-col">
+        <h3>Dados do funcionário</h3>
+        <label class="fc-f">Admissão <small>em branco = trabalhou o ano todo</small><input type="date" data-ff="admissao" value="${f.admissao || ''}"></label>
+        <label class="fc-f">Avos <small>automático: ${x.avosAuto}</small><input data-ff="avos" inputmode="numeric" value="${f.avos != null ? f.avos : ''}" placeholder="${x.avosAuto}"></label>
+        <label class="fc-f">Salário + bonif. fixa <small>automático (folha de ${mesNome}): ${brl(x.salarioAuto)}</small><input data-ff="salario" inputmode="decimal" value="${f.salario != null ? num(f.salario) : ''}" placeholder="${num(x.salarioAuto)}"></label>
+        <label class="fc-f">PIX / conta para pagamento<input data-ff="pix" value="${esc(f.pix || '')}" placeholder="chave PIX, banco/agência/conta…"></label>
+        <label class="fc-f">Observação<textarea data-ff="obs" rows="3" placeholder="Anotações sobre este funcionário…">${esc(f.obs || '')}</textarea></label>
+        <h3>Pagamentos</h3>
+        <div id="fichaPag"></div>
+      </div>
+      <div class="fc-col">
+        <h3>Médias do ano <small>por verba</small></h3>
+        ${linhasCat.length ? `<table class="fc-tab"><thead><tr><th>Verba</th><th>Média auto</th><th>Usar</th></tr></thead><tbody>${linhasCat.map(c => `<tr><td>${esc(c.col.nome)}</td><td>${brl(c.auto)}</td><td><input data-fm="${c.col.k}" inputmode="decimal" value="${c.ov ? num(c.media) : ''}" placeholder="${num(r2(c.auto))}" class="${c.ov ? 'ov' : ''}"></td></tr>`).join('')}</tbody></table>
+        <p class="hint" style="margin-top:6px">"Média auto" = soma dos meses lançados ÷ nº de meses. Digite em <b>Usar</b> o valor da contabilidade para trocar; apague para voltar ao automático.</p>` : `<p class="hint">Nenhuma verba variável (HE, DSR, ajuda…) lançada nas folhas do ano.</p>`}
+        <h3>Cálculo passo a passo</h3>
+        <div id="fichaCalc"></div>
+      </div>
+    </div>`;
+  pintaFicha13();
+  if (!$('dlgFicha13').open) $('dlgFicha13').showModal();
+}
+function pintaFicha13() {
+  const x = calc13(ano).find(y => y.k === fichaK);
+  if (!x) { $('dlgFicha13').close(); return; }
+  const d = dados13(ano), rg = regra13(d, ano), f = x.f;
+  const mesNome = MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef;
+  const pct = x.total ? (x.inss / x.total * 100).toFixed(1).replace('.', ',') : '0';
+  $('fichaTop').innerHTML = `${avatar13(x.nome)}<div><b>${esc(x.nome)}</b><small>${esc(x.funcao || 'Sem função cadastrada')} · ${x.avos}/12 avos${x.manual ? ' · incluído à mão' : ''}</small></div>
+    <span class="chips"><span class="cp c1">1ª ${f.pago1 ? '✓ paga' : 'pendente'}</span><span class="cp c2">2ª ${f.pago2 ? '✓ paga' : 'pendente'}</span></span>`;
+  const l = (rot, val, cls = '') => `<div class="st ${cls}"><span>${rot}</span><b>${val}</b></div>`;
+  $('fichaCalc').innerHTML = [
+    l(`Salário + bonif. fixa (${mesNome})`, brl(x.salario)),
+    rg.media ? l('+ Média das verbas variáveis', brl(x.media)) : '',
+    l('= Base do 13º', brl(x.base), 'sub'),
+    l(`13º integral = base ÷ 12 × ${x.avos} avos`, brl(x.total), 'tot'),
+    l(`1ª parcela (${x.pct1}% do 13º)`, brl(x.p1)),
+    x.ajudaP1 ? l('+ Ajuda alimentação (média)', brl(x.ajudaP1)) : '',
+    x.extraP1 ? l('+ Extras da 1ª parcela', brl(x.extraP1)) : '',
+    l(`= A pagar em ${fmtData(d.datas.p1) || '—'}`, brl(x.liq1), 'k1'),
+    l(`INSS sobre o 13º (${pct}%)`, '− ' + brl(x.inss)),
+    l('2ª parcela = 13º − INSS − 1ª parcela', brl(x.p2)),
+    l(`= A pagar em ${fmtData(d.datas.p2) || '—'}`, brl(x.p2), 'k2'),
+    l('FGTS estimado (8% do 13º) — encargo da empresa', brl(x.fgts), 'mut'),
+  ].join('') + (x.manuais ? `<div class="aviso info" style="margin-top:10px"><span>Há valores digitados à mão para este funcionário.</span><button data-act="limpar">Voltar ao automático</button></div>` : '');
+  const pag = n => `<div class="pgrow p${n}">
+      <label><input type="checkbox" data-fp="pago${n}"${f['pago' + n] ? ' checked' : ''}> <b>${n}ª parcela</b> · ${brl(valorParc13(x, n))} <small>até ${fmtData(d.datas['p' + n]) || '—'}</small></label>
+      <input type="date" data-fp="pagoEm${n}" value="${f['pagoEm' + n] || ''}"${f['pago' + n] ? '' : ' disabled'} title="Data em que foi paga">
+    </div>`;
+  $('fichaPag').innerHTML = pag(1) + pag(2);
+}
+$('fichaBody').onchange = e => {
+  const t = e.target, k = fichaK;
+  if (!k) return;
+  if (t.dataset.ff) {
+    const c = t.dataset.ff;
+    let v;
+    if (c === 'admissao' || c === 'pix' || c === 'obs') v = t.value.trim() || null;
+    else if (c === 'avos') { const n = parse(t.value); v = n == null ? null : Math.max(0, Math.min(12, Math.round(n))); }
+    else v = parse(t.value);
+    mudaFunc13(k, c, v);
+  } else if (t.dataset.fm) {
+    const f = dados13(ano).func[k] || {}, mc = { ...(f.mc || {}) }, v = parse(t.value);
+    if (v == null) delete mc[t.dataset.fm]; else mc[t.dataset.fm] = v;
+    mudaFunc13(k, 'mc', Object.keys(mc).length ? mc : null);
+    t.classList.toggle('ov', v != null);
+  } else if (t.dataset.fp) {
+    const c = t.dataset.fp;
+    mudaFunc13(k, c, c.startsWith('pagoEm') ? (t.value || null) : (t.checked || null));
+  } else return;
+  atualiza13();
+};
+$('fichaBody').onclick = e => {
+  const b = e.target.closest('[data-act="limpar"]');
+  if (!b || !fichaK) return;
+  if (!confirm('Apagar todos os valores digitados à mão deste funcionário e voltar ao cálculo automático?')) return;
+  const dd = structuredClone(dados13(ano)), f = { ...(dd.func[fichaK] || {}) };
+  ['salario', 'avos', 'media', 'base', 'total', 'p1', 'inss', 'p2', 'mc'].forEach(c => delete f[c]);
+  dd.func[fichaK] = f; grava13(ano, dd);
+  abrirFicha13(fichaK); atualiza13();
+};
+$('fichaH1').onclick = () => { if (fichaK) abrirHolerite13(fichaK, 1); };
+$('fichaH2').onclick = () => { if (fichaK) abrirHolerite13(fichaK, 2); };
+$('fichaTirar').onclick = () => {
+  const x = calc13(ano).find(y => y.k === fichaK);
+  if (!x || !confirm(`Tirar ${x.nome} do 13º de ${ano}? (dá para devolver depois)`)) return;
+  mudaDados13(dd => {
+    if (x.manual) { dd.extras = (dd.extras || []).filter(n => chave(n) !== x.k); delete dd.func[x.k]; }
+    else dd.func[x.k] = { ...(dd.func[x.k] || {}), excluido: true, nomeExcl: x.nome };
   });
+  $('dlgFicha13').close(); render13();
+};
+
+// ---------- lista de pagamento (30/11 e 20/12) ----------
+let listaN = 1;
+function abrirLista13(n) { listaN = n; pintaLista13(); if (!$('dlgLista13').open) $('dlgLista13').showModal(); }
+function dadosLista13() {
+  const n = listaN, d = dados13(ano), lista = calc13(ano);
+  const tot = lista.reduce((s, x) => s + valorParc13(x, n), 0);
+  const pago = lista.reduce((s, x) => s + (x.f['pago' + n] ? valorParc13(x, n) : 0), 0);
+  return { n, d, lista, tot, pago, iso: d.datas['p' + n] };
+}
+function pintaLista13() {
+  const { n, lista, tot, pago, iso } = dadosLista13();
+  const pz = prazo13(iso, lista.length > 0 && lista.every(x => x.f['pago' + n]));
+  const todos = lista.length > 0 && lista.every(x => x.f['pago' + n]);
+  $('listaBody').innerHTML = `
+    <div class="ls-head">
+      <div><h2 style="margin:0">Lista de pagamento — 13º ${ano}</h2><div class="muted">${esc(E().nome)} · pagar até <b>${fmtData(iso) || '—'}</b> <span class="h-chip ${pz.cls}" style="margin-left:6px">${pz.txt}</span></div></div>
+      <div class="seg"><button data-ln="1" class="${n === 1 ? 'on' : ''}">1ª parcela</button><button data-ln="2" class="${n === 2 ? 'on' : ''}">2ª parcela</button></div>
+    </div>
+    <div class="ls-sum"><div class="ls1"><small>A pagar</small><b>${brl(tot)}</b></div><div class="ls2"><small>Já pago</small><b>${brl(pago)}</b></div><div class="ls3"><small>Falta pagar</small><b>${brl(Math.max(0, tot - pago))}</b></div></div>
+    <div class="wrap ls-wrap"><table class="ls-tab"><thead><tr><th>#</th><th>Funcionário</th><th>PIX / conta</th><th>Valor</th><th>Pago</th></tr></thead>
+      <tbody>${lista.map((x, i) => `<tr class="${x.f['pago' + n] ? 'ok' : ''}">
+        <td class="n">${i + 1}</td>
+        <td>${esc(x.nome)}<small>${esc(x.funcao || '')}</small></td>
+        <td><input data-pix="${esc(x.k)}" value="${esc(x.f.pix || '')}" placeholder="chave PIX / conta"></td>
+        <td class="vl">${brl(valorParc13(x, n))}</td>
+        <td class="ck"><label><input type="checkbox" data-lp="${esc(x.k)}"${x.f['pago' + n] ? ' checked' : ''}><small>${x.f['pago' + n] && x.f['pagoEm' + n] ? fmtData(x.f['pagoEm' + n]).slice(0, 5) : ''}</small></label></td></tr>`).join('')}</tbody></table></div>
+    <div class="dlg-actions"><button data-la="copiar">Copiar texto</button><button data-la="csv">Baixar CSV</button><button data-la="imprimir">Imprimir</button><button class="primary" data-la="todos">${todos ? '↺ Desmarcar todos' : '✓ Marcar todos como pagos'}</button><button data-la="fechar">Fechar</button></div>`;
+}
+function textoLista13() {
+  const { n, lista, tot, iso } = dadosLista13();
+  return `13º salário ${ano} — ${n}ª parcela (pagar até ${fmtData(iso)})\n${E().nome}\n\n` +
+    lista.map((x, i) => `${i + 1}. ${x.nome} — ${brl(valorParc13(x, n))}${x.f.pix ? ' — ' + x.f.pix : ''}`).join('\n') + `\n\nTotal: ${brl(tot)}`;
+}
+$('listaBody').onchange = e => {
+  const t = e.target;
+  if (t.dataset.pix) { mudaFunc13(t.dataset.pix, 'pix', t.value.trim() || null); return; }
+  if (t.dataset.lp) { mudaFunc13(t.dataset.lp, 'pago' + listaN, t.checked || null); atualiza13(); pintaLista13(); }
+};
+$('listaBody').onclick = async e => {
+  const bn = e.target.closest('[data-ln]');
+  if (bn) { listaN = Number(bn.dataset.ln); pintaLista13(); return; }
+  const b = e.target.closest('[data-la]');
+  if (!b) return;
+  const a = b.dataset.la;
+  if (a === 'fechar') return $('dlgLista13').close();
+  if (a === 'todos') { marcarTodos13(listaN, calc13(ano)); atualiza13(); pintaLista13(); return; }
+  if (a === 'copiar') {
+    const txt = textoLista13();
+    try { await navigator.clipboard.writeText(txt); }
+    catch (err) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+    b.textContent = '✓ Copiado'; setTimeout(() => { b.textContent = 'Copiar texto'; }, 1500);
+    return;
+  }
+  if (a === 'csv') {
+    const { n, lista, iso } = dadosLista13();
+    const q = t => `"${String(t || '').replace(/"/g, '""')}"`, f = v => (v || 0).toFixed(2).replace('.', ',');
+    const linhas = lista.map((x, i) => [i + 1, q(x.nome), q(x.f.pix), f(valorParc13(x, n)), x.f['pago' + n] ? 'sim' : 'não', fmtData(x.f['pagoEm' + n])].join(';'));
+    download(`pagamento-13-${n}a-parcela-${ano}.csv`, '﻿' + ['Nº;Nome;PIX/conta;Valor;Pago;Pago em', ...linhas].join('\r\n'), 'text/csv');
+    return;
+  }
+  if (a === 'imprimir') {
+    const { n, lista, tot, iso } = dadosLista13();
+    const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    imprimirConteudo(`<div class="p-lista">
+      <div class="p-head"><div><h1 style="display:inline">${esc(E().nome)} — 13º salário ${ano} · ${n}ª parcela</h1></div><small>pagar até ${fmtData(iso)} · gerado em ${agora}</small></div>
+      <table class="p-tab"><colgroup><col style="width:5%"><col style="width:30%"><col style="width:33%"><col style="width:17%"><col style="width:15%"></colgroup>
+        <thead><tr><th>#</th><th class="nome">Funcionário</th><th class="nome">PIX / conta</th><th>Valor</th><th>Visto</th></tr></thead>
+        <tbody>${lista.map((x, i) => `<tr><td class="n">${i + 1}</td><td class="nome">${esc(x.nome)}</td><td class="nome">${esc(x.f.pix || '')}</td><td>${brl(valorParc13(x, n))}</td><td>${x.f['pago' + n] ? '✓ ' + fmtData(x.f['pagoEm' + n]).slice(0, 5) : ''}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td></td><td class="nome">Total (${lista.length})</td><td></td><td>${brl(tot)}</td><td></td></tr></tfoot></table></div>`);
+  }
+};
+function imprimirConteudo(html) {
+  $('printArea').innerHTML = html;
+  printFixo = true;
+  const st = document.createElement('style'); st.id = 'pgDin';
+  st.textContent = '@page { size: A4 portrait; margin: 10mm; }';
+  document.head.appendChild(st);
+  setTimeout(() => window.print(), 50);
+}
+
+// ---------- regras do cálculo ----------
+function abrirRegras13() {
+  const d = dados13(ano), rg = regra13(d, ano);
+  $('rgMes').innerHTML = MESES.map((m, i) => { const v = `${ano}-${String(i + 1).padStart(2, '0')}`; return `<option value="${v}"${v === rg.mesRef ? ' selected' : ''}>${m}</option>`; }).join('');
+  $('rgMedia').checked = rg.media;
+  $('rgAjuda').checked = rg.ajuda;
+  $('rgPct').value = String(rg.pct1).replace('.', ',');
+  $('rgP1').value = d.datas.p1 || '';
+  $('rgP2').value = d.datas.p2 || '';
+  $('dlgRegras13').showModal();
+}
+$('rgSalvar').onclick = () => {
+  const pct = parse($('rgPct').value);
+  mudaDados13(dd => {
+    dd.datas = { ...dd.datas, p1: $('rgP1').value || dd.datas.p1, p2: $('rgP2').value || dd.datas.p2 };
+    const derivado = (dd.datas.p1 || `${ano}-11`).slice(0, 7);
+    if ($('rgMes').value === derivado) delete dd.mesRef; else dd.mesRef = $('rgMes').value;
+    dd.media = $('rgMedia').checked;
+    dd.ajuda = $('rgAjuda').checked;
+    dd.pct1 = pct == null ? 50 : Math.max(0, Math.min(100, pct));
+  });
+  $('dlgRegras13').close(); render13();
+};
+
+// ---------- planilha (CSV) do 13º ----------
+function exportCsv13() {
+  const d = dados13(ano), lista = calc13(ano), ex = extras13();
+  const f = n => (n || 0).toFixed(2).replace('.', ','), q = t => `"${String(t || '').replace(/"/g, '""')}"`;
+  const head = ['Nome', 'Função', 'Admissão', 'Avos', 'Salário + bonif. fixa', 'Média variáveis', 'Base do 13º', '13º total', '1ª parcela', 'Ajuda e extras da 1ª', 'A pagar na 1ª', 'INSS', '2ª parcela',
+    'FGTS estimado', '1ª paga', '1ª paga em', '2ª paga', '2ª paga em', 'PIX / conta', 'Observação', ...ex.map(e => e.nome)];
+  const linhas = lista.map(x => [q(x.nome), q(x.funcao), fmtData(x.f.admissao), x.avos, f(x.salario), f(x.media), f(x.base), f(x.total), f(x.p1), f(x.ajudaP1 + x.extraP1), f(x.liq1), f(x.inss), f(x.p2),
+    f(x.fgts), x.f.pago1 ? 'sim' : 'não', fmtData(x.f.pagoEm1), x.f.pago2 ? 'sim' : 'não', fmtData(x.f.pagoEm2), q(x.f.pix), q(x.f.obs), ...ex.map(e => f(x.f[e.k]))].join(';'));
+  download(`13o-${E().nome.replace(/[^\wÀ-ſ-]+/g, '-')}-${ano}.csv`, '﻿' + [head.join(';'), ...linhas].join('\r\n'), 'text/csv');
 }
 
 // ----- painel "Colunas" do 13º -----
@@ -1468,7 +2059,7 @@ function buildPrint13(anexar) {
   const d = dados13(ano), lista = calc13(ano);
   if (anexar && !lista.length) return;
   const v = n => n ? brl(n).replace(/^R\$\s?/, '') : '–';
-  const CLS = { total: 'liq', p1: 'if', p2: 'ct', recebido: 'liq' };
+  const CLS = { total: 'liq', p1: 'if', liq1: 'if', p2: 'ct', recebido: 'liq' };
   const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   const soma = k => lista.reduce((s, x) => s + (x[k] || 0), 0);
   const valor = (c, x, t) => c.tipo === 'data' ? (fmtData(x.f.admissao) || '–')
@@ -1496,20 +2087,20 @@ function buildPrint13(anexar) {
       <small>${lista.length} funcionários · valores em R$ · gerado em ${agora}</small>
     </div>
     <div class="p-sum">
-      <div class="pink">1ª parcela · até ${fmtData(d.datas.p1)}<b>${brl(soma('p1'))}</b></div>
+      <div class="pink">1ª parcela · até ${fmtData(d.datas.p1)}<b>${brl(soma('liq1'))}</b></div>
       <div class="mint">2ª parcela · até ${fmtData(d.datas.p2)}<b>${brl(soma('p2'))}</b></div>
       <div>INSS<b>${brl(soma('inss'))}</b></div>
       <div class="lav">13º total<b>${brl(soma('total'))}</b></div>
     </div>
     ${TABELAS13.map(tab).join('')}
-    <div class="p-foot">13º = base ÷ 12 × avos · 1ª parcela = 50% sem descontos · 2ª parcela = 13º − INSS − 1ª parcela · ✓ = pago</div>`;
+    <div class="p-foot">13º = base ÷ 12 × avos · 1ª parcela = ${regra13(d, ano).pct1}% do 13º sem descontos (mais ajuda e extras) · 2ª parcela = 13º − INSS − 1ª parcela · ✓ = pago</div>`;
 }
 
 // cartão do 13º no calendário
 function cartao13() {
   const lista = calc13(ano), d = dados13(ano);
   if (!lista.length) return `<div class="card empty c13" data-d13="1"><div class="mname">13º salário</div><div>Sem funcionários no ano</div></div>`;
-  const tot = lista.reduce((t, x) => (t.total += x.total, t.p1 += x.p1, t.p2 += x.p2, t), { total: 0, p1: 0, p2: 0 });
+  const tot = lista.reduce((t, x) => (t.total += x.total, t.p1 += x.liq1, t.p2 += x.p2, t), { total: 0, p1: 0, p2: 0 });
   const pg = n => lista.filter(x => x.f['pago' + n]).length;
   const tudo = pg(1) === lista.length && pg(2) === lista.length;
   const st = tudo ? 'paga' : pg(1) === lista.length ? 'fechada' : 'conferencia';

@@ -243,6 +243,31 @@
   .kpi em button { padding: 0 6px; background: rgba(255,255,255,.2); border: none; color: #fff; border-radius: 6px; font-size: 12px; }
   .kpi.k7 { background: #6d4aff; } .kpi.k8 { background: #0e7490; }
   .f-tools .i-info { margin-left: -2px; margin-right: 4px; }
+
+  /* ---------- quadradinhos de marcação (status) ---------- */
+  .mks { display: inline-flex; gap: 3px; flex: none; }
+  .mk { position: relative; display: inline-flex; margin: 0; cursor: pointer; }
+  .mk input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 19px !important; min-width: 19px !important; height: 19px; margin: 0; padding: 0;
+    border: 2px solid var(--mkc); border-radius: 6px; background: color-mix(in srgb, var(--mkc) 9%, transparent); cursor: pointer;
+    display: grid; place-items: center; transition: background .12s, transform .12s, box-shadow .12s; flex: none; }
+  .mk input[type=checkbox]::after { content: attr(data-g); font: 800 11px/1 system-ui, sans-serif; color: var(--mkc); opacity: .3; transition: opacity .12s; }
+  .mk input[type=checkbox]:hover { transform: scale(1.14); }
+  .mk input[type=checkbox]:checked { background: var(--mkc); box-shadow: 0 2px 7px color-mix(in srgb, var(--mkc) 45%, transparent); }
+  .mk input[type=checkbox]:checked::after { color: #fff; opacity: 1; }
+  .mk input[type=checkbox]:focus-visible { outline: 2px solid var(--mkc); outline-offset: 2px; }
+  td.mkcol { padding-left: 8px; padding-right: 8px; text-align: center; }
+  tbody tr.mk-aviso td:first-child { box-shadow: inset 4px 0 0 #e8960c; background: color-mix(in srgb, #e8960c 10%, var(--card)); }
+  tbody tr.mk-duvida td:first-child { box-shadow: inset 4px 0 0 #2b8fd6; background: color-mix(in srgb, #2b8fd6 10%, var(--card)); }
+  tbody tr.ok td:first-child { box-shadow: inset 4px 0 0 #0f9f78; }
+  .mkleg { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 2px 0 14px; }
+  .mkleg > small { color: var(--muted); font-weight: 600; margin-right: 2px; }
+  .mkchip { display: inline-flex; align-items: center; gap: 7px; border: 1.5px solid var(--mkc); color: var(--mkc); background: color-mix(in srgb, var(--mkc) 9%, var(--card));
+    border-radius: 999px; padding: 4px 12px 4px 5px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: transform .1s; }
+  .mkchip:hover { transform: translateY(-1px); }
+  .mkchip b { display: inline-grid; place-items: center; width: 19px; height: 19px; border-radius: 6px; background: var(--mkc); color: #fff; font-size: 11px; }
+  .mkchip em { font-style: normal; opacity: .75; font-weight: 700; }
+  .mkchip.on { background: var(--mkc); color: #fff; }
+  .mkchip.on b { background: #fff; color: var(--mkc); }
   /* ---------- ⓘ explicações ---------- */
   .i-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border: 1.5px solid currentColor;
     border-radius: 50%; font: italic 700 10px/1 Georgia, serif; text-transform: none; letter-spacing: 0; opacity: .55; cursor: help; vertical-align: middle; flex: none; }
@@ -1630,16 +1655,18 @@ function render13() {
         <table class="t13" data-t="${t}">
           <thead><tr>
             <th>Funcionário</th>
+            <th>Marcadores${infoIcon(INFO_MARC)}</th>
             ${cs.map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${infoCol13(c) ? '' : ` title="${esc(c.dica || '')}"`}>${esc(c.nome)}${infoIcon(infoCol13(c))}${c.pago ? `<br><small>${fmtData(d.datas['p' + c.pago])}</small>` : ''}</th>`).join('')}
             <th></th>
           </tr></thead>
           <tbody>${lista.map(x => `
             <tr data-k="${esc(x.k)}" data-t="${t}">
-              <td><label class="nm13"><input type="checkbox" class="okchk" data-ok title="Marcar linha como conferida">${avatar13(x.nome)}<span class="t"><b>${esc(x.nome)}</b><small>${esc([x.funcao, x.avos < 12 ? `${x.avos}/12 avos` : '', x.manual ? 'incluído à mão' : ''].filter(Boolean).join(' · '))}</small></span></label></td>
+              <td><div class="nm13">${avatar13(x.nome)}<span class="t"><b>${esc(x.nome)}</b><small>${esc([x.funcao, x.avos < 12 ? `${x.avos}/12 avos` : '', x.manual ? 'incluído à mão' : ''].filter(Boolean).join(' · '))}</small></span></div></td>
+              <td class="mkcol">${marcHtml(k => mk13(x, t, k), { ok: ' data-ok' })}</td>
               ${cs.map(c => cel(c, x, t)).join('')}
               <td class="acoes13"><button class="del det13" title="Detalhes, cálculo passo a passo e pagamento">Detalhes</button>${t === 't1' || t === 't2' ? `<button class="del holer13" title="Contracheque da ${t === 't1' ? 1 : 2}ª parcela">🧾</button>` : ''}<button class="del lixo" title="Tirar do 13º">🗑</button></td>
             </tr>`).join('')}</tbody>
-          <tfoot><tr><td></td>${cs.map(c => `<td data-tot="${c.k}"></td>`).join('')}<td></td></tr></tfoot>
+          <tfoot><tr><td></td><td></td>${cs.map(c => `<td data-tot="${c.k}"></td>`).join('')}<td></td></tr></tfoot>
         </table>
       </div>
     </section>`;
@@ -1669,6 +1696,7 @@ function render13() {
       <label class="ord">Ordenar <select id="d13Ord">${[['nome', 'Nome'], ['valor', 'Maior 13º'], ['pendentes', 'Pendentes primeiro']].map(([k, r]) => `<option value="${k}"${ui13.ord === k ? ' selected' : ''}>${r}</option>`).join('')}</select></label>
       <span class="muted" id="d13Cont"></span>
     </div>
+    <div class="mkleg" id="d13Leg"></div>
     ${lista.length ? tabs.map(tabela).join('') : `<div class="empty-f wrap">Nenhum funcionário no 13º de ${ano} desta empresa. Use "+ Funcionário" para incluir.</div>`}
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
@@ -1717,6 +1745,13 @@ function render13() {
     aplicaFiltro13(calc13(ano));
   });
   $('d13Ord').onchange = e => { ui13.ord = e.target.value; render13(); };
+  $('d13Leg').onclick = e => {
+    const b = e.target.closest('[data-mkf]');
+    if (!b) return;
+    const f = 'mk:' + b.dataset.mkf;
+    ui13.filtro = ui13.filtro === f ? 'todos' : f;
+    aplicaFiltro13(calc13(ano));
+  };
 
   const alterar = fn => { mudaDados13(fn); render13(); };
   app.querySelectorAll('th[data-col]').forEach(th => {
@@ -1746,6 +1781,19 @@ function render13() {
       grava13(ano, dd); pinta();
     };
     tr.querySelectorAll('[data-pago]').forEach(c => c.onchange = () => { mudaFunc13(k, 'pago' + c.dataset.pago, c.checked || null); pinta(); });
+    tr.querySelectorAll('[data-mk]').forEach(i => {
+      const m = i.dataset.mk;
+      if (m === 'ok') return;
+      i.onchange = () => {
+        if (m === 'pago') { (t === 'tot' ? [1, 2] : [t === 't1' ? 1 : 2]).forEach(n => mudaFunc13(k, 'pago' + n, i.checked || null)); }
+        else {
+          const mk = { ...((dados13(ano).func[k] || {}).mk || {}) };
+          if (i.checked) mk[m] = 1; else delete mk[m];
+          mudaFunc13(k, 'mk', Object.keys(mk).length ? mk : null);
+        }
+        pinta();
+      };
+    });
     tr.querySelectorAll('input[data-f]').forEach(inp => inp.onchange = () => {
       const campo = inp.dataset.f;
       let val;
@@ -1790,6 +1838,9 @@ function avatar13(nome) {
   return `<span class="av" style="background:${AV_CORES[h % AV_CORES.length]}">${esc(ini)}</span>`;
 }
 // busca e filtro das linhas (sem recriar a tabela, para não perder o foco)
+const mk13 = (x, t, k) => k === 'ok' ? okDe(x.f, t)
+  : k === 'pago' ? (t === 't1' ? !!x.f.pago1 : t === 't2' ? !!x.f.pago2 : !!(x.f.pago1 && x.f.pago2))
+  : !!(x.f.mk && x.f.mk[k]);
 function visivel13(x, t) {
   const b = (ui13.busca || '').trim().toLocaleLowerCase('pt-BR');
   if (b && !x.nome.toLocaleLowerCase('pt-BR').includes(b)) return false;
@@ -1797,6 +1848,7 @@ function visivel13(x, t) {
   if (ui13.filtro === 'pendentes') return !quit;
   if (ui13.filtro === 'pagos') return quit;
   if (ui13.filtro === 'conferir') return !okDe(x.f, t);
+  if (ui13.filtro.startsWith('mk:')) return mk13(x, t, ui13.filtro.slice(3));
   return true;
 }
 function aplicaFiltro13(lista) {
@@ -1811,6 +1863,13 @@ function aplicaFiltro13(lista) {
     vis = n; tot = lista.length;
   });
   const c = $('d13Cont'); if (c) c.textContent = vis === tot ? '' : `mostrando ${vis} de ${tot}`;
+  // resumo colorido dos marcadores (conta na primeira tabela mostrada)
+  const t0 = (app.querySelector('table.t13') || {}).dataset ? app.querySelector('table.t13').dataset.t : 't1';
+  const cont = {};
+  MARC.forEach(m => { cont[m.k] = lista.filter(x => mk13(x, t0, m.k)).length; });
+  const leg = $('d13Leg');
+  if (leg) leg.innerHTML = legendaMarc(cont, ui13.filtro.startsWith('mk:') ? ui13.filtro.slice(3) : null);
+  app.querySelectorAll('[data-fil]').forEach(o => o.classList.toggle('on', o.dataset.fil === ui13.filtro));
 }
 
 // preenche/atualiza valores, totais, contadores e o painel
@@ -1825,6 +1884,7 @@ function pinta13(lista) {
       const ok = okDe(x.f, t);
       tr.classList.toggle('ok', ok);
       tr.querySelector('[data-ok]').checked = ok;
+      tr.querySelectorAll('[data-mk]').forEach(i => { const on = mk13(x, t, i.dataset.mk); i.checked = on; if (i.dataset.mk === 'aviso' || i.dataset.mk === 'duvida') tr.classList.toggle('mk-' + i.dataset.mk, on); });
       tr.querySelectorAll('input[data-f]').forEach(inp => {
         const campo = inp.dataset.f;
         if (campo === 'admissao') return;
@@ -2263,6 +2323,18 @@ function ajustaTopo() {
 }
 window.addEventListener('resize', ajustaTopo);
 
+
+// ---------- marcadores (quadradinhos coloridos de status) ----------
+const MARC = [
+  { k: 'ok', nome: 'Conferido', g: '✓', cor: '#0f9f78', info: 'Valores conferidos — a linha fica verde.' },
+  { k: 'pago', nome: 'Pago', g: '$', cor: '#5b50e6', info: 'Já foi pago ao funcionário.' },
+  { k: 'aviso', nome: 'Atenção', g: '!', cor: '#e8960c', info: 'Precisa de atenção ou revisão antes de fechar.' },
+  { k: 'duvida', nome: 'Dúvida', g: '?', cor: '#2b8fd6', info: 'Ficou uma dúvida para esclarecer (ex.: com a contabilidade).' },
+  { k: 'entregue', nome: 'Entregue', g: '✎', cor: '#8a5cf6', info: 'Contracheque entregue e assinado pelo funcionário.' },
+];
+const INFO_MARC = 'Quadradinhos de marcação (clique para marcar): ' + MARC.map(m => `${m.g} ${m.nome}`).join(' · ') + '.\n\nO resumo colorido acima da tabela conta quantos estão marcados e serve de filtro: clique nele para ver só essas linhas.';
+const marcHtml = (valor, attrs = {}) => `<span class="mks">${MARC.map(m => `<label class="mk" style="--mkc:${m.cor}" title="${m.nome} — ${m.info}"><input type="checkbox" data-mk="${m.k}" data-g="${m.g}"${m.k === 'ok' ? ' class="okchk"' + (attrs.ok || '') : ''}${valor(m.k) ? ' checked' : ''}></label>`).join('')}</span>`;
+const legendaMarc = (cont, ativo) => `<small>Marcadores${infoIcon(INFO_MARC)}</small>` + MARC.map(m => `<button type="button" class="mkchip${ativo === m.k ? ' on' : ''}" data-mkf="${m.k}" style="--mkc:${m.cor}" title="Mostrar só: ${m.nome}"><b>${m.g}</b>${m.nome} <em>${cont[m.k] || 0}</em></button>`).join('');
 const kpiHtml = (cls, rot, val, em, inf) => `<div class="kpi ${cls}"><small>${rot}${infoIcon(inf)}</small><b>${val}</b><em>${em}</em></div>`;
 const kAbrev = n => Math.abs(n) >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(Math.round(n));
 
@@ -2393,13 +2465,14 @@ function renderFolha() {
     </div>
     <div class="kpis" id="fsum"></div>
     <div class="fgraf" id="fchart"></div>
+    <div class="mkleg" id="mkleg"></div>
     <div id="fbar"></div>
     <div class="topscroll" id="topscroll"><div></div></div>
     <div class="wrap" id="wrap">
       <table>
         <thead>
           <tr>
-            <th>Nome</th>
+            <th>Nome${infoIcon(INFO_MARC)}</th>
             ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${!infoColFolha(c) && (c.dica || c.k === 'inss') ? ` title="${esc(c.dica || 'Em branco = automático')}"` : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}${infoIcon(infoColFolha(c))}</th>`).join('')}
             <th></th>
           </tr>
@@ -2416,7 +2489,8 @@ function renderFolha() {
     </p>`;
 
   const tbody = document.getElementById('tbody');
-  const visiveis = filtro ? list.filter(r => recebe(r, filtro)) : list;
+  const marcado = (r, k) => k === 'ok' ? !!r.ok : !!(r.mk && r.mk[k]);
+  const visiveis = (filtro ? list.filter(r => recebe(r, filtro)) : list).filter(r => !mkFolha || marcado(r, mkFolha));
   visiveis.forEach((r, i) => tbody.appendChild(rowEl(r, i + 1)));
   // arrastar o título da coluna para mudar a posição
   document.querySelectorAll('th[data-col]').forEach(th => {
@@ -2580,7 +2654,7 @@ function rowEl(r, n) {
     return `<td class="vcell ${col.cls || ''}">${input(r, col.k)}${sub}${notaBtn(r, col.k)}</td>`;
   }).join('');
   tr.innerHTML = `
-    <td class="vcell"><div class="namecell"><input type="checkbox" class="okchk" title="Marcar valor como conferido"${r.ok ? ' checked' : ''}><span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button><button class="cfg holer" title="Ver o contracheque deste funcionário">🧾</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}${notaBtn(r, 'nome')}</td>
+    <td class="vcell"><div class="namecell">${marcHtml(k => k === 'ok' ? !!r.ok : !!(r.mk && r.mk[k]))}<span class="n">${n}</span><input data-f="nome" value="${esc(r.nome)}" placeholder="Nome"><button class="cfg${r.cfg ? ' on' : ''}" title="Configuração do funcionário">⚙︎</button><button class="cfg holer" title="Ver o contracheque deste funcionário">🧾</button></div>${r.cfg ? `<span class="tag">${cfgResumo(r.cfg)}</span>` : ''}${notaBtn(r, 'nome')}</td>
     ${celulas}
     <td><button class="del" title="Remover">✕</button></td>`;
   tr.addEventListener('input', e => {
@@ -2593,11 +2667,18 @@ function rowEl(r, n) {
     renderTotals();
   });
   tr.classList.toggle('ok', !!r.ok);
-  tr.querySelector('.okchk').onchange = e => {
-    r.ok = e.target.checked;
-    tr.classList.toggle('ok', r.ok);
+  ['aviso', 'duvida'].forEach(m => tr.classList.toggle('mk-' + m, !!(r.mk && r.mk[m])));
+  tr.querySelectorAll('[data-mk]').forEach(i => i.onchange = () => {
+    const m = i.dataset.mk;
+    if (m === 'ok') { r.ok = i.checked; tr.classList.toggle('ok', r.ok); }
+    else {
+      r.mk = { ...(r.mk || {}) };
+      if (i.checked) r.mk[m] = 1; else delete r.mk[m];
+      if (!Object.keys(r.mk).length) delete r.mk;
+      if (m === 'aviso' || m === 'duvida') tr.classList.toggle('mk-' + m, i.checked);
+    }
     save(); renderTotals();
-  };
+  });
   tr.querySelector('.del').onclick = () => abrirRemover(r);
   tr.querySelector('.cfg:not(.holer)').onclick = () => abrirFunc(r);
   tr.querySelector('.holer').onclick = () => abrirHolerite(r);
@@ -2635,6 +2716,7 @@ function updateRow(tr, r) {
 
 
 // gráficos da folha do mês
+let mkFolha = null; // filtro pelo quadradinho (ok, pago, aviso…)
 let mostraGraf = (() => { try { return localStorage.getItem('folha-graf') !== '0'; } catch (e) { return true; } })();
 function pintaGraficosFolha(list, t) {
   const box = document.getElementById('fchart');
@@ -2678,6 +2760,11 @@ function renderTotals() {
     kpiHtml('k6', 'Na conta', brl(t.conta), 'líquido − iFood', 'O que cai na conta bancária dos funcionários: líquido − iFood Benefícios.'),
   ].join('');
   pintaGraficosFolha(list, t);
+  const cont = {};
+  MARC.forEach(m => { cont[m.k] = list.filter(r => m.k === 'ok' ? r.ok : (r.mk && r.mk[m.k])).length; });
+  const leg = $('mkleg');
+  leg.innerHTML = legendaMarc(cont, mkFolha);
+  leg.onclick = e => { const b = e.target.closest('[data-mkf]'); if (!b) return; mkFolha = mkFolha === b.dataset.mkf ? null : b.dataset.mkf; render(); };
   $('btnFer').onclick = () => {
     const im2 = infoMes(mes);
     const v = prompt(`Feriados em dia de semana (seg–sáb) em ${nomeMes(mes)}:\n\nAutomático: ${im2.auto} (feriados nacionais). Digite o número que vale para sua cidade, ou deixe vazio para voltar ao automático.`, im2.manual ? im2.fer : '');

@@ -268,6 +268,13 @@
   .mkchip em { font-style: normal; opacity: .75; font-weight: 700; }
   .mkchip.on { background: var(--mkc); color: #fff; }
   .mkchip.on b { background: #fff; color: var(--mkc); }
+  .travada input[data-f] { cursor: not-allowed; opacity: .85; }
+  .aviso.trav { margin-bottom: 12px; }
+  .hist { padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+  .hist small { color: var(--muted); margin-left: 8px; }
+  td input.anom { background: color-mix(in srgb, #e8952f 18%, transparent) !important; border-color: #e8952f !important; border-radius: 7px; }
+  .kpi.k9 { background: #d9480f; cursor: pointer; }
+  .kpi.k9.on { outline: 3px solid var(--fg); outline-offset: 2px; }
   /* ---------- ⓘ explicações ---------- */
   .i-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border: 1.5px solid currentColor;
     border-radius: 50%; font: italic 700 10px/1 Georgia, serif; text-transform: none; letter-spacing: 0; opacity: .55; cursor: help; vertical-align: middle; flex: none; }
@@ -767,6 +774,13 @@
   <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" id="rgSalvar">Salvar</button></div>
 </dialog>
 
+<!-- histórico da folha -->
+<dialog id="dlgHist" style="width:min(560px,96vw)">
+  <h2 id="histTit">Histórico da folha</h2>
+  <div id="histBody"></div>
+  <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Fechar</button></div>
+</dialog>
+
 <!-- comentário de um valor -->
 <dialog id="dlgNota">
   <form id="notaForm">
@@ -884,7 +898,7 @@ function normalize(s) {
   if (!s) return null;
   let empresas;
   if (Array.isArray(s.empresas) && s.empresas.length) {
-    empresas = s.empresas.map(e => ({ id: e.id || uid(), nome: e.nome || 'Empresa', meses: e.meses || {}, status: e.status || {}, decimo: e.decimo || {}, mesInfo: e.mesInfo || {}, info: e.info || '' }));
+    empresas = s.empresas.map(e => ({ id: e.id || uid(), nome: e.nome || 'Empresa', meses: e.meses || {}, status: e.status || {}, decimo: e.decimo || {}, mesInfo: e.mesInfo || {}, info: e.info || '', historico: e.historico || [] }));
   } else if (s.meses) {
     // formato antigo: uma única empresa
     empresas = [{ id: 'principal', nome: 'Empresa principal', meses: s.meses, status: s.status || {} }];
@@ -998,6 +1012,89 @@ const nomeMes = m => MESES[Number(m.slice(5)) - 1] + ' ' + m.slice(0, 4);
 const rowsOf = m => E().meses[m] || [];
 function rows() { return E().meses[mes] || (E().meses[mes] = []); }
 const statusOf = m => E().status[m] || 'aberta';
+
+// ---------- fechamento seguro da folha ----------
+// Regra tirada do cérebro (Sistema de Locação): a folha avança uma etapa por vez; ao fechar, os valores que dependem de tabela
+// (INSS e DSR) são congelados; reabrir exige motivo, volta para "Em conferência" e fica no histórico.
+const ORDEM_ST = ['aberta', 'conferencia', 'fechada', 'paga'];
+const travada = m => ['fechada', 'paga'].includes(statusOf(m));
+function logHist(m, de, para, motivo) {
+  E().historico = E().historico || [];
+  E().historico.push({ q: new Date().toISOString(), mes: m, de, para, motivo: motivo || '' });
+}
+function congelar(m) {
+  rowsOf(m).forEach(r => {
+    const c = calc(r, m), cong = { ...(r.cong || {}) };
+    if (r.inss == null && c.inss) { r.inss = c.inss; cong.inss = true; }
+    if (r.dsr == null && c.dsrV) { r.dsr = c.dsrV; cong.dsr = true; }
+    if (Object.keys(cong).length) r.cong = cong;
+  });
+}
+function descongelar(m) {
+  rowsOf(m).forEach(r => {
+    if (!r.cong) return;
+    if (r.cong.inss) delete r.inss;
+    if (r.cong.dsr) delete r.dsr;
+    delete r.cong;
+  });
+}
+function mudaStatus(novo) {
+  const atual = statusOf(mes), i = ORDEM_ST.indexOf(atual), j = ORDEM_ST.indexOf(novo);
+  if (i === j) return;
+  if (j > i + 1) return alert(`Avance uma etapa por vez. A próxima etapa depois de "${STATUS_LABEL[atual]}" é "${STATUS_LABEL[ORDEM_ST[i + 1]]}".`);
+  if (j > i) {
+    if (novo === 'fechada') {
+      if (!confirm('Fechar a folha?\n\nOs valores ficam travados e o INSS e o DSR calculados ficam congelados (não mudam mais se a tabela mudar). Os marcadores continuam livres. Para editar de novo é preciso reabrir, com um motivo.')) return;
+      congelar(mes);
+    }
+    logHist(mes, atual, novo, '');
+  } else {
+    // voltar de uma folha fechada/paga = reabrir
+    let destino = novo, motivo = '';
+    if (travada(mes) && !travada2(novo)) {
+      motivo = (prompt('Reabrir a folha de ' + nomeMes(mes) + '?\n\nDigite o motivo (obrigatório). Ela volta para "Em conferência" e a reabertura fica no histórico.') || '').trim();
+      if (!motivo) return;
+      destino = 'conferencia';
+      descongelar(mes);
+    }
+    logHist(mes, atual, destino, motivo);
+    E().status[mes] = destino; save(); render(); return;
+  }
+  E().status[mes] = novo; save(); render();
+}
+const travada2 = st => st === 'fechada' || st === 'paga';
+function abrirHist(m) {
+  const h = (E().historico || []).filter(x => x.mes === m).sort((a, b) => b.q.localeCompare(a.q));
+  $('histTit').textContent = 'Histórico — ' + nomeMes(m);
+  $('histBody').innerHTML = h.length ? h.map(x => `<div class="hist"><b>${STATUS_LABEL[x.de] || x.de} → ${STATUS_LABEL[x.para] || x.para}</b>
+    <small>${new Date(x.q).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</small>${x.motivo ? `<div>Motivo: ${esc(x.motivo)}</div>` : ''}</div>`).join('')
+    : '<p class="muted">Nenhuma mudança de etapa registrada.</p>';
+  $('dlgHist').showModal();
+}
+const avisoTravada = () => alert('Esta folha está ' + STATUS_LABEL[statusOf(mes)].toLowerCase() + ' e travada. Reabra a folha (com um motivo) para alterar.');
+
+// ---------- valores fora do padrão (mediana dos meses anteriores) ----------
+const mediana = a => { const x = [...a].sort((p, q) => p - q), n = x.length; return n ? (n % 2 ? x[(n - 1) / 2] : (x[n / 2 - 1] + x[n / 2]) / 2) : null; };
+const FIXOS_ANOM = new Set(['salario', 'bonif', 'ajuda', 'ifood']);
+function anomDeLinha(r, m) {
+  const out = {};
+  if (!r.nome || !(r.salario > 0)) return out; // folha ainda não lançada para esta pessoa
+  const hist = Object.keys(E().meses).filter(x => x < m).sort().map(x => (E().meses[x] || []).find(y => sameName(y.nome, r.nome)))
+    .filter(y => y && y.salario > 0);
+  if (hist.length < 3) return out;
+  todasColunas().filter(c => c.tipo && !c.calc && c.tipo !== 'info').forEach(c => {
+    const k = c.k, v = r[k] || 0, vals = hist.map(y => y[k] || 0), fixo = FIXOS_ANOM.has(k);
+    const nz = vals.filter(x => x > 0);
+    if (nz.length < 3 && !(fixo && nz.length === hist.length && nz.length >= 3)) return;
+    const ref = mediana(nz);
+    if (!ref) return;
+    if (v === 0) { if (fixo) out[k] = { ref, vazio: true }; return; }
+    if (Math.abs(v - ref) / ref > (fixo ? 0.01 : 0.6)) out[k] = { ref, vazio: false };
+  });
+  return out;
+}
+const anomTxt = (c, a) => a.vazio ? `Está vazio, mas nos meses anteriores o normal era ${num(a.ref)} (mediana).` : `Fora do padrão: nos meses anteriores o normal era ${num(a.ref)} (mediana).`;
+
 const sameName = (a, b) => (a || '').trim().toLocaleLowerCase('pt-BR') === (b || '').trim().toLocaleLowerCase('pt-BR');
 const byName = (a, b) => {
   if (!a.nome) return 1;
@@ -2422,6 +2519,7 @@ function mesOrigem(m) {
   return null;
 }
 function copiarValores() {
+  if (travada(mes)) return avisoTravada();
   const origem = mesOrigem(mes);
   if (!origem) return alert('Não há folha anterior com dados nesta empresa.');
   if (!confirm(`Copiar os valores de ${nomeMes(origem)} para ${nomeMes(mes)}?\n\nSó os campos vazios de ${nomeMes(mes)} serão preenchidos — o que você já lançou não muda. Funcionários que faltarem serão incluídos.`)) return;
@@ -2466,6 +2564,7 @@ function renderFolha() {
     <div class="kpis" id="fsum"></div>
     <div class="fgraf" id="fchart"></div>
     <div class="mkleg" id="mkleg"></div>
+    <div id="fTrava"></div>
     <div id="fbar"></div>
     <div class="topscroll" id="topscroll"><div></div></div>
     <div class="wrap" id="wrap">
@@ -2489,7 +2588,7 @@ function renderFolha() {
     </p>`;
 
   const tbody = document.getElementById('tbody');
-  const marcado = (r, k) => k === 'ok' ? !!r.ok : !!(r.mk && r.mk[k]);
+  const marcado = (r, k) => k === 'anom' ? Object.keys(anomDeLinha(r, mes)).length > 0 : k === 'ok' ? !!r.ok : !!(r.mk && r.mk[k]);
   const visiveis = (filtro ? list.filter(r => recebe(r, filtro)) : list).filter(r => !mkFolha || marcado(r, mkFolha));
   visiveis.forEach((r, i) => tbody.appendChild(rowEl(r, i + 1)));
   // arrastar o título da coluna para mudar a posição
@@ -2539,11 +2638,20 @@ function renderFolha() {
     document.getElementById('btnCopy').onclick = () => { criarFolha(mes); render(); };
   }
 
-  document.querySelectorAll('#seg button').forEach(b => b.onclick = () => {
-    E().status[mes] = b.dataset.st;
-    save(); render();
-  });
+  document.querySelectorAll('#seg button').forEach(b => b.onclick = () => mudaStatus(b.dataset.st));
+  // folha fechada/paga: valores travados (os marcadores continuam livres)
+  const trava = travada(mes);
+  $('fTrava').innerHTML = trava ? `<div class="aviso info trav"><span>🔒 Folha <b>${STATUS_LABEL[statusOf(mes)].toLowerCase()}</b>: valores travados — INSS e DSR calculados ficaram congelados. Os marcadores continuam livres.</span>
+    <button id="btnReabrir">Reabrir folha</button><button id="btnHist">Histórico</button></div>`
+    : ((E().historico || []).some(h => h.mes === mes) ? `<div style="margin:-6px 0 10px"><button class="ghost" id="btnHist" style="font-size:12px">🕘 Histórico da folha</button></div>` : '');
+  if (trava) {
+    document.getElementById('wrap').classList.add('travada');
+    document.getElementById('wrap').querySelectorAll('input[data-f]').forEach(i => { i.readOnly = true; });
+    $('btnReabrir').onclick = () => mudaStatus('conferencia');
+  }
+  if ($('btnHist')) $('btnHist').onclick = () => abrirHist(mes);
   document.getElementById('btnAdd').onclick = () => {
+    if (travada(mes)) return avisoTravada();
     document.getElementById('novoNome').value = '';
     document.getElementById('dlgNovo').showModal();
   };
@@ -2706,6 +2814,12 @@ function updateRow(tr, r) {
   const inss = tr.querySelector('[data-f=inss]');
   if (inss) inss.placeholder = num(c.inssAuto);
   ['baseInss', 'fgts'].forEach(k => { const el = tr.querySelector(`td[data-c=${k}]`); if (el) el.textContent = brl(c[k]); });
+  const an = anomDeLinha(r, mes);
+  tr.querySelectorAll('input[data-f]').forEach(i => {
+    const a = an[i.dataset.f];
+    i.classList.toggle('anom', !!a);
+    if (a) i.title = anomTxt(null, a); else if (/^(Fora do padrão|Está vazio)/.test(i.title)) i.removeAttribute('title');
+  });
   const dsrIn = tr.querySelector('[data-f=dsr]');
   if (dsrIn) dsrIn.placeholder = c.dsrAuto ? num(c.dsrAuto) : '';
   ['liquido', 'conta'].forEach(k => {
@@ -2750,6 +2864,7 @@ function renderTotals() {
   const t = totals(list);
   const im = infoMes(mes);
   const nOk = list.filter(r => r.ok).length;
+  const anoms = list.map(r => Object.keys(anomDeLinha(r, mes)).length), nAnom = anoms.reduce((a, b) => a + b, 0), linAnom = anoms.filter(Boolean).length;
   document.getElementById('fsum').innerHTML = [
     kpiHtml('k1', 'Funcionários', list.length, `${nOk} conferido${nOk === 1 ? '' : 's'} de ${list.length}`, 'Quantos funcionários têm linha nesta folha. "Conferidos" = linhas em que você marcou a caixinha ao lado do nome (ficam verdes).'),
     kpiHtml('k7', 'Dias úteis', im.uteis, `${im.dom} dom. + ${im.fer} fer. <button id="btnFer" title="Ajustar os feriados do mês">✎</button>`, 'Base do repouso remunerado (DSR) sobre as horas extras: dias úteis, domingos e feriados do mês. Clique no lápis (✎) para ajustar quantos feriados em dia de semana existem na sua cidade.'),
@@ -2758,7 +2873,10 @@ function renderTotals() {
     kpiHtml('k3', 'Líquido', brl(t.liquido), 'proventos − descontos', 'Proventos − INSS − adiantamentos − descontos. É o que a empresa realmente paga.'),
     kpiHtml('k5', 'iFood', brl(t.ifood), 'cartão de benefícios', 'Parte do pagamento que vai no cartão de benefícios (iFood). Sai só do "Na conta".'),
     kpiHtml('k6', 'Na conta', brl(t.conta), 'líquido − iFood', 'O que cai na conta bancária dos funcionários: líquido − iFood Benefícios.'),
+    kpiHtml('k9', 'Fora do padrão', nAnom, nAnom ? `${linAnom} funcionário${linAnom === 1 ? '' : 's'} · clique para filtrar` : 'tudo dentro do normal', 'Compara cada valor com a MEDIANA dos meses anteriores do mesmo funcionário (a mediana não é puxada por um valor muito diferente, como a média é). Marca o que foge muito (horas extras e bonificações: mais de 60%; salário, ajuda e iFood: qualquer mudança) ou o que ficou vazio. Ajuda a pegar erro de digitação — ex.: 40 horas extras em vez de 4. Só funciona com 3 meses lançados antes.'),
   ].join('');
+  const k9 = document.querySelector('#fsum .k9');
+  if (k9) { k9.onclick = () => { mkFolha = mkFolha === 'anom' ? null : 'anom'; render(); }; k9.classList.toggle('on', mkFolha === 'anom'); }
   pintaGraficosFolha(list, t);
   const cont = {};
   MARC.forEach(m => { cont[m.k] = list.filter(r => m.k === 'ok' ? r.ok : (r.mk && r.mk[m.k])).length; });
@@ -2997,6 +3115,8 @@ function cfgResumo(c) {
 }
 let editandoFunc = null;
 function abrirFunc(r) {
+  if (travada(mes)) return avisoTravada();
+  if (travada(mes)) return avisoTravada();
   editandoFunc = r;
   const c = r.cfg || {}, g = state.config;
   $('funcTitulo').textContent = r.nome || 'Funcionário';
@@ -3037,6 +3157,7 @@ $('funcForm').onsubmit = e => {
   const todos = $('fSeguintes').checked && r.nome;
   if (todos) {
     Object.keys(E().meses).forEach(m => {
+      if (travada(m)) return; // folha fechada/paga não muda
       E().meses[m].forEach(x => { if (x !== r && sameName(x.nome, r.nome)) x.cfg = cfg && structuredClone(cfg); });
     });
   }
@@ -3054,6 +3175,7 @@ $('funcForm').onsubmit = e => {
 
 let removendo = null;
 function abrirRemover(r) {
+  if (travada(mes)) return avisoTravada();
   removendo = r;
   document.getElementById('delTitulo').textContent = 'Remover ' + (r.nome || 'funcionário');
   document.getElementById('dlgDel').showModal();

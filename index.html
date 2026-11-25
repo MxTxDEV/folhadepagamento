@@ -207,6 +207,16 @@
   .card.c13 .mname { text-transform: none; }
   .t13 td.pg { background: var(--ok) !important; color: var(--mint-d); }
 
+
+  /* ---------- ⓘ explicações ---------- */
+  .i-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border: 1.5px solid currentColor;
+    border-radius: 50%; font: italic 700 10px/1 Georgia, serif; text-transform: none; letter-spacing: 0; opacity: .55; cursor: help; vertical-align: middle; flex: none; }
+  .i-info:hover, .i-info:focus-visible { opacity: 1; outline: none; }
+  #infoPop { position: fixed; z-index: 3000; max-width: min(320px, 90vw); background: var(--fg); color: var(--bg); padding: 10px 13px; border-radius: 11px;
+    font: 400 12.5px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-transform: none; letter-spacing: 0; white-space: pre-line; text-align: left;
+    box-shadow: 0 10px 30px rgba(0,0,0,.28); pointer-events: none; }
+  #infoPop[hidden] { display: none; }
+  @media print { .i-info, #infoPop { display: none !important; } }
   /* ---------- 13º: tela nova (cores sólidas, indicadores e gráficos) ---------- */
   .d13 { --c1: #5b50e6; --c2: #0f9f78; --ct: #262248; --ci: #e2557b; --cf: #c97a00; --cs: #2b8fd6;
     --trk: color-mix(in srgb, var(--fg) 12%, transparent); }
@@ -691,8 +701,8 @@
   <h3>Cálculo</h3>
   <div class="row"><label>Salário-base vem da folha de</label><select id="rgMes"></select></div>
   <div class="row"><label>1ª parcela = % do 13º</label><input id="rgPct" inputmode="decimal" style="width:80px"></div>
-  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgMedia"> Incluir a média de HE, DSR e bonificações variáveis no 13º</label>
-  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgAjuda"> Pagar a média da ajuda alimentação junto com a 1ª parcela</label>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgMedia"> Incluir a média de HE, DSR e bonificações variáveis no 13º<span class="i-info" tabindex="0" role="button" data-info="Média variável = o que o funcionário ganhou de extra durante o ano (horas extras, DSR, bonificações…), em média por mês. A lei manda incluir no 13º porque faz parte da remuneração.">i</span></label>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgAjuda"> Pagar a média da ajuda alimentação junto com a 1ª parcela<span class="i-info" tabindex="0" role="button" data-info="A ajuda alimentação não entra no 13º nem no INSS, mas a contabilidade paga a média dela junto com a 1ª parcela. Desmarque se não quiser pagar.">i</span></label>
   <p class="hint">As regras valem para o 13º deste ano. Valores digitados à mão na tabela ou em Detalhes continuam valendo no lugar do automático.</p>
   <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" id="rgSalvar">Salvar</button></div>
 </dialog>
@@ -1054,6 +1064,37 @@ const COLS_BASE = [
   { k: 'ifood', tipo: 'conta', nome: 'iFood Benefícios', g: 'r', cls: 'c-if' },
   { k: 'conta', nome: 'Na conta', g: 'r', calc: true, cls: 'c-conta', fixa: true },
 ];
+
+// ---------- ⓘ explicações (passe o mouse ou clique no "i") ----------
+const infoIcon = txt => txt ? `<span class="i-info" tabindex="0" role="button" aria-label="O que é isto?" data-info="${esc(txt)}">i</span>` : '';
+const INFO_FOLHA = {
+  salario: 'Salário base do funcionário no mês (o valor do contrato). É sobre ele que se calcula a hora extra e o 13º.',
+  bonif: 'Bonificação fixa: um valor combinado que se repete todo mês. Entra na base do INSS e do FGTS.',
+  bonifVar: 'Bonificação variada: bonificação que muda de mês para mês (prêmio, comissão…). Entra na base do INSS.',
+  diasTrab: 'Bonificação por dias trabalhados: digite a quantidade de dias; o sistema multiplica pelo valor por dia (definido em ⚙︎ Configurações ou no ⚙︎ do funcionário).',
+  dias361: 'Bonificação 361/380: digite a quantidade de dias; o sistema multiplica pelo valor por dia dessa bonificação.',
+  grat: 'Gratificação: valor extra pago de forma eventual (não é fixo). Entra na base do INSS.',
+  ajuda: 'Ajuda combinada (ajuda alimentação): valor combinado que soma ao pagamento mas NÃO entra na base do INSS nem do FGTS.',
+  heSem: 'Horas extras de segunda a sábado. Digite as horas; o valor sai de salário ÷ 220 × (1 + adicional, padrão 50%).',
+  heSdf: 'Horas extras de sábado, domingo e feriado (SDF). Digite as horas; o valor sai de salário ÷ 220 × (1 + adicional, padrão 100%).',
+  dsr: 'Repouso Remunerado (DSR): o descanso de domingos e feriados também é pago sobre as horas extras. Conta: horas extras ÷ dias úteis × (domingos + feriados). Digite um valor para trocar.',
+  adiant: 'Adiantamento: dinheiro que já foi pago antes do fechamento. É descontado do valor líquido.',
+  inss: 'INSS: desconto da previdência, calculado por faixas sobre a Base INSS (tabela de 2026). Digite um valor para trocar o automático.',
+  desc: 'Descontos: outros descontos do mês (faltas, vales, multas…). Subtraem do valor líquido.',
+  baseInss: 'Base INSS: tudo o que entra no cálculo do INSS (não inclui a ajuda alimentação). É também a base do FGTS.',
+  fgts: 'FGTS do mês: depósito de 8% sobre a base, pago pela empresa. Não é descontado do funcionário.',
+  liquido: 'Valor líquido: o que sobra depois de somar tudo e descontar INSS, adiantamento e descontos.',
+  ifood: 'iFood Benefícios: parte do pagamento que vai no cartão de benefício. Sai só do "Na conta".',
+  conta: 'Na conta: o que cai na conta bancária do funcionário = valor líquido − iFood Benefícios.',
+};
+const INFO_TIPO = {
+  provento: 'Coluna que soma ao pagamento e entra na base do INSS.',
+  proventoSem: 'Coluna que soma ao pagamento, mas não entra na base do INSS.',
+  desconto: 'Coluna que subtrai do valor líquido.',
+  conta: 'Coluna que subtrai só do "Na conta" (ex.: parte paga em benefício).',
+  info: 'Coluna só informativa: não soma nem subtrai.',
+};
+const infoColFolha = c => INFO_FOLHA[c.k] || (c.extra ? 'Coluna criada por você. ' + (INFO_TIPO[c.tipo] || '') : '');
 const TIPOS = {
   provento: '➕ Soma (entra no INSS)',
   proventoSem: '➕ Soma (fora do INSS)',
@@ -1212,6 +1253,28 @@ const COLS13_BASE = [
   { k: 'p2', nome: '2ª parcela', tipo: 'din', cls: 'c-conta', pago: 2 },
   { k: 'recebido', nome: 'Total recebido (1ª + 2ª)', tipo: 'din', cls: 'c-liq', calc: true, dica: 'Soma das duas parcelas' },
 ];
+
+const INFO13 = {
+  admissao: 'Data em que o funcionário entrou na empresa. Só preencha se ele entrou NESTE ano: serve para contar os meses de 13º (avos). Em branco = trabalhou o ano todo.',
+  avos: 'Avos = quantos meses de 13º o funcionário tem direito. 12/12 = o ano inteiro. Cada mês trabalhado com 15 dias ou mais conta 1. Quem entrou no meio do ano recebe proporcional (ex.: 8/12).',
+  salario: 'Salário (mais a bonificação fixa) da folha de novembro. É a base principal do 13º.',
+  media: 'Média variável = o que o funcionário ganhou de extra durante o ano (horas extras, DSR, bonificações…), em média por mês. A lei manda incluir isso no 13º porque essas verbas fazem parte da remuneração.\n\nExemplo: se ele ganhou R$ 300 de hora extra somando 10 meses, a média é R$ 30 por mês e esses R$ 30 entram na conta do 13º.',
+  base: 'Base do 13º = salário + média variável. É o valor sobre o qual o 13º é calculado.',
+  total: '13º total = base ÷ 12 × avos. É o 13º bruto do ano inteiro, antes do desconto de INSS.',
+  p1: 'Primeira parcela: 50% do 13º, sem nenhum desconto, paga até 30/11. Marque a caixinha quando pagar.',
+  liq1: 'O que realmente vai na 1ª parcela: a 1ª parcela do 13º + a ajuda alimentação (média) + extras (ex.: reembolso). É o valor do contracheque.',
+  inss: 'INSS sobre o 13º inteiro (tabela por faixas). Só é descontado na 2ª parcela.',
+  p2: 'Segunda parcela: 13º total − INSS − o que já foi pago na 1ª parcela. Paga até 20/12.',
+  recebido: 'Soma do que o funcionário recebe de 13º nas duas parcelas (já sem o INSS).',
+};
+const INFO13_TIPO = {
+  soma: 'Valor que você digita e que soma ao 13º (entra na conta e no INSS).',
+  somaP1: 'Valor que você digita e que é pago junto com a 1ª parcela, sem entrar no 13º nem no INSS (ex.: reembolso).',
+  somaP2: 'Valor que você digita e que é pago junto com a 2ª parcela, fora do INSS.',
+  desc: 'Valor que você digita e que é descontado da 2ª parcela (ex.: adiantamento de 13º).',
+  info: 'Coluna só informativa: não soma nem subtrai.',
+};
+const infoCol13 = c => INFO13[c.k] || (c.extra ? 'Coluna criada por você. ' + (INFO13_TIPO[c.papel] || '') : '');
 // tabelas da tela: 1ª parcela, 2ª parcela e o total do final
 const TABELAS13 = [['t1', '1ª parcela'], ['t2', '2ª parcela'], ['tot', 'Total do 13º']];
 const TABS_PADRAO = {
@@ -1433,7 +1496,7 @@ function htmlPainel(lista) {
       ? `${rg.pct1}% do 13º${soma('ajudaP1') + soma('extraP1') ? ' + ajuda e extras' : ''}`
       : '13º − INSS − 1ª parcela';
     return `<div class="hero h${k}">
-      <div class="h-top"><span class="h-t">${k}ª parcela</span><span class="h-chip ${pz.cls}">${pz.txt}</span></div>
+      <div class="h-top"><span class="h-t">${k}ª parcela${infoIcon(k === 1 ? 'Primeira parcela do 13º: metade do valor, sem desconto de INSS, paga até 30/11 (mais a ajuda alimentação e extras, se houver).' : 'Segunda parcela: o 13º inteiro − o INSS − o que já foi pago na 1ª parcela. Paga até 20/12.')}</span><span class="h-chip ${pz.cls}">${pz.txt}</span></div>
       <div class="h-val">${brl(valor)}</div>
       <div class="h-sub">${n} funcionário${n === 1 ? '' : 's'} · ${sub}</div>
       <div class="h-prog" title="${pc(pagoK, valor)}% pago"><i style="width:${pc(pagoK, valor)}%"></i></div>
@@ -1449,7 +1512,7 @@ function htmlPainel(lista) {
   };
   const seg = (v, c) => `<i style="width:${tot > 0 ? v / tot * 100 : 0}%;background:${c}"></i>`;
   const heroTot = `<div class="hero ht">
-      <div class="h-top"><span class="h-t">13º total ${ano}</span><span class="h-chip">${n} funcionário${n === 1 ? '' : 's'}</span></div>
+      <div class="h-top"><span class="h-t">13º total ${ano}${infoIcon('Soma do 13º bruto de todos os funcionários (antes do INSS). A barra mostra quanto vai para a 1ª parcela, a 2ª parcela e o INSS.')}</span><span class="h-chip">${n} funcionário${n === 1 ? '' : 's'}</span></div>
       <div class="h-val">${brl(tot)}</div>
       <div class="h-sub">Valor bruto do 13º, antes do INSS</div>
       <div class="stack" title="1ª parcela · 2ª parcela · INSS">${seg(p1, 'var(--c1)')}${seg(p2, 'var(--c2)')}${seg(inss, 'var(--ci)')}</div>
@@ -1458,14 +1521,14 @@ function htmlPainel(lista) {
       <div class="h-btns"><button data-act="regras">⚙ Regras do cálculo</button></div>
     </div>`;
 
-  const kpi = (cls, rot, val, em) => `<div class="kpi ${cls}"><small>${rot}</small><b>${val}</b><em>${em}</em></div>`;
+  const kpi = (cls, rot, val, em, inf) => `<div class="kpi ${cls}"><small>${rot}${infoIcon(inf)}</small><b>${val}</b><em>${em}</em></div>`;
   const kpis = [
-    kpi('k1', 'Funcionários', n, `${integrais} integrais · ${n - integrais} proporcionais`),
-    kpi('k2', 'Média por funcionário', brl(n ? tot / n : 0), '13º bruto'),
-    kpi('k3', 'Maior 13º', brl(maior ? maior.total : 0), maior ? esc(nomeCurto(maior.nome)) : '–'),
-    kpi('k4', 'INSS retido', brl(inss), tot ? `${(inss / tot * 100).toFixed(1).replace('.', ',')}% do 13º` : '–'),
-    kpi('k5', 'FGTS estimado', brl(fgts), '8% do 13º (encargo)'),
-    kpi('k6', 'Já pago', brl(jaPago), `${pc(jaPago, aPagar)}% de ${brl(aPagar)}`),
+    kpi('k1', 'Funcionários', n, `${integrais} integrais · ${n - integrais} proporcionais`, 'Quantos funcionários entram no 13º. Integrais = trabalharam o ano todo (12/12). Proporcionais = entraram durante o ano e recebem só os meses trabalhados.'),
+    kpi('k2', 'Média por funcionário', brl(n ? tot / n : 0), '13º bruto', 'O 13º total dividido pelo número de funcionários.'),
+    kpi('k3', 'Maior 13º', brl(maior ? maior.total : 0), maior ? esc(nomeCurto(maior.nome)) : '–', 'O funcionário com o maior valor de 13º.'),
+    kpi('k4', 'INSS retido', brl(inss), tot ? `${(inss / tot * 100).toFixed(1).replace('.', ',')}% do 13º` : '–', 'INSS descontado dos funcionários sobre o 13º. É descontado na 2ª parcela e a empresa repassa à Previdência.'),
+    kpi('k5', 'FGTS estimado', brl(fgts), '8% do 13º (encargo)', 'FGTS é um depósito de 8% sobre o 13º que a EMPRESA paga além do 13º — não sai do bolso do funcionário. Aqui é só uma estimativa.'),
+    kpi('k6', 'Já pago', brl(jaPago), `${pc(jaPago, aPagar)}% de ${brl(aPagar)}`, 'Soma do que já foi marcado como pago nas duas parcelas.'),
   ].join('');
 
   const ord = [...lista].sort((a, b) => b.total - a.total);
@@ -1486,13 +1549,13 @@ function htmlPainel(lista) {
     <div class="heros">${hero(1)}${hero(2)}${heroTot}</div>
     <div class="kpis">${kpis}</div>
     <div class="charts">
-      <div class="panel"><h3>13º por funcionário <span class="muted">1ª parcela · 2ª parcela · INSS</span></h3>
+      <div class="panel"><h3><span>13º por funcionário${infoIcon('Cada barra é o 13º de um funcionário, dividida em 1ª parcela (azul), 2ª parcela (verde) e INSS (rosa).')}</span> <span class="muted">1ª parcela · 2ª parcela · INSS</span></h3>
         <div class="bars">${barras || '<span class="muted">Sem funcionários</span>'}</div></div>
-      <div class="panel"><h3>Andamento dos pagamentos</h3>
+      <div class="panel"><h3><span>Andamento dos pagamentos${infoIcon('Mostra quanto do valor de cada parcela já foi marcado como pago.')}</span></h3>
         <div class="donuts">${donut(pc(pago1, liq1), 'var(--c1)', '1ª parcela', `${pg(1)}/${n} pagos`)}${donut(pc(pago2, p2), 'var(--c2)', '2ª parcela', `${pg(2)}/${n} pagos`)}</div>
         <div class="h-prog-d"><i style="width:${pc(jaPago, aPagar)}%"></i></div>
         <div class="muted" style="font-size:12px;margin-top:6px">Geral: ${brl(jaPago)} de ${brl(aPagar)} (${pc(jaPago, aPagar)}%)</div></div>
-      <div class="panel"><h3>Meses trabalhados <span class="muted">avos</span></h3>
+      <div class="panel"><h3><span>Meses trabalhados${infoIcon('Avos = quantos meses de 13º cada funcionário tem direito. 12/12 = o ano inteiro; menos que isso = entrou no meio do ano.')}</span> <span class="muted">avos</span></h3>
         <div class="bars">${avosOrd.map(([av, c]) => `<div class="br br2"><span class="nm">${av}/12</span><span class="tr"><i style="width:${c / maxAv * 100}%;background:var(--cs)"></i></span><span class="v">${c} func.</span></div>`).join('') || '<span class="muted">–</span>'}</div></div>
     </div>`;
 }
@@ -1532,7 +1595,7 @@ function render13() {
         <table class="t13" data-t="${t}">
           <thead><tr>
             <th>Funcionário</th>
-            ${cs.map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}" title="${esc(c.dica || '')}">${esc(c.nome)}${c.pago ? `<br><small>${fmtData(d.datas['p' + c.pago])}</small>` : ''}</th>`).join('')}
+            ${cs.map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${infoCol13(c) ? '' : ` title="${esc(c.dica || '')}"`}>${esc(c.nome)}${infoIcon(infoCol13(c))}${c.pago ? `<br><small>${fmtData(d.datas['p' + c.pago])}</small>` : ''}</th>`).join('')}
             <th></th>
           </tr></thead>
           <tbody>${lista.map(x => `
@@ -1773,7 +1836,7 @@ function abrirFicha13(k) {
       <div class="fc-col">
         <h3>Dados do funcionário</h3>
         <label class="fc-f">Admissão <small>em branco = trabalhou o ano todo</small><input type="date" data-ff="admissao" value="${f.admissao || ''}"></label>
-        <label class="fc-f">Avos <small>automático: ${x.avosAuto}</small><input data-ff="avos" inputmode="numeric" value="${f.avos != null ? f.avos : ''}" placeholder="${x.avosAuto}"></label>
+        <label class="fc-f">Avos ${infoIcon(INFO13.avos)}<small>automático: ${x.avosAuto}</small><input data-ff="avos" inputmode="numeric" value="${f.avos != null ? f.avos : ''}" placeholder="${x.avosAuto}"></label>
         <label class="fc-f">Salário + bonif. fixa <small>automático (folha de ${mesNome}): ${brl(x.salarioAuto)}</small><input data-ff="salario" inputmode="decimal" value="${f.salario != null ? num(f.salario) : ''}" placeholder="${num(x.salarioAuto)}"></label>
         <label class="fc-f">PIX / conta para pagamento<input data-ff="pix" value="${esc(f.pix || '')}" placeholder="chave PIX, banco/agência/conta…"></label>
         <label class="fc-f">Observação<textarea data-ff="obs" rows="3" placeholder="Anotações sobre este funcionário…">${esc(f.obs || '')}</textarea></label>
@@ -1781,10 +1844,10 @@ function abrirFicha13(k) {
         <div id="fichaPag"></div>
       </div>
       <div class="fc-col">
-        <h3>Médias do ano <small>por verba</small></h3>
+        <h3>Médias do ano <small>por verba</small>${infoIcon(INFO13.media)}</h3>
         ${linhasCat.length ? `<table class="fc-tab"><thead><tr><th>Verba</th><th>Média auto</th><th>Usar</th></tr></thead><tbody>${linhasCat.map(c => `<tr><td>${esc(c.col.nome)}</td><td>${brl(c.auto)}</td><td><input data-fm="${c.col.k}" inputmode="decimal" value="${c.ov ? num(c.media) : ''}" placeholder="${num(r2(c.auto))}" class="${c.ov ? 'ov' : ''}"></td></tr>`).join('')}</tbody></table>
         <p class="hint" style="margin-top:6px">"Média auto" = soma dos meses lançados ÷ nº de meses. Digite em <b>Usar</b> o valor da contabilidade para trocar; apague para voltar ao automático.</p>` : `<p class="hint">Nenhuma verba variável (HE, DSR, ajuda…) lançada nas folhas do ano.</p>`}
-        <h3>Cálculo passo a passo</h3>
+        <h3>Cálculo passo a passo${infoIcon('Mostra, linha por linha, como o sistema chegou no valor de cada parcela.')}</h3>
         <div id="fichaCalc"></div>
       </div>
     </div>`;
@@ -2113,6 +2176,35 @@ function cartao13() {
   </div>`;
 }
 
+
+// ---------- caixinha das explicações (ⓘ) ----------
+const infoPop = document.createElement('div');
+infoPop.id = 'infoPop'; infoPop.hidden = true; document.body.appendChild(infoPop);
+let infoEl = null, infoFixo = false;
+function mostraInfo(el, fixo) {
+  infoPop.textContent = el.dataset.info; infoPop.hidden = false; infoEl = el; infoFixo = !!fixo;
+  const host = document.querySelector('dialog[open]') || document.body;
+  if (infoPop.parentNode !== host) host.appendChild(infoPop);
+  infoPop.style.left = '0px'; infoPop.style.top = '0px';
+  const r = el.getBoundingClientRect(), w = infoPop.offsetWidth, h = infoPop.offsetHeight;
+  const x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  let y = r.bottom + 8; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
+  infoPop.style.left = x + 'px'; infoPop.style.top = y + 'px';
+}
+function fechaInfo() { infoPop.hidden = true; infoEl = null; infoFixo = false; }
+document.addEventListener('click', e => {
+  const i = e.target.closest && e.target.closest('.i-info');
+  if (i) { e.preventDefault(); e.stopPropagation(); if (infoEl === i && infoFixo) fechaInfo(); else mostraInfo(i, true); return; }
+  fechaInfo();
+}, true);
+document.addEventListener('mouseover', e => { const i = e.target.closest && e.target.closest('.i-info'); if (i && !infoFixo) mostraInfo(i, false); });
+document.addEventListener('mouseout', e => { if (!infoFixo && e.target.closest && e.target.closest('.i-info')) fechaInfo(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fechaInfo();
+  else if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('i-info')) { e.preventDefault(); mostraInfo(e.target, true); }
+});
+window.addEventListener('scroll', () => { if (!infoFixo) fechaInfo(); }, true);
+
 // ---------- tema claro / escuro ----------
 const escuroAgora = () => {
   const t = document.documentElement.dataset.theme;
@@ -2245,7 +2337,7 @@ function renderFolha() {
         <thead>
           <tr>
             <th>Nome</th>
-            ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${c.dica || c.k === 'inss' ? ` title="${esc(c.dica || 'Em branco = automático')}"` : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}</th>`).join('')}
+            ${cols().map(c => `<th draggable="true" data-col="${c.k}" class="${c.cls || ''}"${filtravel(c.k) ? ` data-filtro="${c.k}"` : ''}${!infoColFolha(c) && (c.dica || c.k === 'inss') ? ` title="${esc(c.dica || 'Em branco = automático')}"` : ''}>${esc(c.nome)}${c.un ? ` <small>(${c.un})</small>` : ''}${infoIcon(infoColFolha(c))}</th>`).join('')}
             <th></th>
           </tr>
         </thead>

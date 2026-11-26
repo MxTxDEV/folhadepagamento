@@ -774,9 +774,9 @@
   <h3>Cálculo</h3>
   <div class="row"><label>Salário-base vem da folha de</label><select id="rgMes"></select></div>
   <div class="row"><label>1ª parcela = % do 13º</label><input id="rgPct" inputmode="decimal" style="width:80px"></div>
-  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgMedia"> Incluir a média de HE, DSR e bonificações variáveis no 13º<span class="i-info" tabindex="0" role="button" data-info="Média variável = o que o funcionário ganhou de extra durante o ano (horas extras, DSR, bonificações…), em média por mês. A lei manda incluir no 13º porque faz parte da remuneração.">i</span></label>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgMedia"> Calcular a média variável automaticamente a partir das folhas (HE, DSR, bonificações)<span class="i-info" tabindex="0" role="button" data-info="Desmarcado (padrão): a média variável é MANUAL — você digita o valor na coluna 'Média variáveis' (ou em Detalhes). Marcado: o sistema puxa das folhas dos meses (média de HE, DSR e bonificações) e calcula sozinho.">i</span></label>
   <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgLiq1"> Puxar o valor "A pagar na 1ª parcela" automaticamente<span class="i-info" tabindex="0" role="button" data-info="Marcado: o sistema calcula o valor a pagar de todos. Desmarcado: ninguém é puxado — o valor começa vazio e você digita (ou usa a coluna Contracheque da contabilidade). Dá para escolher por funcionário em Detalhes → Como recebe o 13º.">i</span></label>
-  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgAjuda"> Pagar a média da ajuda alimentação junto com a 1ª parcela<span class="i-info" tabindex="0" role="button" data-info="A ajuda alimentação não entra no 13º nem no INSS, mas a contabilidade paga a média dela junto com a 1ª parcela. Desmarque se não quiser pagar.">i</span></label>
+  <label class="chk-media" style="margin:8px 0"><input type="checkbox" id="rgAjuda"> Puxar a média da ajuda alimentação das folhas e pagar junto com a 1ª parcela<span class="i-info" tabindex="0" role="button" data-info="Desmarcado (padrão): nada de ajuda é puxado — se for pagar, lance a mão na coluna 'A pagar na 1ª'. Marcado: o sistema calcula a média da ajuda alimentação das folhas e soma na 1ª parcela (não entra no INSS).">i</span></label>
   <p class="hint">As regras valem para o 13º deste ano. Valores digitados à mão na tabela ou em Detalhes continuam valendo no lugar do automático.</p>
   <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" id="rgSalvar">Salvar</button></div>
 </dialog>
@@ -1424,7 +1424,7 @@ const INFO13 = {
   admissao: 'Data em que o funcionário entrou na empresa. Só preencha se ele entrou NESTE ano: serve para contar os meses de 13º (avos). Em branco = trabalhou o ano todo.',
   avos: 'Avos = quantos meses de 13º o funcionário tem direito. 12/12 = o ano inteiro. Cada mês trabalhado com 15 dias ou mais conta 1. Quem entrou no meio do ano recebe proporcional (ex.: 8/12).',
   salario: 'Salário (mais a bonificação fixa) da folha de novembro. É a base principal do 13º.',
-  media: 'Média variável = o que o funcionário ganhou de extra durante o ano (horas extras, DSR, bonificações…), em média por mês. A lei manda incluir isso no 13º porque essas verbas fazem parte da remuneração.\n\nExemplo: se ele ganhou R$ 300 de hora extra somando 10 meses, a média é R$ 30 por mês e esses R$ 30 entram na conta do 13º.',
+  media: 'Média variável = o extra que o funcionário ganhou no ano (horas extras, DSR, bonificações…), em média por mês, que entra na conta do 13º. Aqui é MANUAL: digite o valor que a contabilidade informou (deixe 0 para quem não tem). Se quiser, ligue o cálculo automático em ⚙ Regras.',
   base: 'Base do 13º = salário + média variável. É o valor sobre o qual o 13º é calculado.',
   total: '13º total = base ÷ 12 × avos. É o 13º bruto do ano inteiro, antes do desconto de INSS.',
   p1: 'Primeira parcela: 50% do 13º, sem nenhum desconto, paga até 30/11. Marque a caixinha quando pagar.',
@@ -1494,8 +1494,8 @@ const okDe = (f, t) => !!(f['ok_' + t] || (t === 't1' && f.ok));
 
 // ---------- regras e estado da tela do 13º ----------
 const regra13 = (d, a) => ({
-  media: d.media !== false,
-  ajuda: d.ajuda !== false,
+  media: d.mediaAuto === true,  // média variável: MANUAL por padrão (só puxa das folhas se você ligar em Regras)
+  ajuda: d.ajudaAuto === true,
   pct1: d.pct1 != null && !isNaN(Number(d.pct1)) ? Number(d.pct1) : 50,
   liq1Auto: d.liq1Auto !== false,
   mesRef: d.mesRef || (d.datas && d.datas.p1 ? d.datas.p1.slice(0, 7) : `${a}-11`),
@@ -1575,9 +1575,9 @@ function calc13(a) {
     const v = { salario, media, base, total, p1, liq1, inss, p2, avos, recebido: r2(p1 + p2), fgts, cont1: f.cont1 || 0, cont2: f.cont2 || 0 };
     extras13().forEach(x => { v[x.k] = f[x.k] || 0; });
     const funcao = (ult.cfg && ult.cfg.funcao) || (p.linhas.map(({ r }) => r.cfg && r.cfg.funcao).filter(Boolean).pop()) || '';
-    const manuais = ['salario', 'avos', 'media', 'base', 'total', 'p1', 'inss', 'p2'].some(c => f[c] != null) || Object.keys(mc).length > 0;
+    const manuais = ['salario', 'avos', ...(rg.media ? ['media'] : []), 'base', 'total', 'p1', 'inss', 'p2'].some(c => f[c] != null) || Object.keys(mc).length > 0;
     return { k, nome: p.nome, manual: !!p.manual, f, v, funcao, avosAuto, salarioAuto, inssAuto, salario, media, avos, base, total, p1, liq1, liq1Auto, liq1Fonte, manual1, p2Auto, inss, p2, fgts,
-      ajudaP1, extraP1, meses: p.linhas.length, itemizado, cats, catsSem, catsTodas: [...catsFull, ...catsSemFull], semMedia, semAjuda, acordo: f.acordo || '', metade, manuais, mesRef: rg.mesRef, pct1: rg.pct1 };
+      ajudaP1, extraP1, meses: p.linhas.length, itemizado, cats, catsSem, catsTodas: [...catsFull, ...catsSemFull], rgMedia: rg.media, rgAjuda: rg.ajuda, autoMediaRef: r2(catsFull.reduce((t, c) => t + c.media, 0)), semMedia, semAjuda, acordo: f.acordo || '', metade, manuais, mesRef: rg.mesRef, pct1: rg.pct1 };
   }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 // avos: admitido antes do ano = 12; no ano, conta a partir do mês de admissão (se trabalhou 15 dias ou mais nele)
@@ -1820,9 +1820,9 @@ function render13() {
     ${excluidos13(ano).length ? `<div class="excl">Fora do 13º: ${excluidos13(ano).map(x =>
       `<span class="pill-ex">${esc(x.nome)} <button data-volta="${esc(x.k)}" title="Devolver ao 13º">↺</button></span>`).join('')}</div>` : ''}
     <p class="hint">
-      <b>Como calcula:</b> 13º = base ÷ 12 × avos. Base = salário + bonificação fixa da folha de ${MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef}${rg.media ? ' + média mensal das outras verbas que entram no INSS (HE, DSR, bonificações…)' : ''}.
-      1ª parcela = ${rg.pct1}% do 13º, item a item, sem INSS; 2ª parcela = 13º − INSS − 1ª parcela. A ajuda alimentação (média) é paga com a 1ª parcela e não entra no INSS.<br>
-      <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja) e apague para voltar. Use <b>Detalhes</b> para ver o cálculo passo a passo, a média de cada verba, o PIX e a data do pagamento. IRRF não é calculado.
+      <b>Como calcula:</b> 13º = base ÷ 12 × avos. Base = salário + bonificação fixa da folha de ${MESES[Number(rg.mesRef.slice(5, 7)) - 1] || rg.mesRef}${rg.media ? ' + média mensal das outras verbas (HE, DSR, bonificações…) calculada das folhas' : ' + média variável digitada por você (coluna "Média variáveis")'}.
+      1ª parcela = ${rg.pct1}% do 13º, item a item, sem INSS; 2ª parcela = 13º − INSS − 1ª parcela. <br>
+      <b>Tudo é editável:</b> digite qualquer valor para trocar o automático (traço laranja) e apague para voltar. Use <b>Detalhes</b> para ver o cálculo passo a passo, o PIX e a data do pagamento. <b>Média variável e ajuda são manuais</b> (ligue o automático em ⚙ Regras se quiser). IRRF não é calculado.
     </p>
   </div>`;
 
@@ -2058,6 +2058,7 @@ function abrirFicha13(k) {
         <label class="fc-f">Admissão <small>em branco = trabalhou o ano todo</small><input type="date" data-ff="admissao" value="${f.admissao || ''}"></label>
         <label class="fc-f">Avos ${infoIcon(INFO13.avos)}<small>automático: ${x.avosAuto}</small><input data-ff="avos" inputmode="numeric" value="${f.avos != null ? f.avos : ''}" placeholder="${x.avosAuto}"></label>
         <label class="fc-f">Salário + bonif. fixa <small>automático (folha de ${mesNome}): ${brl(x.salarioAuto)}</small><input data-ff="salario" inputmode="decimal" value="${f.salario != null ? num(f.salario) : ''}" placeholder="${num(x.salarioAuto)}"></label>
+        <label class="fc-f">Média variável (digitar)${infoIcon(INFO13.media)}<small>${x.rgMedia ? 'automática das folhas: ' + brl(x.autoMediaRef) + ' — digite para trocar' : 'manual — deixe vazio para 0'}</small><input data-ff="media" inputmode="decimal" value="${f.media != null ? num(f.media) : ''}" placeholder="0"></label>
         <label class="fc-f">PIX / conta para pagamento<input data-ff="pix" value="${esc(f.pix || '')}" placeholder="chave PIX, banco/agência/conta…"></label>
         <label class="fc-f">Observação<textarea data-ff="obs" rows="3" placeholder="Anotações sobre este funcionário…">${esc(f.obs || '')}</textarea></label>
         <h3>Como recebe o 13º${infoIcon('Quem recebe pela folha (contracheque): digite o valor que já veio calculado da contabilidade. Quem recebe por combinado (um valor diferente do que vem na folha): marque a caixinha e digite o valor a pagar. O que você digita aqui vale no lugar do cálculo automático; apague para voltar.')}</h3>
@@ -2066,16 +2067,17 @@ function abrirFicha13(k) {
         <label class="fc-f">Contracheque 1ª parcela (contabilidade)<input data-ff="cont1" inputmode="decimal" value="${f.cont1 != null ? num(f.cont1) : ''}" placeholder="valor que veio da contabilidade"></label>
         <label class="fc-f">Contracheque 2ª parcela (contabilidade)<input data-ff="cont2" inputmode="decimal" value="${f.cont2 != null ? num(f.cont2) : ''}" placeholder="valor que veio da contabilidade"></label>
         <h3>Acordo com o funcionário${infoIcon('Para quem não entra na média variável: marque aqui. Por exemplo, quem tem horas extras compensadas ou pagas por fora. Sem a média, o 13º dele é só o salário (mais o que você lançar à mão). Anote o combinado para não esquecer.')}</h3>
-        <label class="fc-chk"><input type="checkbox" data-ff="semMedia"${f.semMedia ? ' checked' : ''}> Sem média variável no 13º <small>(HE, DSR, bonificações)</small></label>
-        <label class="fc-chk"><input type="checkbox" data-ff="semAjuda"${f.semAjuda ? ' checked' : ''}> Sem a média da ajuda alimentação</label>
+        ${x.rgMedia ? `<label class="fc-chk"><input type="checkbox" data-ff="semMedia"${f.semMedia ? ' checked' : ''}> Sem média variável no 13º <small>(HE, DSR, bonificações)</small></label>` : ''}
+        ${x.rgAjuda ? `<label class="fc-chk"><input type="checkbox" data-ff="semAjuda"${f.semAjuda ? ' checked' : ''}> Sem a média da ajuda alimentação</label>` : ''}
         <label class="fc-f">Anotação do acordo<input data-ff="acordo" value="${esc(f.acordo || '')}" placeholder="ex.: HE compensada em folga, combinado em 10/2026"></label>
         <h3>Pagamentos</h3>
         <div id="fichaPag"></div>
       </div>
       <div class="fc-col">
-        <h3>Médias do ano <small>por verba</small>${infoIcon(INFO13.media)}</h3>
+        ${x.rgMedia || x.rgAjuda ? `<h3>Médias do ano <small>por verba</small>${infoIcon(INFO13.media)}</h3>
         ${linhasCat.length ? `<table class="fc-tab"><thead><tr><th>Verba</th><th>Média auto</th><th>Usar</th></tr></thead><tbody>${linhasCat.map(c => { const off = !(x.cats.includes(c) || x.catsSem.includes(c)); return `<tr${off ? ' class="off"' : ''}><td>${esc(c.col.nome)}</td><td>${brl(c.auto)}</td><td>${off ? '<small class="muted">desligada</small>' : `<input data-fm="${c.col.k}" inputmode="decimal" value="${c.ov ? num(c.media) : ''}" placeholder="${num(r2(c.auto))}" class="${c.ov ? 'ov' : ''}">`}</td></tr>`; }).join('')}</tbody></table>
         <p class="hint" style="margin-top:6px">"Média auto" = soma dos meses lançados ÷ nº de meses. Digite em <b>Usar</b> o valor da contabilidade para trocar; apague para voltar ao automático.</p>` : `<p class="hint">Nenhuma verba variável (HE, DSR, ajuda…) lançada nas folhas do ano.</p>`}
+        ` : ''}
         <h3>Cálculo passo a passo${infoIcon('Mostra, linha por linha, como o sistema chegou no valor de cada parcela.')}</h3>
         <div id="fichaCalc"></div>
       </div>
@@ -2094,7 +2096,7 @@ function pintaFicha13() {
   const l = (rot, val, cls = '') => `<div class="st ${cls}"><span>${rot}</span><b>${val}</b></div>`;
   $('fichaCalc').innerHTML = [
     l(`Salário + bonif. fixa (${mesNome})`, brl(x.salario)),
-    rg.media ? l('+ Média das verbas variáveis', brl(x.media)) : '',
+    x.media || rg.media ? l(rg.media ? '+ Média das verbas variáveis' : '+ Média variável (digitada)', brl(x.media)) : '',
     l('= Base do 13º', brl(x.base), 'sub'),
     l(`13º integral = base ÷ 12 × ${x.avos} avos`, brl(x.total), 'tot'),
     l(`1ª parcela (${x.pct1}% do 13º)`, brl(x.p1)),
@@ -2255,8 +2257,9 @@ $('rgSalvar').onclick = () => {
     dd.datas = { ...dd.datas, p1: $('rgP1').value || dd.datas.p1, p2: $('rgP2').value || dd.datas.p2 };
     const derivado = (dd.datas.p1 || `${ano}-11`).slice(0, 7);
     if ($('rgMes').value === derivado) delete dd.mesRef; else dd.mesRef = $('rgMes').value;
-    dd.media = $('rgMedia').checked;
-    dd.ajuda = $('rgAjuda').checked;
+    dd.mediaAuto = $('rgMedia').checked;
+    dd.ajudaAuto = $('rgAjuda').checked;
+    delete dd.media; delete dd.ajuda; // chaves antigas (a média era automática)
     if ($('rgLiq1').checked) delete dd.liq1Auto; else dd.liq1Auto = false;
     dd.pct1 = pct == null ? 50 : Math.max(0, Math.min(100, pct));
   });
